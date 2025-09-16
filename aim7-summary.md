@@ -1,10 +1,6 @@
 APS Aim 7 Derived Variables Summary
 ================
 
-# Setup
-
-# Deriving Variables
-
 ## Neuromuscular Blockade
 
 | Value | Counts | % of Data |

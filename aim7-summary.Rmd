@@ -10,8 +10,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Setup
-
 ```{r, echo = FALSE}
 load(file = "tmp-data/20250731_data.RData")
 ```
@@ -32,8 +30,6 @@ summarize_factor_variable <- function(var) {
   knitr::kable(var_summary, col.names = c("Value", "Counts", "% of Data"))
 }
 ```
-
-# Deriving Variables
 
 ## Neuromuscular Blockade
 ```{r, echo = FALSE}
