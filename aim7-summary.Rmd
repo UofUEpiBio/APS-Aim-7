@@ -61,6 +61,6 @@ summarize_factor_variable(rfs_0$rfs_var1)
 
 ### Variable 2
 ```{r, echo = FALSE}
-hist(rfs_0$rfs_var2, main = "Histogram of Variable 2 (Systematic)")
+hist(rfs_0$rfs_var2, main = "Histogram of Variable 2 (Systematic)", xlab = "Variable 2")
 ```
 
