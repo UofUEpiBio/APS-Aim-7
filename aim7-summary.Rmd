@@ -1,0 +1,64 @@
+---
+title: "APS Aim 7 Derived Variables Summary"
+output: github_document
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Setup
+
+```{r, echo = FALSE}
+load(file = "tmp-data/20250731_data.RData")
+```
+
+```{r, echo = FALSE}
+# Source variable derivation code
+source("R/all.R")
+```
+
+```{r, echo = FALSE}
+summarize_factor_variable <- function(var) {
+  summary(as.factor(var))
+}
+
+summarize_continuous_variable <- function(var) {
+  summary(var)
+}
+```
+
+# Deriving Variables
+
+## Neuromuscular Blockade
+```{r, echo = FALSE}
+nmb_0 <- derive_neuromuscular_blockade_0(data)
+summarize_factor_variable(nmb_0)
+```
+
+## Inflammatory Profile (Streamlined)
+
+```{r, echo = FALSE}
+ifp_0 <- derive_inflammatory_profile_0(data)
+summarize_factor_variable(ifp_0)
+```
+
+## Respiratory Failure Severity (Systematic)
+
+```{r, echo = FALSE}
+rfs_0 <- derive_respiratory_failure_severity_0(data)
+```
+
+### Variable 1
+```{r, echo = FALSE}
+summarize_factor_variable(rfs_0$rfs_var1)
+```
+
+### Variable 2
+```{r, echo = FALSE}
+summarize_continuous_variable(rfs_0$rfs_var2)
+```
+

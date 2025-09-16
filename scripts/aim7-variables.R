@@ -3,17 +3,14 @@
 # data <- read_data(filepath = "tmp-data/20250731_data.csv")
 
 # Uncomment to load from RData file (loads into global workspace as 'data')
-# load(file = "tmp-data/20250731_data.RData")
+load(file = "tmp-data/20250731_data.RData")
 
 # Filter for Day 0
 # - TODO: Is this needed?
 # data_0 <- data[data$event_label == "Day 0",]
 
 # Source variable derivation code
-source("R/variables.R")
+source("R/all.R")
 
 nmb_0 <- derive_neuromuscular_blockade_0(data)
 ifp_0 <- derive_inflammatory_profile_0(data)
-
-# Cleanup
-rm(derive_neuromuscular_blockade_0)
