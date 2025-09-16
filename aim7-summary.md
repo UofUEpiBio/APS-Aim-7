@@ -31,3 +31,6 @@ APS Aim 7 Derived Variables Summary
 ### Variable 2
 
 ![](aim7-summary_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+    #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+    #>   33.33  182.26  247.50  267.80  351.85  476.19    7748
