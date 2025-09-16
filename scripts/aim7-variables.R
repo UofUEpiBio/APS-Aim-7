@@ -6,7 +6,6 @@
 load(file = "tmp-data/20250731_data.RData")
 
 # Filter for Day 0
-# - TODO: Is this needed?
 # data_0 <- data[data$event_label == "Day 0",]
 
 # Source variable derivation code

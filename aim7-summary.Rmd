@@ -23,11 +23,13 @@ source("R/all.R")
 
 ```{r, echo = FALSE}
 summarize_factor_variable <- function(var) {
-  summary(as.factor(var))
-}
-
-summarize_continuous_variable <- function(var) {
-  summary(var)
+  sum_table <- summary(as.factor(var))
+  total <- sum(sum_table)
+  var_summary <- data.frame(
+    counts = sum_table,
+    percentage = paste0(round(sum_table / total * 100, 2), "%")
+  )
+  knitr::kable(var_summary, col.names = c("Value", "Counts", "% of Data"))
 }
 ```
 
@@ -59,6 +61,6 @@ summarize_factor_variable(rfs_0$rfs_var1)
 
 ### Variable 2
 ```{r, echo = FALSE}
-summarize_continuous_variable(rfs_0$rfs_var2)
+hist(rfs_0$rfs_var2, main = "Histogram of Variable 2 (Systematic)")
 ```
 
