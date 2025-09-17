@@ -12,6 +12,7 @@ knitr::opts_chunk$set(
 
 ```{r, echo = FALSE}
 load(file = "tmp-data/20250731_data.RData")
+data <- data[data$event_label == "Daily In-Hospital Forms",]
 ```
 
 ```{r, echo = FALSE}
@@ -27,37 +28,77 @@ summarize_factor_variable <- function(var) {
     counts = sum_table,
     percentage = paste0(round(sum_table / total * 100, 2), "%")
   )
-  knitr::kable(var_summary, col.names = c("Value", "Counts", "% of Data"))
+  knitr::kable(var_summary, col.names = c("Value", "Counts", "%"))
 }
 ```
 
+
 ## Neuromuscular Blockade
+
+- 0 = No neuromuscular blockade on day 0 or missing (NA)
+- 1 = Neuromuscular blockade given on day 0
+
 ```{r, echo = FALSE}
 nmb_0 <- derive_neuromuscular_blockade_0(data)
 summarize_factor_variable(nmb_0)
 ```
 
+
 ## Inflammatory Profile (Streamlined)
 
+- 0 = Day 0 CRP not checked or < 15 or missing (NA)
+- 1 = Day 0 CRP checked and ≥ 15
+
 ```{r, echo = FALSE}
-ifp_0 <- derive_inflammatory_profile_0(data)
+ifp_0 <- derive_streamlined_inflammatory_profile_0(data)
 summarize_factor_variable(ifp_0)
 ```
+
 
 ## Respiratory Failure Severity (Systematic)
 
 ```{r, echo = FALSE}
-rfs_0 <- derive_respiratory_failure_severity_0(data)
+rfs_0 <- derive_systematic_respiratory_failure_severity_0(data)
 ```
 
 ### Variable 1
+
+- 0 = No oxygen or missing (NA)
+- 1 = Standard flow
+- 2 = HFNC
+- 3 = NIV
+- 4 = IMV and PEEP < 12
+- 5 = IMV and PEEP ≥ 12
+
 ```{r, echo = FALSE}
 summarize_factor_variable(rfs_0$rfs_var1)
 ```
 
+
 ### Variable 2
+
+- If Variable 1 is 0 = daily_spo2_8a_0 / 0.21
+- If Variable 1 is 1 = daily_spo2_8a_0 / 0.21 + (0.03 * daily_standard_flow_8a_0)
+- If Variable 1 is 2, 3, 4, or 5 = daily_spo2_8a_0 / daily_fio2_lowest_0
+
 ```{r, echo = FALSE}
 hist(rfs_0$rfs_var2, main = "Histogram of Variable 2 (Systematic)", xlab = "Variable 2")
 summary(rfs_0$rfs_var2)
 ```
 
+**NOTE:** NA values indicate missing data for the ratio calculation.
+
+
+## Hypotension Severity
+
+- 0 = No pressors or inotrope, MAP >= 70
+- 1 = No pressors or inotrope, MAP < 70
+- 2 = (dobutamine OR milrinone) and (no dopamine or dopamine <= 5) and (no other vasopressors)
+- 3 = On vasopressors with NEE < 0.1
+- 4 = NEE > 0.1 and NEE < 0.25
+- 5 = NEE >= .25
+
+```{r, echo = FALSE}
+hs_0 <- derive_hypotension_severity_0(data)
+summarize_factor_variable(hs_0)
+```
