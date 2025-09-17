@@ -1,6 +1,10 @@
 APS Aim 7 Derived Variables Summary
 ================
 
+**NOTE:** Data is filtered to include only rows where `event_label` is
+“Daily In-Hospital Forms”. This is because the variables used to compute
+the following derived variables are only collected in this event.
+
 ## Neuromuscular Blockade
 
 - 0 = No neuromuscular blockade on day 0 or missing (NA)
