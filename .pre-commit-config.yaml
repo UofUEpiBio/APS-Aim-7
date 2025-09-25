@@ -9,14 +9,14 @@ repos:
     -   id: check-added-large-files
     -   id: detect-private-key
 
--   repo: https://github.com/lorenzwalthert/precommit
-    # This version of precommit uses R 4.4.1 (renv.lock)
-    # See the pre-commit.yaml workflow file for more details.
-    rev: v0.4.3.9009
-    hooks:
-      - id: readme-rmd-rendered
-      - id: roxygenize
-        additional_dependencies:
-        - lubridate
-        - writexl
-      - id: use-tidy-description
+# -   repo: https://github.com/lorenzwalthert/precommit
+#     # This version of precommit uses R 4.4.1 (renv.lock)
+#     # See the pre-commit.yaml workflow file for more details.
+#     rev: v0.4.3.9009
+#     hooks:
+#       - id: readme-rmd-rendered
+#       - id: roxygenize
+#         additional_dependencies:
+#         - lubridate
+#         - writexl
+#       - id: use-tidy-description
