@@ -34,20 +34,7 @@ source("R/all.R")
 - 0 = No neuromuscular blockade on Day 0 or missing
 - 1 = Neuromuscular blockade given on Day 0
 
-### Code to Generate Variable
-```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(str_nmblockade_0 = calc_str_nmblockade_0(
-    daily_paralysis_0 = daily_paralysis_0,
-    trx_0 = trx_0
-  )) |>
-  select(str_nmblockade_0)
-```
-
-Note, filtering by 'Daily In-Hospital Forms' returns only 499 entries, not 500?
-
-### Variable Summary
+### Summary
 
 ```{r}
 data |>
@@ -60,12 +47,11 @@ data |>
   gt()
 ```
 
-### Missingness Report for `daily_paralysis_0`
+### Missingness Report
 
 #### Valid NA Values
 
-These records were missing `daily_paralysis_0`, but this was *expected* by the branching logic of `trx_0 == 'Not Available'`.
-These values were set to `neuromuscular_blockade_0 = 0` according to the variable definition.
+These records were correctly missing `daily_paralysis_0` by the branching logic of `trx_0 == 'Not Available'`. They were set to `str_nmblockade_0 = 0` according to the variable definition.
 
 ```{r}
 data |>
@@ -77,7 +63,7 @@ data |>
 
 #### Invalid NA Values
 
-These records were missing `daily_paralysis_0`, but this was *unexpected* by the branching logic.
+These records were incorrectly missing `daily_paralysis_0`:
 ```{r}
 data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
@@ -87,5 +73,55 @@ data |>
     is.na(trx_0) ~ '"trx_0" is also missing'
   )) |>
   select(record_id, daily_paralysis_0, trx_0, missingness) |>
+  gt()
+```
+
+
+## Streamlined DAG: Inflammatory Profile
+
+- 0 = Day 0 CRP not checked
+- 1 = Day 0 CRP checked and < 15
+- 2 = Day 0 CRP checked and ≥ 15
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(str_inflamprofile_0 = calc_str_inflamprofile_0(
+    daily_crp_8a_0 = daily_crp_8a_0,
+    daily_crp_nc_0 = daily_crp_nc_0
+  )) |>
+  count(str_inflamprofile_0) |>
+  gt()
+```
+
+### Missingness Report
+
+#### Valid NA Values
+
+All missing values of `daily_crp_8a_0` expected by the branching logic of `daily_crp_nc_0 == 'Not Collected'` were correctly set to `str_inflamprofile_0 = 0` according to the variable definition.
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(str_inflamprofile_0 = calc_str_inflamprofile_0(
+    daily_crp_8a_0 = daily_crp_8a_0,
+    daily_crp_nc_0 = daily_crp_nc_0
+  )) |>
+  filter(is.na(daily_crp_8a_0) & (daily_crp_nc_0 == 'Not Collected')) |>
+  count(daily_crp_nc_0, daily_crp_8a_0, str_inflamprofile_0) |>
+  gt()
+```
+
+#### Invalid NA Values
+
+These records were incorrectly missing both `daily_crp_8a_0` and `daily_crp_nc_0`:
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  filter(is.na(daily_crp_8a_0) & is.na(daily_crp_nc_0)) |>
+  select(record_id, daily_crp_8a_0, daily_crp_nc_0) |>
   gt()
 ```

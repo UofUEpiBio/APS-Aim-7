@@ -1,6 +1,6 @@
 #' Calculate the streamlined DAG variable for neuromuscular blockade on Day 0
 #'
-#' `calc_str_nmblockade_0` derives the streamlined DAG variable for
+#' `calc_str_nmblockade_0` calculates the streamlined DAG variable for
 #' neuromuscular blockade from the data. This variable represents daily
 #' neuromuscular blocking agent use on admission day.
 #'
@@ -21,42 +21,28 @@ calc_str_nmblockade_0 <- function(daily_paralysis_0, trx_0) {
 }
 
 
-#' Derive streamlined inflammatory profile variable
+#' Calculate the streamlined DAG variable for inflammatory profile on Day 0
 #'
-#' `derive_streamlined_inflammatory_profile_0` derives the inflammatory
-#' profile variable from the data. Using the streamlined formula. This
-#' variable represents hyperinflammatory profile closest to 8am on this
-#' day.
+#' `calc_str_inflamprofile_0` calculates the streamlined DAG variable for
+#' inflammatory profile from the data. This variable represents
+#' CRP level on admission day.
 #'
-#' Input data must contain the columns:
-#' - `daily_crp_8a_0`
-#'
-#' @inheritParams derive_neuromuscular_blockade_0
+#' @param daily_crp_8a_0 Numeric vector. The `daily_crp_8a_0` column from the data.
+#' @param daily_crp_nc_0 Character vector. The `daily_crp_nc_0` column from the data.
 #'
 #' @returns A vector with values:
-#' - 0 = Day 0 CRP not checked or < 15 or missing (NA)
-#' - 1 = Day 0 CRP checked and ≥ 15
+#' - 0 = Day 0 CRP not checked
+#' - 1 = Day 0 CRP checked and < 15
+#' - 2 = Day 0 CRP checked and ≥ 15
 #' @export
-derive_streamlined_inflammatory_profile_0 <- function(data) {
-
-  required_vars <- c(
-    "daily_crp_8a_0"
+calc_str_inflamprofile_0 <- function(daily_crp_8a_0, daily_crp_nc_0) {
+  dplyr::case_when(
+    daily_crp_8a_0 >= 15 ~ 2,
+    daily_crp_8a_0 < 15 ~ 1,
+    daily_crp_nc_0 == 'Not Collected' ~ 0
   )
-
-  validate_required_variables(
-    data = data,
-    required_vars = required_vars,
-    function_name = "derive_streamlined_inflammatory_profile_0"
-  )
-
-  ifp <- data$daily_crp_8a_0
-
-  # TODO: Use new formula
-  ifp <- ifelse(ifp >= 15, 1, 0)
-  ifp[is.na(ifp)] <- 0
-
-  ifp
 }
+
 
 #' Derive systematic respiratory failure severity variables
 #'

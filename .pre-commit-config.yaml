@@ -1,4 +1,4 @@
-exclude: ^(inst/|man/|.github/|vignettes/vignette-data/|README.md)
+exclude: ^(inst/|man/|.github/|vignettes/vignette-data/|README.md|aim7-summary.md)
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
