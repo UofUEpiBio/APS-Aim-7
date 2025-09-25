@@ -20,13 +20,27 @@ parse_choices <-  function(choices) {
 get_code_label_map <- function(field_name, dictionary) {
   field_name_orig <- field_name
   field_name_code <- paste0(field_name, '_code')
-  dictionary %>% 
+  dictionary %>%
     filter(field_name == field_name_orig) %>%
     pull(select_choices_or_calculations) %>%
     parse_choices() %>%
     rename(!!field_name_orig := value,
            !!field_name_code := key)
 }
+
+
+## View common dictionary fields for a given field name
+## field - name of field corresponding to 'field_name' in dictionary
+## dictionary - data dictionary table
+view_dict <- function(field, dictionary) {
+  dictionary %>%
+    filter(field_name == field) %>%
+    select('field_name', 'field_type', 'form_label', 'field_label',
+           'select_choices_or_calculations', 'branching_logic') %>%
+    unclass()
+}
+
+
 
 ## SOFA score functions
 
@@ -37,19 +51,19 @@ get_code_label_map <- function(field_name, dictionary) {
 ## o2_low_pao2 - Std. Oxygen L/min at lowest PaO2 (e.g., daily_o2_lowest_pao2_m2)
 calc_pf_ratio <- function(low_pao2, resp_low_pao2, fio2_low_pao2, o2_low_pao2) {
   case_when(
-    
+
     ## patient on ECMO without invasive mechanical ventilation (FiO2 is nonsense)
     resp_low_pao2 == 'ECMO without invasive mechanical ventilation' ~ NA,
-    
+
     ## lowest PaO2 available and patient on IMV, NIV, or HFNC
     !is.na(low_pao2) & !is.na(fio2_low_pao2) ~ low_pao2/fio2_low_pao2,
-    
+
     ## lowest PaO2 available and patient on supplemental oxygen (0.21 + 0.03 * L/min)
     !is.na(low_pao2) & !is.na(o2_low_pao2) ~ low_pao2/pmin(0.21 + 0.03*o2_low_pao2, 1),
-    
+
     ## lowest PaO2 available and patient on room air
     !is.na(low_pao2) & grepl('^No respiratory support', resp_low_pao2) ~ low_pao2/0.21,
-    
+
     TRUE ~ NA
   )
 }
@@ -61,19 +75,19 @@ calc_pf_ratio <- function(low_pao2, resp_low_pao2, fio2_low_pao2, o2_low_pao2) {
 ## o2_low_spo2 - Std. Oxygen L/min at lowest SpO2 (e.g., daily_o2_lowest_m2)
 calc_sf_ratio <- function(low_spo2, resp_low_spo2, fio2_low_spo2, o2_low_spo2) {
   case_when(
-    
+
     ## patient on ECMO without invasive mechanical ventilation (FiO2 is nonsense)
     resp_low_spo2 == 'ECMO without invasive mechanical ventilation' ~ NA,
-    
+
     ## lowest SaO2 available and patient on IMV, NIV, or HFNC
     !is.na(low_spo2) & !is.na(fio2_low_spo2) ~ low_spo2/fio2_low_spo2,
-    
+
     ## lowest SaO2 available and patient on supplemental oxygen (0.21 + 0.03 * L/min)
     !is.na(low_spo2) & !is.na(o2_low_spo2) ~ low_spo2/pmin(0.21 + 0.03*o2_low_spo2, 1),
-    
+
     ## lowest SaO2 available and patient on room air
     !is.na(low_spo2) & grepl('^No respiratory support', resp_low_spo2) ~ low_spo2/0.21,
-    
+
     TRUE ~ NA
   )
 }
@@ -134,13 +148,13 @@ calc_sofa_card <- function(sbp, dbp, dopa_mcg, dopa_mcgkg, dobu_mcg, dobu_mcgkg,
                            epin_mcg, epin_mcgkg, nore_mcg, nore_mcgkg, weight_kg) {
   map <- 1/3*sbp + 2/3*dbp
   case_when(
-    dopa_mcgkg > 15  | dopa_mcg/weight_kg > 15  | 
+    dopa_mcgkg > 15  | dopa_mcg/weight_kg > 15  |
       epin_mcgkg > 0.1 | epin_mcg/weight_kg > 0.1 |
       nore_mcgkg > 0.1 | nore_mcg/weight_kg > 0.1  ~ 4,
-    dopa_mcgkg > 5.1 | dopa_mcg/weight_kg > 5.1 | 
+    dopa_mcgkg > 5.1 | dopa_mcg/weight_kg > 5.1 |
       epin_mcgkg > 0.0 | epin_mcg/weight_kg > 0.0 |
       nore_mcgkg > 0.0 | nore_mcg/weight_kg > 0.0  ~ 3,
-    dopa_mcgkg > 0.0 | dopa_mcg/weight_kg > 0.0 | 
+    dopa_mcgkg > 0.0 | dopa_mcg/weight_kg > 0.0 |
       dobu_mcgkg > 0.0 | dobu_mcg/weight_kg > 0.0  ~ 2,
     map < 70                                       ~ 1,
     map >= 70                                      ~ 0,
@@ -151,20 +165,20 @@ calc_sofa_card <- function(sbp, dbp, dopa_mcg, dopa_mcgkg, dobu_mcg, dobu_mcgkg,
 ## calculate CNS SOFA score
 ## gcs - Glasgow Coma Score
 calc_sofa_cns <- function(gcs) {
-  
+
   ## treat 'not documented' as NA
   gcs <- ifelse(gcs == 'not documeted', NA, gcs)
   ## GCS contains T/patient was intubated/no verbal score
   gcs_intub <- grepl('T$', gcs)
   ## extract quantitative component of GCS
   gcs_quant <- as.numeric(sub('T', '', gcs))
-  
+
   ## imputed GCS
   gcs_imput <- case_when(
     gcs_intub ~ gcs_quant + 5.0, ## impute normal verbal score
     TRUE ~ gcs_quant
   )
-  
+
   ## convert to SOFA CNS score
   case_when(
     gcs_imput <  6  ~ 4,
@@ -182,7 +196,7 @@ calc_sofa_rena <- function(cr) {
   case_when(
     cr > 5.0 ~ 4,
     cr > 3.5 ~ 3,
-    cr > 2.0 ~ 2, 
+    cr > 2.0 ~ 2,
     cr > 1.2 ~ 1,
     cr > 0.0 ~ 0,
     TRUE ~ NA

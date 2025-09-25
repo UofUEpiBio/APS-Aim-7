@@ -49,20 +49,6 @@ data |>
 
 ### Missingness Report
 
-#### Valid NA Values
-
-These records were correctly missing `daily_paralysis_0` by the branching logic of `trx_0 == 'Not Available'`. They were set to `str_nmblockade_0 = 0` according to the variable definition.
-
-```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  filter(is.na(daily_paralysis_0) & (trx_0 == 'Not Available')) |>
-  select(record_id, daily_paralysis_0, trx_0) |>
-  gt()
-```
-
-#### Invalid NA Values
-
 These records were incorrectly missing `daily_paralysis_0`:
 ```{r}
 data |>
@@ -73,6 +59,18 @@ data |>
     is.na(trx_0) ~ '"trx_0" is also missing'
   )) |>
   select(record_id, daily_paralysis_0, trx_0, missingness) |>
+  gt()
+```
+
+#### Valid NA Values
+
+These records were missing `daily_paralysis_0`, but this was considered valid by the branching logic of `trx_0 == 'Not Available'`. Thus, they were set to `str_nmblockade_0 = 0` according to the variable definition. However, I include them here since I don't understand what `trx_0` represents.
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  filter(is.na(daily_paralysis_0) & (trx_0 == 'Not Available')) |>
+  select(record_id, daily_paralysis_0, trx_0) |>
   gt()
 ```
 
@@ -98,24 +96,6 @@ data |>
 
 ### Missingness Report
 
-#### Valid NA Values
-
-All missing values of `daily_crp_8a_0` expected by the branching logic of `daily_crp_nc_0 == 'Not Collected'` were correctly set to `str_inflamprofile_0 = 0` according to the variable definition.
-
-```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(str_inflamprofile_0 = calc_str_inflamprofile_0(
-    daily_crp_8a_0 = daily_crp_8a_0,
-    daily_crp_nc_0 = daily_crp_nc_0
-  )) |>
-  filter(is.na(daily_crp_8a_0) & (daily_crp_nc_0 == 'Not Collected')) |>
-  count(daily_crp_nc_0, daily_crp_8a_0, str_inflamprofile_0) |>
-  gt()
-```
-
-#### Invalid NA Values
-
 These records were incorrectly missing both `daily_crp_8a_0` and `daily_crp_nc_0`:
 
 ```{r}
@@ -125,3 +105,117 @@ data |>
   select(record_id, daily_crp_8a_0, daily_crp_nc_0) |>
   gt()
 ```
+
+## Systematic DAG: Inflammatory Profile
+
+Four variables, one for each element:
+
+1. `crp_0`
+  - 0 = Day 0 CRP not checked
+  - 1 = Day 0 CRP checked and < 15
+  - 2 = Day 0 CRP checked and ≥ 15
+2. `ferritin_0`
+  - 0 = Day 0 Ferritin not checked
+  - 1 = Day 0 Ferritin checked and < 700
+  - 2 = Day 0 Ferritin checked and ≥ 700
+3. `fibrinogen_0`
+  - 0 = Day 0 Fibrinogen not checked
+  - 1 = Day 0 Fibrinogen checked and < 150
+  - 2 = Day 0 Fibrinogen checked and ≥ 150
+4. `ddimer_0`
+  - 0 = Day 0 D-dimer not checked
+  - 1 = Day 0 D-dimer checked and < 1500
+  - 2 = Day 0 D-dimer checked and ≥ 1500
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(crp_0 = calc_crp_0(daily_crp_8a_0, daily_crp_nc_0)) |>
+  mutate(ferritin_0 = calc_ferritin_0(daily_ferritin_8a_0, daily_ferritin_nc_0)) |>
+  mutate(fibrinogen_0 = calc_fibrinogen_0(daily_fibrinogen_8a_0, daily_fibrinogen_nc_0)) |>
+  mutate(ddimer_0 = calc_ddimer_0(daily_ddimer_8a_0, daily_ddimer_nc_0)) |>
+  pivot_longer(
+    cols = c(crp_0, ferritin_0, fibrinogen_0, ddimer_0),
+    names_to = "variable",
+    values_to = "level"
+  ) |>
+  count(variable, level) |>
+  pivot_wider(
+    names_from = level,
+    values_from = n
+  ) |>
+  gt()
+```
+
+### Missingness Report
+
+For the `crp_0` variable, see the invalid NA values for the streamlined DAG inflammatory profile variable.
+
+These records were incorrectly missing both `daily_ferritin_8a_0` and `daily_ferritin_nc_0`:
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  filter(is.na(daily_ferritin_8a_0) & is.na(daily_ferritin_nc_0)) |>
+  select(record_id, daily_ferritin_8a_0, daily_ferritin_nc_0) |>
+  gt()
+```
+
+These records were incorrectly missing both `daily_fibrinogen_8a_0` and `daily_fibrinogen_nc_0`:
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  filter(is.na(daily_fibrinogen_8a_0) & is.na(daily_fibrinogen_nc_0)) |>
+  select(record_id, daily_fibrinogen_8a_0, daily_fibrinogen_nc_0) |>
+  gt()
+```
+
+These records were incorrectly missing both `daily_ddimer_8a_0` and `daily_ddimer_nc_0`:
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  filter(is.na(daily_ddimer_8a_0) & is.na(daily_ddimer_nc_0)) |>
+  select(record_id, daily_ddimer_8a_0, daily_ddimer_nc_0) |>
+  gt()
+```
+
+
+<!--
+## DAG:
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate() |>  # Add your calculation here
+  count() |>    # Add your grouping variable here
+  gt()
+```
+
+### Missingness Report
+
+#### Valid NA Values
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  filter() |>  # Add your NA validation conditions here
+  select(record_id) |>  # Add your relevant columns here
+  gt()
+```
+
+#### Invalid NA Values
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  filter() |>  # Add your invalid NA conditions here
+  select(record_id) |>  # Add your relevant columns here
+  gt()
+```
+ -->

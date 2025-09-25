@@ -2,7 +2,7 @@
 title: "APS Data Examples"
 author: "M. Shotwell"
 date: "`r Sys.Date()`"
-output: 
+output:
   html_document:
     code_folding: show
 ---
@@ -21,7 +21,7 @@ source('support_functions.R')
 
 ## load data from N=500 APS cohort
 ## provides "data", "dictionary" and "codebook" in the working environment
-load('20250806_data.RData')
+load('../aps-data/20250731_data.RData')
 ```
 
 ## Working with the codebook and dictionary
@@ -37,7 +37,7 @@ codebook %>%
 The dictionary gives detailed information about each field. Consider the "frailty_base", which is a radio button field that is part of the Clinical Frailty Scale form. The dictionary gives each possible value for this field. Note that other kinds of fields, notably text fields, may have values that are less structured.
 
 ```{r}
-dictionary %>% 
+dictionary %>%
   filter(field_name == 'frailty_base') %>%
   select('field_name', 'field_type', 'form_label', 'field_label',
     'select_choices_or_calculations', 'branching_logic') %>%
@@ -64,9 +64,9 @@ data %>%
   ## merge fields from clinical frailty form at the patient/surrogate interview
   left_join(data %>%
     filter(event_label == 'Patient/Surrogate Interview') %>%
-    filter(is.na(repeat_instrument)) %>% 
-    select(record_id, all_of(dictionary %>% 
-      filter(form_name == 'clinical_frailty_scale') %>% 
+    filter(is.na(repeat_instrument)) %>%
+    select(record_id, all_of(dictionary %>%
+      filter(form_name == 'clinical_frailty_scale') %>%
       pull(field_name))),
     by='record_id') %>%
   xtabs(~ frailty_perf + is.na(frailty_base), data=., addNA=TRUE)
@@ -92,18 +92,18 @@ data %>%
   ## merge fields from clinical frailty form at the patient/surrogate interview
   left_join(data %>%
     filter(event_label == 'Daily In-Hospital Forms') %>%
-    filter(is.na(repeat_instrument)) %>% 
-    select(record_id, all_of(dictionary %>% 
-      filter(form_name == 'sedation_and_delirium_day_2_to_7') %>% 
+    filter(is.na(repeat_instrument)) %>%
+    select(record_id, all_of(dictionary %>%
+      filter(form_name == 'sedation_and_delirium_day_2_to_7') %>%
       pull(field_name))),
     by='record_id') %>%
   ## reproduct cam_0 branching logic
-  mutate(cam_0_branching_logic = 
+  mutate(cam_0_branching_logic =
     ## lowest and highest RASS are documented
-    !is.na(highestrass_orres_0) & 
-    !is.na(lowrass_orres_0) & 
+    !is.na(highestrass_orres_0) &
+    !is.na(lowrass_orres_0) &
     ## at least one is > -4
-    (!(lowrass_orres_0 %in% c('-5','-4')) | 
+    (!(lowrass_orres_0 %in% c('-5','-4')) |
      !(highestrass_orres_0 %in% c('-5','-4')))) %>%
   xtabs(~cam_0_branching_logic + is.na(cam_0), data=.)
 ```
@@ -113,7 +113,7 @@ It may be convenient to use numeric codes for multiple choice fields instead of 
 ```{r}
 ## show label-to-code map for 'elig_vent_support'
 ## get_code_label_map defined in support_functions.R
-get_code_label_map('elig_vent_support', dictionary) %>% 
+get_code_label_map('elig_vent_support', dictionary) %>%
   select(elig_vent_support, elig_vent_support_code) %>%
   gt()
 ```
@@ -122,7 +122,7 @@ The numeric codes that then be easily merged with the data:
 
 ```{r}
 ## join codes for 'elig_vent_support' variable
-data %>% 
+data %>%
   ## merge codes for 'elig_vent_support'
   left_join(
     get_code_label_map('elig_vent_support', dictionary),
@@ -131,7 +131,7 @@ data %>%
   filter(event_label == 'Pre-Enrollment') %>%
   filter(is.na(repeat_instrument)) %>%
   select(record_id, elig_vent_support, elig_vent_support_code) %>%
-  head() %>% 
+  head() %>%
   gt()
 ```
 
@@ -153,11 +153,11 @@ syndrome_data <- data %>%
   ## get ID fields and syndrome adjudication fields
   select(record_id, event_label, enrolling_center, all_of(syndrome_fields)) %>%
   ## make sure there is one record per participant, even if no adjudication row
-  right_join(data %>% select(record_id) %>% filter(!duplicated(record_id)), 
+  right_join(data %>% select(record_id) %>% filter(!duplicated(record_id)),
     by='record_id')
 
 ## show a portion of the table
-syndrome_data %>% 
+syndrome_data %>%
   select(record_id, ards_clinical_judgement,
     pna_clinical_judgement, sepsis_clinical_judgement) %>%
   head() %>%
@@ -170,7 +170,7 @@ The code below converts SOFA score fields in wide format to long, computes each 
 
 ```{r 'sofa scores'}
 
-## daily in-hospital measurements needed for SOFA are all collected at the 
+## daily in-hospital measurements needed for SOFA are all collected at the
 ## 'Daily In-Hospital Forms' event. Each day has a separate set of fields,
 ## e.g., daily_pa02_lowest_m2, daily_pa02_lowest_m1, daily_pa02_lowest_0, ...
 ## which correspond to daily lowest PaO2 on day -2, -1, 0, ...
@@ -180,11 +180,11 @@ data_sofa <- data %>%
 
   ## filter to the relevant event
   filter(event_label == 'Daily In-Hospital Forms') %>%
-  
+
   ## filter out any repeat instrument rows (none of the SOFA variables are
   ## on a repeating instrument/form)
   filter(is.na(repeat_instrument)) %>%
-  
+
   ## remove the weight variable and merge it back in from the "Day 0" event
   ## where weight is collected
   select(-m_weight_kg) %>%
@@ -192,7 +192,7 @@ data_sofa <- data %>%
     filter(event_label == 'Day 0') %>%
     select(record_id, m_weight_kg),
     by='record_id') %>%
-  
+
   ## ensure there is exactly one row per participant; this is good practice
   ## because some participants will not have any records for some events; this
   ## ensures that there is a data point for each participant, even if that data
@@ -201,7 +201,7 @@ data_sofa <- data %>%
     filter(!duplicated(record_id)) %>%
     select(record_id),
     by='record_id') %>%
-  
+
   ## select variables involved in SOFA calculations
   select(
     record_id,
@@ -231,16 +231,16 @@ data_sofa <- data %>%
     matches('daily_gcs_8a_(m2|m1|[0-7])'),
     ## Renal
     matches('daily_cr_8a_(m2|m1|[0-7])')) %>%
-  
+
   ## rename the columns so that the study day is always the last element
   rename_with(~sub('(.+)_(m2|m1|[0-7])_(.+)', '\\1_\\3_\\2', x=.)) %>%
-  
+
   ## pivot from wide to long with respect to days -2, -1, 0, ..., 7
   pivot_longer(
     cols = -c(record_id, m_weight_kg), ## pivot all columns except these
     names_to = c('.value', 'study_day'),
     names_pattern = '(.+)_(m2|m1|[0-7])') %>%
-  
+
   ## convert study_day to numeric
   mutate(study_day = as.numeric(sub('m', '-', study_day))) %>%
 
@@ -258,13 +258,13 @@ data_sofa <- data %>%
   mutate(sofa_resp = calc_sofa_resp(
     pf_ratio = pf_ratio,
     sf_ratio = sf_ratio)) %>%
-  
+
   ## coagulation
   mutate(sofa_coag = calc_sofa_coag(platelets = daily_platelet_8a)) %>%
-  
+
   ## liver
   mutate(sofa_livr = calc_sofa_livr(bilirubin = daily_tbili_8a)) %>%
-  
+
   ## cardiovascular
   mutate(sofa_card = calc_sofa_card(
     sbp = daily_sbp_8a,
@@ -278,24 +278,24 @@ data_sofa <- data %>%
     nore_mcg = daily_ne_dose_8a_mcg,
     nore_mcgkg = daily_ne_dose_8a_mcgkg,
     weight_kg = m_weight_kg)) %>%
-  
+
   ## CNS
   ## calculate wither 'T' present in GCS; indicating intubated patient
   mutate(sofa_cns_gcs_t = ifelse(is.na(daily_gcs_8a), NA, grepl('T', daily_gcs_8a))) %>%
   ## create variable where GCS with a 'T' are set to NA
   mutate(sofa_cns_gcs_no_t = as.numeric(daily_gcs_8a)) %>%
   mutate(sofa_cns = calc_sofa_cns(gcs = daily_gcs_8a)) %>%
-  
+
   ## Renal
   mutate(sofa_rena = calc_sofa_rena(daily_cr_8a)) %>%
-  
+
   ## Total SOFA
   mutate(sofa_totl = sofa_resp + sofa_coag + sofa_livr + sofa_card + sofa_cns + sofa_rena)
 
 data_sofa %>%
   select(record_id, study_day, starts_with('sofa')) %>%
   select(-starts_with('sofa_cns_gcs'), -sofa_totl) %>%
-  pivot_longer(cols = starts_with('sofa'), names_to = 'component') %>% 
+  pivot_longer(cols = starts_with('sofa'), names_to = 'component') %>%
   mutate(study_day = factor(study_day, levels=-2:7)) %>%
   mutate(value = factor(value)) %>%
   mutate(component = case_match(component,

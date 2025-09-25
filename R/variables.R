@@ -36,10 +36,43 @@ calc_str_nmblockade_0 <- function(daily_paralysis_0, trx_0) {
 #' - 2 = Day 0 CRP checked and ≥ 15
 #' @export
 calc_str_inflamprofile_0 <- function(daily_crp_8a_0, daily_crp_nc_0) {
+  calc_crp_0(daily_crp_8a_0, daily_crp_nc_0)
+}
+
+
+# Calculate the CRP component of the inflammatory profile variable
+calc_crp_0 <- function(daily_crp_8a_0, daily_crp_nc_0) {
   dplyr::case_when(
     daily_crp_8a_0 >= 15 ~ 2,
     daily_crp_8a_0 < 15 ~ 1,
     daily_crp_nc_0 == 'Not Collected' ~ 0
+  )
+}
+
+# Calculate the Ferritin component of the inflammatory profile variable
+calc_ferritin_0 <- function(daily_ferritin_8a_0, daily_ferritin_nc_0) {
+  dplyr::case_when(
+    daily_ferritin_8a_0 >= 700 ~ 2,
+    daily_ferritin_8a_0 < 700 ~ 1,
+    daily_ferritin_nc_0 == 'Not Collected' ~ 0
+  )
+}
+
+# Calculate the Fibrinogen component of the inflammatory profile variable
+calc_fibrinogen_0 <- function(daily_fibrinogen_8a_0, daily_fibrinogen_nc_0) {
+  dplyr::case_when(
+    daily_fibrinogen_8a_0 >= 150 ~ 2,
+    daily_fibrinogen_8a_0 < 150 ~ 1,
+    daily_fibrinogen_nc_0 == 'Not Collected' ~ 0
+  )
+}
+
+# Calculate the D-dimer component of the inflammatory profile variable
+calc_ddimer_0 <- function(daily_ddimer_8a_0, daily_ddimer_nc_0) {
+  dplyr::case_when(
+    daily_ddimer_8a_0 >= 1500 ~ 2,
+    daily_ddimer_8a_0 < 1500 ~ 1,
+    daily_ddimer_nc_0 == 'Not Collected' ~ 0
   )
 }
 
