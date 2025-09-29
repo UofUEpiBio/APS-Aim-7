@@ -6,3 +6,6 @@
 .Ruserdata
 .DS_Store
 *.Rproj
+
+aim7-summary.md
+aim7-summary_files/*
