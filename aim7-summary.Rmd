@@ -29,9 +29,25 @@ load(file = '../aps-data/20250731_data.RData')
 source("R/all.R")
 ```
 
+## Missing Record Data
+
+There should be records for 500 patients in the dataset. However, for certain events appear to be missing data for one patient. When I filter the data for `event_label == "Daily In-Hospital Forms"`, which has values for the variables we are using, the result has 499 rows, not 500. Other events, such as `event_label == "Day 0"` have 500 rows, so the patient is included in some events but not this one. There may be other events that are missing as well that I didn't check.
+
+Here is the patient record missing the "Daily In-Hospital Forms" event:
+
+```{r}
+ihf_data <- filter(data, event_label == 'Daily In-Hospital Forms')
+d0_data <- filter(data, event_label == 'Day 0')
+anti_join(d0_data, ihf_data, by="record_id") |>
+  select(record_id) |>
+  gt()
+```
+
+Given that this patient is missing, the totals for the derived variables below come to 499 instead of 500.
+
 ## Streamlined DAG: Neuromuscular Blockade
 
-- 0 = No neuromuscular blockade on Day 0 or missing
+- 0 = No neuromuscular blockade on Day 0 or not applicable
 - 1 = Neuromuscular blockade given on Day 0
 
 ### Summary
@@ -44,12 +60,18 @@ data |>
     trx_0 = trx_0
   )) |>
   count(str_nmblockade_0) |>
-  gt()
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
 ```
 
 ### Missingness Report
 
-These records were incorrectly missing `daily_paralysis_0`:
+The branching logic for `daily_paralysis_0` states that if the variable `trx_0 == "Available"`, then `daily_paralysis_0` should be present. If `trx_0 == "Not Available"`, then `daily_paralysis_0` will be missing (NA). `trx_0` has no associated branching logic and thus should always have one of those two values.
+
+Thus, according to the branching logic, these records were incorrectly missing `daily_paralysis_0`:
 ```{r}
 data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
@@ -64,7 +86,7 @@ data |>
 
 #### Valid NA Values
 
-These records were missing `daily_paralysis_0`, but this was considered valid by the branching logic of `trx_0 == 'Not Available'`. Thus, they were set to `str_nmblockade_0 = 0` according to the variable definition. However, I include them here since I don't understand what `trx_0` represents.
+These records were missing `daily_paralysis_0`, but this was considered valid (e.g., "Not Applicable") by the branching logic of `trx_0 == 'Not Available'`. Thus, they were set to `str_nmblockade_0 = 0` according to the variable definition. However, as we are unsure what `trx_0` represents and why it would be marked "Not Available", we've included those records for completeness.
 
 ```{r}
 data |>
@@ -91,12 +113,18 @@ data |>
     daily_crp_nc_0 = daily_crp_nc_0
   )) |>
   count(str_inflamprofile_0) |>
-  gt()
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
 ```
 
 ### Missingness Report
 
-These records were incorrectly missing both `daily_crp_8a_0` and `daily_crp_nc_0`:
+This variable is computed from the paired variables `daily_crp_8a_0` and `daily_crp_nc_0`. The `*_nc_*` suffix indicates "not collected", while the `*_8a_*` suffix contains the value of the measurement. The branching logic for this pair makes them mutually exclusive. Thus, if one variable is present, the other should be missing (NA).
+
+According to the branching logic, these records were incorrectly missing both `daily_crp_8a_0` and `daily_crp_nc_0`:
 
 ```{r}
 data |>
@@ -146,12 +174,30 @@ data |>
     names_from = level,
     values_from = n
   ) |>
-  gt()
+  mutate(Total = rowSums(across(where(is.numeric)))) |>
+  gt() |>
+  tab_style(
+    style = list(cell_text(weight = "bold")),
+    locations = list(
+      cells_body(columns = Total),
+      cells_column_labels(columns = Total)
+    )
+  )
 ```
 
 ### Missingness Report
 
-For the `crp_0` variable, see the invalid NA values for the streamlined DAG inflammatory profile variable.
+Each variable is computed from a pair of variables `daily_<element_name>_8a_0` and `daily_<element_name>_nc_0` (e.g., `daily_crp_8a_0` and `daily_crp_nc_0`). The `*_nc_*` suffix indicates "not collected", while the `*_8a_*` suffix contains the value of the measurement. The branching logic makes each pair mutually exclusive. Thus, if one variable in the pair is present, the other should be missing (NA).
+
+According to the branching logic, these records were incorrectly missing both `daily_crp_8a_0` and `daily_crp_nc_0` (same list as for the streamlined DAG inflammatory profile variable above):
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  filter(is.na(daily_crp_8a_0) & is.na(daily_crp_nc_0)) |>
+  select(record_id, daily_crp_8a_0, daily_crp_nc_0) |>
+  gt()
+```
 
 These records were incorrectly missing both `daily_ferritin_8a_0` and `daily_ferritin_nc_0`:
 
@@ -184,6 +230,113 @@ data |>
 ```
 
 
+## Systematic DAG: Respiratory Failure Severity
+
+Variable #1 = type of support.
+
+- 1 = No Oxygen
+- 2 = Standard Flow
+- 3 = HFNC
+- 4 = NIV
+- 5 = IMV AND PEEP < 12 but NOT ECMO
+- 6 = (IMV AND PEEP ≥ 12) OR ECMO
+
+Variable #2 = S/F ratio closest to 8am
+Calculated using one of 3 options dependent on variable #1:
+
+- If variable #1 = 3, 4, 5, 6 -> [8a SpO2]/[8a FiO2]
+- If variable #1 = 2 -> [8a SpO2]/[0.21 + (0.03 * 8a O2 flow)]
+- If variable #1 = 1 -> [8a SpO2]/[0.21]
+
+### Variable 1
+
+#### Summary
+
+```{r}
+data_with_sysrespfail_var1 <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  left_join(
+    get_code_label_map('daily_resp_8a_0', dictionary),
+    by ='daily_resp_8a_0'
+    ) |>
+  mutate(resp_support_type_0 = calc_resp_support_type_0(
+    daily_resp_8a_0_code = daily_resp_8a_0_code,
+    dailysofa_perf_0 = dailysofa_perf_0,
+    daily_standard_flow_8a_0 = daily_standard_flow_8a_0,
+    daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_0,
+    daily_niv_fi02_8a_0 = daily_niv_fi02_8a_0,
+    daily_imv_fio2_8a_0 = daily_imv_fio2_8a_0,
+    daily_epap_8a_0 = daily_epap_8a_0
+  ))
+
+data_with_sysrespfail_var1 |>
+  count(resp_support_type_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### Missingness Report
+
+These records are missing (NA) because they have an unknown support type (`daily_resp_8a_0 == 'Unknown'`). This is not one of the possible conditions in the DAG variable definition.
+
+```{r}
+data_with_sysrespfail_var1 |>
+  filter(is.na(resp_support_type_0) & daily_resp_8a_0_code == 99) |>
+  select(record_id, daily_resp_8a_0_code, daily_resp_8a_0, resp_support_type_0) |>
+  gt()
+```
+These records are missing due to invalid branching logic.
+
+For the case where `daily_resp_8a_0 == 'Invasive mechanical ventilation without ECMO'` (`daily_resp_8a_0_code == 3`), the branching logic expects values for `daily_imv_mode_8a_0` and `daily_epap_8a_0`. Both are missing for the record listed below.
+
+For the case where `daily_resp_8a_0 == 'Non-invasive ventilation'` (`daily_resp_8a_0_code == 4`), the branching logic expects a value for `daily_niv_fi02_8a_0`. This is missing in the record listed below.
+
+```{r}
+data_with_sysrespfail_var1 |>
+  filter(is.na(resp_support_type_0) & daily_resp_8a_0_code != 99) |>
+  select(record_id, daily_resp_8a_0_code, daily_resp_8a_0, daily_imv_mode_8a_0, daily_epap_8a_0, daily_niv_fi02_8a_0, resp_support_type_0) |>
+  gt() |>
+  tab_style(
+    style = list(
+      cell_text(weight = "bold", color = "red")
+    ),
+    locations = cells_body(
+      columns = daily_niv_fi02_8a_0,
+      rows = daily_resp_8a_0_code == 4
+    )
+  ) |>
+  tab_style(
+    style = list(
+      cell_text(weight = "bold", color = "red")
+    ),
+    locations = cells_body(
+      columns = c(daily_imv_mode_8a_0, daily_epap_8a_0),
+      rows = daily_resp_8a_0_code == 3
+    )
+  )
+```
+
+
+##### Valid NA Values
+
+These records were missing `daily_resp_8a_0`, but this was satisfied by the branching logic with  `dailysofa_perf_0 == 'Not Available'`. Thus, `resp_support_type_0` was set to "1" (no oxygen/not applicable) according to the variable definition.
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  left_join(
+    get_code_label_map('daily_resp_8a_0', dictionary),
+    by ='daily_resp_8a_0'
+    ) |>
+  filter(is.na(daily_resp_8a_0)) |>
+  select(record_id, dailysofa_perf_0, daily_resp_8a_0) |>
+  gt()
+```
+
+## Template Section Headers
 <!--
 ## DAG:
 
@@ -192,30 +345,18 @@ data |>
 ```{r}
 data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate() |>  # Add your calculation here
-  count() |>    # Add your grouping variable here
+  mutate() |>
+  count() |>
   gt()
 ```
 
 ### Missingness Report
 
-#### Valid NA Values
-
 ```{r}
 data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
-  filter() |>  # Add your NA validation conditions here
-  select(record_id) |>  # Add your relevant columns here
-  gt()
-```
-
-#### Invalid NA Values
-
-```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  filter() |>  # Add your invalid NA conditions here
-  select(record_id) |>  # Add your relevant columns here
+  filter() |>
+  select(record_id) |>
   gt()
 ```
  -->
