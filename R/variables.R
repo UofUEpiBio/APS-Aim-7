@@ -176,133 +176,126 @@ is_unchecked <- function(x) {
   x == "Unchecked"
 }
 
-compute_NEE <- function(ne_dose, epi_dose, phen_dose) {
-  ne_dose[is.na(ne_dose)] <- 0
-  epi_dose[is.na(epi_dose)] <- 0
-  phen_dose[is.na(phen_dose)] <- 0
 
-  nee <- ne_dose + epi_dose + phen_dose
 
-  nee
-}
-
-#' Derive hypotension severity variable
+#' Calculate the systematic DAG variable for adrenal insufficiency on Day 0
 #'
-#' `derive_hypotension_severity_0` derives the hypotension severity variable
-#' from the data. This variable represents the severity of hypotension on
-#' admission day.
+#' `calc_sys_def_adrenal_insufficiency_0` calculates the systematic DAG variable for
+#' adrenal insufficiency from the data.
 #'
-#' Input data must contain the columns:
-#' - `daily_vasopressors_0___0` (None)
-#' - `daily_vasopressors_0___1` (Norepinephrine)
-#' - `daily_vasopressors_0___2` (Epinephrine)
-#' - `daily_vasopressors_0___3` (Phenylephrine)
-#' - `daily_vasopressors_0___4` (Vasopressin)
-#' - `daily_vasopressors_0___5` (Dopamine)
-#' - `daily_vasopressors_0___6` (Dobutamine)
-#' - `daily_vasopressors_0___7` (Angiotensin II)
-#' - `daily_vasopressors_0___8` (Milrinone)
-#' - `daily_vasopressors_0___88` (Other)
-#' - `daily_sbp_8a_0`
-#' - `daily_dbp_8a_0`
-#' - `daily_ne_dose_8a_0_mcgkg`
-#' - `daily_epi_dose_8a_0_mcgkg`
-#' - `daily_phen_dos_8a_0_mcgkg`
-#' - `daily_dopa_dos_8a_0_mcgkg`
-#'
-#' @inheritParams derive_neuromuscular_blockade_0
+#' @param m_endo_conditions___2 Character vector. The `m_endo_conditions___2` column
+#' from the data.
+#' @param m_immunosup_conditions___1 Character vector. The `m_immunosup_conditions___1`
+#' column from the data.
 #'
 #' @returns A vector with values:
-#' - 0 = No pressors or inotrope, MAP >= 70
-#' - 1 = No pressors or inotrope, MAP < 70
-#' - 2 = (dobutamine OR milrinone) AND (no dopamine or dopamine <= 5) AND (no other vasopressors)
-#' - 3 = On vasopressors with NEE < 0.1
-#' - 4 = NEE > 0.1 AND NEE < 0.25
-#' - 5 = NEE >= .25
+#' - 0 = No definite adrenal insufficiency
+#' - 1 = Definite adrenal insufficiency
 #' @export
-derive_hypotension_severity_0 <- function(data) {
+calc_sys_def_adrenal_insufficiency_0 <- function(
+  m_endo_conditions___2,
+  m_immunosup_conditions___1
+  ) {
 
-  required_vars <- c(
-    "daily_vasopressors_0___0", # None
-    "daily_vasopressors_0___1", # Norepinephrine
-    "daily_vasopressors_0___2", # Epinephrine
-    "daily_vasopressors_0___3", # Phenylephrine
-    "daily_vasopressors_0___4", # Vasopressin
-    "daily_vasopressors_0___5", # Dopamine
-    "daily_vasopressors_0___6", # Dobutamine
-    "daily_vasopressors_0___7", # Angiotensin II
-    "daily_vasopressors_0___8", # Milrinone
-    "daily_vasopressors_0___88", # Other
-    "daily_sbp_8a_0",
-    "daily_dbp_8a_0",
-    "daily_ne_dose_8a_0_mcgkg",
-    "daily_epi_dose_8a_0_mcgkg",
-    "daily_phen_dos_8a_0_mcgkg",
-    "daily_dopa_dos_8a_0_mcgkg"
+  dplyr::case_when(
+    is_unchecked(m_endo_conditions___2) & is_unchecked(m_immunosup_conditions___1) ~ 0,
+    is_checked(m_endo_conditions___2) | is_checked(m_immunosup_conditions___1) ~ 1
   )
-
-  validate_required_variables(
-    data = data,
-    required_vars = required_vars,
-    function_name = "derive_hypotension_severity_0"
-  )
-
-  MAP_score <- (2 * data$daily_dbp_8a_0 + data$daily_sbp_8a_0) / 3
-  NEE_score <- compute_NEE(
-    ne_dose = data$daily_ne_dose_8a_0_mcgkg,
-    epi_dose = data$daily_epi_dose_8a_0_mcgkg,
-    phen_dose = data$daily_phen_dos_8a_0_mcgkg
-  )
-
-  hs <- ifelse(
-    # No pressors or inotrope, MAP >= 70
-    (is_checked(data$daily_vasopressors_0___0)) & (MAP_score >= 70), 0,
-    # No pressors or inotrope, MAP < 70
-    ifelse((is_checked(data$daily_vasopressors_0___0)), 1,
-    # (dobutamine OR milrinone) AND (no dopamine or dopamine <= 5) AND (no other vasopressors)
-    ifelse(
-      (is_checked(data$daily_vasopressors_0___6) | is_checked(data$daily_vasopressors_0___8)) &
-      (is.na(data$daily_vasopressors_0___5) | data$daily_dopa_dos_8a_0_mcgkg <= 5) &
-      (
-        is_unchecked(data$daily_vasopressors_0___7) &
-        is_unchecked(data$daily_vasopressors_0___4) &
-        is_unchecked(data$daily_vasopressors_0___3) &
-        is_unchecked(data$daily_vasopressors_0___2) &
-        is_unchecked(data$daily_vasopressors_0___1) &
-        is_unchecked(data$daily_vasopressors_0___88)
-      ), 2,
-    # On vasopressors with NEE < 0.1
-    ifelse((is_unchecked(data$daily_vasopressors_0___0)) & (NEE_score <= 0.1), 3,
-    # NEE > 0.1 AND NEE < 0.25
-    ifelse((NEE_score > 0.1) & (NEE_score < 0.25), 4,
-    # NEE >= .25
-    5
-  )))))
-
-  hs
 }
 
-# hightemp_vsorres,
-# lowtemp_vsorres,
-# highhr_vsorres,
-# lowhr_vsorres,
-# highrr_vsorres,
-# lowrr_vsorres,
-# lowsysbp_vsorres,
-# lowdbp_vsorres,
-# daily_imv_mode_8a_0,
-# daily_imv_fio2_lowest_0,
-# daily_pa02_lowest_0,
-# daily_paco2_lowest_0,
-# daily_ph_lowest_0,
-# daily_k_8a_0,
-# daily_na_8a_0,
-# daily_alb_8a_0,
-# daily_tbili_8a_0,
-# daily_hct_8a_0,
-# daily_wbc_8a_0,
-# daily_gluc_8a_0,
-# daily_bun_8a_0,
-# daily_cr_8a_0,
-# totaluop_cmorres_3,
-# daily_gcs_8a_0
+#' Calculate the streamlined DAG variable for adrenal insufficiency on Day 0
+#'
+#' `calc_sys_def_adrenal_insufficiency_0` calculates the streamlined DAG variable for
+#' adrenal insufficiency from the data.
+#'
+#' @param m_endo_conditions___2 Character vector. The `m_endo_conditions___2` column
+#' from the data.
+#'
+#' @returns A vector with values:
+#' - 0 = No definite adrenal insufficiency
+#' - 1 = Definite adrenal insufficiency
+#' @export
+calc_str_adrenal_insufficiency_0 <- function(m_endo_conditions___2) {
+  dplyr::case_when(
+    is_unchecked(m_endo_conditions___2) ~ 0,
+    is_checked(m_endo_conditions___2) ~ 1
+  )
+}
+
+
+#' Calculate the systematic DAG variable for possible adrenal insufficiency on Day 0
+#'
+#' `calc_sys_poss_adrenal_insufficiency_0` calculates the systematic DAG variable for
+#' possible adrenal insufficiency from the data. This variable represents chronic
+#' moderate-dose steroid use leading to possible adrenal insufficinecy (but not
+#' definite adrenal insufficiency)
+#'
+#' @param mhccster Character vector. The `mhccster` column from the data.
+#' @param m_endo_conditions___2 Character vector. The `m_endo_conditions___2` column
+#' from the data.
+#' @param m_immunosup_conditions___1 Character vector. The `m_immunosup_conditions___1`
+#' column from the data.
+#'
+#' @returns A vector with values:
+#' - 0 = No possible adrenal insufficiency
+#' - 1 = Possible adrenal insufficiency
+#' @export
+calc_sys_poss_adrenal_insufficiency_0 <- function(
+  mhccster,
+  m_endo_conditions___2,
+  m_immunosup_conditions___1
+) {
+  dplyr::case_when(
+    mhccster == "No" | is_checked(m_endo_conditions___2) | is_checked(m_immunosup_conditions___1) ~ 0,
+    mhccster == "Yes" & is_unchecked(m_endo_conditions___2) & is_unchecked(m_immunosup_conditions___1) ~ 1
+  )
+}
+
+
+#' Calculate the streamlined DAG variable for possible adrenal insufficiency on Day 0
+#'
+#' `calc_sys_poss_adrenal_insufficiency_0` calculates the streamlined DAG variable for
+#' possible adrenal insufficiency from the data. This variable represents chronic
+#' moderate-dose steroid use leading to possible adrenal insufficinecy (but not
+#' definite adrenal insufficiency)
+#'
+#' @param mhccster Character vector. The `mhccster` column from the data.
+#' @param m_endo_conditions___2 Character vector. The `m_endo_conditions___2` column
+#' from the data.
+#' @param m_immunosup_conditions___1 Character vector. The `m_immunosup_conditions___1`
+#' column from the data.
+#'
+#' @returns A vector with values:
+#' - 0 = No possible adrenal insufficiency
+#' - 1 = Possible adrenal insufficiency
+#' @export
+calc_str_poss_adrenal_insufficiency_0 <- function(
+  mhccster,
+  m_endo_conditions___2,
+  m_immunosup_conditions___1
+) {
+  dplyr::case_when(
+    mhccster == "No" | is_checked(m_endo_conditions___2) | is_checked(m_immunosup_conditions___1) ~ 0,
+    mhccster == "Yes" & is_unchecked(m_endo_conditions___2) & is_unchecked(m_immunosup_conditions___1) ~ 1
+  )
+}
+
+
+#' Calculate the streamlined DAG variable for chronic high-dose steroid use on Day 0
+#'
+#' `calc_str_chron_steroid_highdose_0` calculates the streamlined DAG variable for
+#' chronic high-dose steroid use from the data.
+#'
+#' @param m_immunosup_conditions___1 Character vector. The `m_immunosup_conditions___1`
+#' column from the data.
+#'
+#' @returns A vector with values:
+#' - 0 = No chronic high-dose steroid use
+#' - 1 = Chronic high-dose steroid use
+#' @export
+calc_str_chron_steroid_highdose_0 <- function(m_immunosup_conditions___1) {
+  dplyr::case_when(
+    is_unchecked(m_immunosup_conditions___1) ~ 0,
+    is_checked(m_immunosup_conditions___1) ~ 1
+  )
+}

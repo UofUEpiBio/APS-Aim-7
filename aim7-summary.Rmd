@@ -47,6 +47,8 @@ anti_join(d0_data, ihf_data, by="record_id") |>
 
 Given that this patient is missing, the totals for the derived variables below come to 499 instead of 500.
 
+Matt Shotwell believes this participant was identified as "erroneously included in the N=500 dataset and will be omitted in the final dataset."
+
 ## Streamlined DAG: Neuromuscular Blockade
 
 - 0 = No neuromuscular blockade on Day 0 or not applicable
@@ -401,6 +403,185 @@ data_with_sysrespfail_var2 |>
 ## Streamlined DAG: Respiratory Failure Severity
 
 Currently calculated the same as Variable 2 from the Systematic DAG Respiratory Failure Severity (see above).
+
+
+## Systematic DAG: Definite Adrenal Insufficiency
+
+Binary indicator variable (used to exclude patients if yes)
+
+- 0 (No) = `(m_endo_conditions___2 == 0)` AND `(m_immunosup_conditions___1 == 0)`
+- 1 (Yes) = `(m_endo_conditions___2 == 1)` OR `(m_immunosup_conditions___1 == 1)`
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Day 0') |>
+  mutate(sys_def_adrenal_insufficiency_0 = calc_sys_def_adrenal_insufficiency_0(
+    m_endo_conditions___2 = m_endo_conditions___2,
+    m_immunosup_conditions___1 = m_immunosup_conditions___1
+  )) |>
+  count(sys_def_adrenal_insufficiency_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+## Streamlined DAG: Definite Adrenal Insufficiency
+
+Binary indicator variable (used to exclude patients if yes)
+
+- 0 (No) = `(m_endo_conditions___2 == 0)`
+- 1 (Yes) = `(m_endo_conditions___2 == 1)`
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Day 0') |>
+  mutate(str_def_adrenal_insufficiency_0 = calc_str_adrenal_insufficiency_0(
+    m_endo_conditions___2 = m_endo_conditions___2
+  )) |>
+  count(str_def_adrenal_insufficiency_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+## Systematic DAG: Possible Adrenal Insufficiency
+
+Binary indicator variable:
+
+- 0 (No) = `(mhccster == 0)` OR `(m_endo_conditions__2 == 1)` OR `(m_immunosup_conditions__1 == 1)`
+- 1 (Yes) = `(mhccster == 1)` AND `(m_endo_conditions___2 == 0)` AND `(m_immunosup_conditions___1 == 0)`
+
+### Summary
+
+```{r}
+data_with_poss_adrenal_insufficiency_0 <- data|>
+  filter(event_label == 'Day 0') |>
+  mutate(sys_poss_adrenal_insufficiency_0 = calc_sys_poss_adrenal_insufficiency_0(
+    mhccster = mhccster,
+    m_endo_conditions___2 = m_endo_conditions___2,
+    m_immunosup_conditions___1 = m_immunosup_conditions___1
+  ))
+
+data_with_poss_adrenal_insufficiency_0 |>
+  count(sys_poss_adrenal_insufficiency_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Missingness Report
+
+The variable `mhccster` (Systemic Corticosteroids) has no branching logic and can be either "Yes" (1), "No" (0), or "Unknown" (99). The variable `m_endo_conditions___2` has branching logic for `m_endocrine == 'Yes'` and will be either "Checked" or "Unchecked". The variable `m_immunosup_conditions___1` has branching logic for `m_immunosuppression == Yes` OR `m_immunosuppression == ''` and will be either "Checked" or "Unchecked".
+
+The table below shows the records that are missing for "Systematic DAG: Possible Adrenal Insufficiency". Invalid branching logic is highlighted in red and "Unknown" values are highlighted in blue. The only missing record unexplained by either invalid branching logic or "Unknown" values is missing all three of `mhccster`, `m_endocrine`, and `m_immunosuppression`. This is the same record that is missing the "Daily In-Hospital Forms" event as mentioned at the top of this document.
+
+```{r}
+data_with_poss_adrenal_insufficiency_0 |>
+  filter(is.na(sys_poss_adrenal_insufficiency_0)) |>
+  select(record_id, mhccster, m_endo_conditions___2, m_endocrine, m_immunosup_conditions___1, m_immunosuppression) |>
+  gt() |>
+  tab_style(
+    style = list(
+      cell_text(weight = "bold", color = "red")
+    ),
+    locations = cells_body(
+      columns = c(m_endo_conditions___2, m_endocrine),
+      rows = m_endocrine == "Yes" & m_endo_conditions___2 == "Unchecked"
+    )
+  ) |>
+  tab_style(
+    style = list(
+      cell_text(weight = "bold", color = "red")
+    ),
+    locations = cells_body(
+      columns = c(m_immunosup_conditions___1, m_immunosuppression),
+      rows = m_immunosuppression == "Yes" & m_immunosup_conditions___1 == "Unchecked"
+    )
+  ) |>
+  tab_style(
+    style = list(
+      cell_text(weight = "bold", color = "blue")
+    ),
+    locations = list(
+      cells_body(
+        columns = mhccster,
+        rows = mhccster == "Unknown"
+      ),
+      cells_body(
+        columns = m_endocrine,
+        rows = m_endocrine == "Unknown"
+      ),
+      cells_body(
+        columns = m_immunosuppression,
+        rows = m_immunosuppression == "Unknown"
+      )
+    )
+  )
+```
+
+## Streamlined DAG: Possible Adrenal Insufficiency
+
+Binary indicator variable:
+
+- 0 (No) = `(mhccster == 0)` OR `(m_endo_conditions__2 == 1)` OR `(m_immunosup_conditions__1 == 1)`
+- 1 (Yes) = `(mhccster == 1)` AND `(m_endo_conditions___2 == 0)` AND `(m_immunosup_conditions___1 == 0)`
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Day 0') |>
+  mutate(str_poss_adrenal_insufficiency_0 = calc_str_poss_adrenal_insufficiency_0(
+    mhccster = mhccster,
+    m_endo_conditions___2 = m_endo_conditions___2,
+    m_immunosup_conditions___1 = m_immunosup_conditions___1
+  )) |>
+  count(str_poss_adrenal_insufficiency_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Missingness Report
+
+Currently, the streamlined DAG for possible adrenal insufficiency is calculated the same way as the systematic DAG. Thus, the missingness report is the same as for the systematic DAG above.
+
+
+## Streamlined DAG: Chronic Steroids High Dose
+
+Binary indicator variable (used to exclude patients if yes):
+
+- 0 (No) = `m_immunosup_conditions__1 == 0`
+- 1 (Yes) = `m_immunosup_conditions__1 == 1`
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Day 0') |>
+  mutate(str_chron_steroid_highdose_0 = calc_str_chron_steroid_highdose_0(
+    m_immunosup_conditions___1 = m_immunosup_conditions___1
+  )) |>
+  count(str_chron_steroid_highdose_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
 
 ## Template Section Headers
 <!--
