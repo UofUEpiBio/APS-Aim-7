@@ -77,7 +77,8 @@ calc_ddimer_0 <- function(daily_ddimer_8a_0, daily_ddimer_nc_0) {
 }
 
 
-#' Calculate the support type component of the systematic DAG variable for respiratory failure severity on Day 0
+#' Calculate the support type component of the systematic DAG variable for
+#' respiratory failure severity on Day 0
 #'
 #' `calc_resp_support_type_0` calculates the respiratory support type
 #' component of the systematic DAG variable for respiratory failure severity
@@ -127,78 +128,43 @@ calc_resp_support_type_0 <- function(
   )
 }
 
-
-#' Derive systematic respiratory failure severity variables
+#' Calculate the S/F ratio component of the systematic DAG variable for
+#' respiratory failure severity on Day 0
 #'
-#' `derive_systematic_respiratory_failure_severity_0` derives the
-#' respiratory failure severity variable from the data using the
-#' systematic formula. This variable is calculated using the P:F
-#' ratio (or S:F) ratio, PEEP, and daily maximal respiratory
-#' support.
+#' `calc_sfratio_8a_0` calculates the S/F ratio component of the systematic
+#' DAG variable for respiratory failure severity from the data.
 #'
-#' Input data must contain the columns:
-#' - `daily_standard_flow_8a_0`
-#' - `daily_hfnc_fi02_8a_0`
-#' - `daily_niv_fi02_8a_0`
-#' - `daily_imv_fio2_8a_0`
-#' - `daily_spo2_8a_0`
-#' - `daily_epap_8a_0`
-#' - `daily_o2_lowest_0`
-#' - `daily_fio2_lowest_0`
-#' - `daily_resp_lowest_0`
+#' @param resp_support_type_0 Integer vector. The `resp_support_type_0` column from the data.
+#' @param daily_spo2_8a_0 Numeric vector. The `daily_spo2_8a_0` column from the data.
+#' @param daily_standard_flow_8a_0 Numeric vector. The `daily_standard_flow_8a_0` column from the data.
+#' @param daily_hfnc_fi02_8a_0 Numeric vector. The `daily_hfnc_fi02_8a_0` column from the data.
+#' @param daily_niv_fi02_8a_0 Numeric vector. The `daily_niv_fi02_8a_0` column from the data.
+#' @param daily_imv_fio2_8a_0 Numeric vector. The `daily_imv_fio2_8a_0` column from the data.
 #'
-#' @inheritParams derive_neuromuscular_blockade_0
-#'
-#' @returns A named list with two vectors:
-#' - `rfs_var1`: A vector with values:
-#'   - 0 = No respiratory support on day 0 or missing (NA)
-#'   - 1 = Standard flow
-#'   - 2 = HFNC
-#'   - 3 = NIV
-#'   - 4 = IMV with PEEP < 12
-#'   - 5 = IMV with PEEP ≥ 12
-#' - `rfs_var2`: A vector with the S:F or P:F ratio on day 0 based on `rfs_var1`:
-#'   - 0 = [8a SpO2]/[0.21)
-#'   - 1 = [8a SpO2]/[0.21 + (0.03 * 8a O2 flow)
-#'   - 2, 3, 4, 5 = [8a SpO2]/[8a FiO2]
+#' @returns A numeric vector representing the S/F ratio on day 0 based on
+#' `resp_support_type_0`:
+#' - 1 = [8a SpO2]/[0.21)
+#' - 2 = [8a SpO2]/[0.21 + (0.03 * 8a O2 flow)
+#' - 3, 4, 5, 6 = [8a SpO2]/[8a FiO2]
 #' @export
-derive_systematic_respiratory_failure_severity_0 <- function(data) {
+calc_sfratio_8a_0 <- function(
+  resp_support_type_0,
+  daily_spo2_8a_0,
+  daily_standard_flow_8a_0,
+  daily_hfnc_fi02_8a_0,
+  daily_niv_fi02_8a_0,
+  daily_imv_fio2_8a_0
+) {
 
-  required_vars <- c(
-    "daily_standard_flow_8a_0",
-    "daily_hfnc_fi02_8a_0",
-    "daily_niv_fi02_8a_0",
-    "daily_imv_fio2_8a_0",
-    "daily_spo2_8a_0",
-    "daily_epap_8a_0",
-    "daily_fio2_lowest_0"
+  dplyr::case_when(
+    resp_support_type_0 == 1 ~ daily_spo2_8a_0 / 0.21,
+    resp_support_type_0 == 2 ~ daily_spo2_8a_0 / (0.21 + (0.03 * daily_standard_flow_8a_0)),
+    resp_support_type_0 == 3 ~ daily_spo2_8a_0 / daily_hfnc_fi02_8a_0,
+    resp_support_type_0 == 4 ~ daily_spo2_8a_0 / daily_niv_fi02_8a_0,
+    resp_support_type_0 %in% c(5, 6) & !is.na(daily_imv_fio2_8a_0) ~ daily_spo2_8a_0 / daily_imv_fio2_8a_0
   )
-
-  validate_required_variables(
-    data = data,
-    required_vars = required_vars,
-    function_name = "derive_systematic_respiratory_failure_severity_0"
-  )
-
-  # Compute Systematic Variable #1
-  # TODO: fix to follow new numbering (one-indexed)
-  rfs_var1 <- ifelse(!is.na(data$daily_standard_flow_8a_0), 1,
-      ifelse(!is.na(data$daily_hfnc_fi02_8a_0), 2,
-      ifelse(!is.na(data$daily_niv_fi02_8a_0), 3,
-      ifelse(!is.na(data$daily_imv_fio2_8a_0) & data$daily_epap_8a_0 < 12, 4,
-      ifelse(!is.na(data$daily_imv_fio2_8a_0) & data$daily_epap_8a_0 >= 12, 5,
-      0)))))
-  # rfs_var1[is.na(rfs_var1)] <- 0
-
-  # Compute Systematic Variable #2
-  # TODO: fix to follow new numbering (one-indexed)
-  rfs_var2 <- ifelse(rfs_var1 == 0, data$daily_spo2_8a_0 / 0.21,
-      ifelse(rfs_var1 == 1, data$daily_spo2_8a_0 / (0.21 + (0.03 * data$daily_standard_flow_8a_0)),
-      data$daily_spo2_8a_0 / data$daily_fio2_lowest_0
-      ))
-
-  return(list(rfs_var1 = rfs_var1, rfs_var2 = rfs_var2))
 }
+
 
 #' Helper function to identify "Checked" values
 is_checked <- function(x) {
