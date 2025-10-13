@@ -257,7 +257,7 @@ data |>
 - 2 = Standard Flow
 - 3 = HFNC
 - 4 = NIV
-- 5 = IMV AND PEEP < 12 but NOT ECMO
+- 5 = (IMV AND PEEP < 12) but NOT ECMO
 - 6 = (IMV AND PEEP ≥ 12) OR ECMO
 
 #### Summary
@@ -335,7 +335,7 @@ data_with_sysrespfail_var1 |>
 
 ##### Valid NA Values
 
-One record was missing `daily_resp_8a_0`, but this was satisfied by the branching logic with `dailysofa_perf_0 == 'Not Available'`. Thus, `resp_support_type_0` was set to "1" (no oxygen/not applicable) according to the variable definition.
+One record was missing `daily_resp_8a_0`, but this was satisfied by the branching logic with `dailysofa_perf_0 == 'Not Available'`. Thus, `resp_support_type_0` was set to "1" (no oxygen/not applicable) according to the variable definition, but due to missing measurements couldn't be defined under Variable 2 (below).
 
 ```{r}
 data |>
@@ -356,6 +356,8 @@ Calculated using one of 3 options dependent on Variable #1 (type of support):
 - If Variable 1 = 3, 4, 5, 6 -> [8a SpO2]/[8a FiO2]
 - If Variable 1 = 2 -> [8a SpO2]/[0.21 + (0.03 * 8a O2 flow)]
 - If Variable 1 = 1 -> [8a SpO2]/[0.21]
+
+Note, if the patient is on ECMO but NOT on IMV, the S/F ratio cannot be calculated due to no Fi02 measurement and is set to missing (NA). No records in this dataset have this condition, but it may arise in future datasets. If it does, the variable definition will need to account for it.
 
 #### Summary
 
@@ -382,7 +384,7 @@ data_with_sysrespfail_var2 |>
                  '3' = '3 (HFNC)',
                  '4' = '4 (NIV)',
                  '5' = '5 (IMV, PEEP < 12, no ECMO)',
-                 '6' = '6 (IMV, PEEP ≥ 12 or ECMO)'
+                 '6' = '6 ([IMV, PEEP ≥ 12] OR ECMO)'
                ))) +
     ggtitle("S/F Ratio Closest to 8am by Respiratory Support Type")
 ```
@@ -405,8 +407,6 @@ Details for why these records are missing are given above.
 ##### Valid NA Values
 
 One record was missing `sfratio_8a_0` (Variable 2), but not missing `resp_support_type_0` (Variable 1). This is explained by the branching logic: if `dailysofa_perf_0 == 'Not Available'`, then `daily_spo2_8a_0` will be missing and the S/F ratio cannot be calculated according to the definition of Variable 2.
-
-However, since this record is assigned a value under Variable 1 ("no oxygen/not applicable" or `resp_support_type_0 = 1`), should the S/F ratio be calculated a different way for this record?
 
 ```{r}
 data_with_sysrespfail_var2 |>
@@ -467,26 +467,29 @@ data |>
   )
 ```
 
-## Systematic DAG: Possible Adrenal Insufficiency
+## Systematic DAG: Chronic Moderate-Dose Steroid Use
 
 Binary indicator variable:
 
-- 0 (No) = `(mhccster == 0)` OR `(m_endo_conditions__2 == 1)` OR `(m_immunosup_conditions__1 == 1)`
+- 0 (No) = `(mhccster == 0)` OR `(m_endo_conditions___2 == 1)` OR `(m_immunosup_conditions___1 == 1)`
 - 1 (Yes) = `(mhccster == 1)` AND `(m_endo_conditions___2 == 0)` AND `(m_immunosup_conditions___1 == 0)`
+- 99 (Unknown) = `mhccster == "Unknown"` OR `m_endocrine == "Unknown"` OR `m_immunosuppression == "Unknown"` (and doesn't meet either of the first two conditions)
 
 ### Summary
 
 ```{r}
-data_with_poss_adrenal_insufficiency_0 <- data|>
+data_with_sys_chron_steroid_moddose_0 <- data|>
   filter(event_label == 'Day 0') |>
-  mutate(sys_poss_adrenal_insufficiency_0 = calc_sys_poss_adrenal_insufficiency_0(
+  mutate(sys_chron_steroid_moddose_0 = calc_sys_chron_steroid_moddose_0(
     mhccster = mhccster,
     m_endo_conditions___2 = m_endo_conditions___2,
-    m_immunosup_conditions___1 = m_immunosup_conditions___1
+    m_immunosup_conditions___1 = m_immunosup_conditions___1,
+    m_endocrine = m_endocrine,
+    m_immunosuppression = m_immunosuppression
   ))
 
-data_with_poss_adrenal_insufficiency_0 |>
-  count(sys_poss_adrenal_insufficiency_0) |>
+data_with_sys_chron_steroid_moddose_0 |>
+  count(sys_chron_steroid_moddose_0) |>
   gt() |>
   grand_summary_rows(
     columns = n,
@@ -494,35 +497,15 @@ data_with_poss_adrenal_insufficiency_0 |>
   )
 ```
 
-### Missingness Report
+### Unknown Values
 
-The variable `mhccster` (Systemic Corticosteroids) has no branching logic and can be either "Yes" (1), "No" (0), or "Unknown" (99). The variable `m_endo_conditions___2` has branching logic for `m_endocrine == 'Yes'` and will be either "Checked" or "Unchecked". The variable `m_immunosup_conditions___1` has branching logic for `m_immunosuppression == Yes` OR `m_immunosuppression == ''` and will be either "Checked" or "Unchecked".
-
-The table below shows the records that are missing for "Systematic DAG: Possible Adrenal Insufficiency". Invalid branching logic is highlighted in red and "Unknown" values are highlighted in blue. The only missing record unexplained by either invalid branching logic or "Unknown" values is missing all three of `mhccster`, `m_endocrine`, and `m_immunosuppression`. This is the same record that is missing the "Daily In-Hospital Forms" event as mentioned at the top of this document.
+These records were marked "Unknown" for one of the fields required to assess this variable:
 
 ```{r}
-data_with_poss_adrenal_insufficiency_0 |>
-  filter(is.na(sys_poss_adrenal_insufficiency_0)) |>
-  select(record_id, mhccster, m_endo_conditions___2, m_endocrine, m_immunosup_conditions___1, m_immunosuppression) |>
+data_with_sys_chron_steroid_moddose_0 |>
+  filter(sys_chron_steroid_moddose_0 == 99) |>
+  select(record_id, mhccster, m_endocrine, m_endo_conditions___2, m_immunosuppression, m_immunosup_conditions___1) |>
   gt() |>
-  tab_style(
-    style = list(
-      cell_text(weight = "bold", color = "red")
-    ),
-    locations = cells_body(
-      columns = c(m_endo_conditions___2, m_endocrine),
-      rows = m_endocrine == "Yes" & m_endo_conditions___2 == "Unchecked"
-    )
-  ) |>
-  tab_style(
-    style = list(
-      cell_text(weight = "bold", color = "red")
-    ),
-    locations = cells_body(
-      columns = c(m_immunosup_conditions___1, m_immunosuppression),
-      rows = m_immunosuppression == "Yes" & m_immunosup_conditions___1 == "Unchecked"
-    )
-  ) |>
   tab_style(
     style = list(
       cell_text(weight = "bold", color = "blue")
@@ -544,24 +527,38 @@ data_with_poss_adrenal_insufficiency_0 |>
   )
 ```
 
-## Streamlined DAG: Possible Adrenal Insufficiency
+### Missingness Report
+
+These records were missing the fields required to assess this variable. This is the same record that is missing the "Daily In-Hospital Forms" event data.
+
+```{r}
+data_with_sys_chron_steroid_moddose_0 |>
+  filter(is.na(sys_chron_steroid_moddose_0)) |>
+  select(record_id, mhccster, m_endocrine, m_endo_conditions___2, m_immunosuppression, m_immunosup_conditions___1) |>
+  gt()
+```
+
+## Streamlined DAG: Chronic Moderate-Dose Steroid Use
 
 Binary indicator variable:
 
-- 0 (No) = `(mhccster == 0)` OR `(m_endo_conditions__2 == 1)` OR `(m_immunosup_conditions__1 == 1)`
-- 1 (Yes) = `(mhccster == 1)` AND `(m_endo_conditions___2 == 0)` AND `(m_immunosup_conditions___1 == 0)`
+- 0 (No) = `(mhccster == 0)` OR `(m_endo_conditions___2 == 1)`
+- 1 (Yes) = `(mhccster == 1)` AND `(m_endo_conditions___2 == 0)`
+- 99 (Unknown) = `mhccster == "Unknown"` OR `m_endocrine == "Unknown"` (and doesn't meet either of the first two conditions)
 
 ### Summary
 
 ```{r}
-data |>
+data_with_str_chron_steroid_moddose_0 <- data |>
   filter(event_label == 'Day 0') |>
-  mutate(str_poss_adrenal_insufficiency_0 = calc_str_poss_adrenal_insufficiency_0(
+  mutate(str_chron_steroid_moddose_0 = calc_str_chron_steroid_moddose_0(
     mhccster = mhccster,
     m_endo_conditions___2 = m_endo_conditions___2,
-    m_immunosup_conditions___1 = m_immunosup_conditions___1
-  )) |>
-  count(str_poss_adrenal_insufficiency_0) |>
+    m_endocrine = m_endocrine
+  ))
+
+data_with_str_chron_steroid_moddose_0 |>
+  count(str_chron_steroid_moddose_0) |>
   gt() |>
   grand_summary_rows(
     columns = n,
@@ -569,17 +566,50 @@ data |>
   )
 ```
 
+### Unknown Values
+
+These records were marked "Unknown" for one of the fields required to assess this variable:
+
+```{r}
+data_with_str_chron_steroid_moddose_0 |>
+  filter(str_chron_steroid_moddose_0 == 99) |>
+  select(record_id, mhccster, m_endocrine, m_endo_conditions___2) |>
+  gt() |>
+  tab_style(
+    style = list(
+      cell_text(weight = "bold", color = "blue")
+    ),
+    locations = list(
+      cells_body(
+        columns = mhccster,
+        rows = mhccster == "Unknown"
+      ),
+      cells_body(
+        columns = m_endocrine,
+        rows = m_endocrine == "Unknown"
+      )
+    )
+  )
+```
+
 ### Missingness Report
 
-Currently, the streamlined DAG for possible adrenal insufficiency is calculated the same way as the systematic DAG. Thus, the missingness report is the same as for the systematic DAG above.
+These records were missing the fields required to assess this variable. This is the same record that is missing the "Daily In-Hospital Forms" event data.
+
+```{r}
+data_with_str_chron_steroid_moddose_0 |>
+  filter(is.na(str_chron_steroid_moddose_0)) |>
+  select(record_id, mhccster, m_endocrine, m_endo_conditions___2, m_immunosuppression, m_immunosup_conditions___1) |>
+  gt()
+```
 
 
 ## Streamlined DAG: Chronic Steroids High Dose
 
 Binary indicator variable (used to exclude patients if yes):
 
-- 0 (No) = `m_immunosup_conditions__1 == 0`
-- 1 (Yes) = `m_immunosup_conditions__1 == 1`
+- 0 (No) = `m_immunosup_conditions___1 == 0`
+- 1 (Yes) = `m_immunosup_conditions___1 == 1`
 
 ### Summary
 
@@ -601,8 +631,8 @@ data |>
 
 Binary indicator variable:
 
-- 0 (No) = All m_rheum_conditions* variables == 0 AND m_pulm_conditions__6 == 0
-- 1 (Yes) = Any m_rheum_conditions* variable == 1 OR m_pulm_conditions__6 == 1
+- 0 (No) = All `(m_rheum_conditions___* == 0)` AND `(m_pulm_conditions___6 == 0)`
+- 1 (Yes) = Any `(m_rheum_conditions___* == 1)` OR `(m_pulm_conditions___6 == 1)`
 
 ### Summary
 
@@ -633,8 +663,8 @@ data |>
 
 Binary indicator variable:
 
-- 0 (No) = All m_rheum_conditions* variables == 0
-- 1 (Yes) = Any m_rheum_conditions* variable == 1
+- 0 (No) = All `(m_rheum_conditions___* == 0)`
+- 1 (Yes) = Any `(m_rheum_conditions___* == 1)`
 
 ### Summary
 

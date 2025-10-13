@@ -136,10 +136,7 @@ calc_resp_support_type_0 <- function(
 #'
 #' @param resp_support_type_0 Integer vector. The `resp_support_type_0` column from the data.
 #' @param daily_spo2_8a_0 Numeric vector. The `daily_spo2_8a_0` column from the data.
-#' @param daily_standard_flow_8a_0 Numeric vector. The `daily_standard_flow_8a_0` column from the data.
-#' @param daily_hfnc_fi02_8a_0 Numeric vector. The `daily_hfnc_fi02_8a_0` column from the data.
-#' @param daily_niv_fi02_8a_0 Numeric vector. The `daily_niv_fi02_8a_0` column from the data.
-#' @param daily_imv_fio2_8a_0 Numeric vector. The `daily_imv_fio2_8a_0` column from the data.
+#' @inheritParams calc_resp_support_type_0
 #'
 #' @returns A numeric vector representing the S/F ratio on day 0 based on
 #' `resp_support_type_0`:
@@ -208,12 +205,9 @@ calc_sys_def_adrenal_insufficiency_0 <- function(
 #' `calc_sys_def_adrenal_insufficiency_0` calculates the streamlined DAG variable for
 #' adrenal insufficiency from the data.
 #'
-#' @param m_endo_conditions___2 Character vector. The `m_endo_conditions___2` column
-#' from the data.
+#' @inheritParams calc_sys_def_adrenal_insufficiency_0
 #'
-#' @returns A vector with values:
-#' - 0 = No definite adrenal insufficiency
-#' - 1 = Definite adrenal insufficiency
+#' @inherits calc_sys_def_adrenal_insufficiency_0 returns
 #' @export
 calc_str_adrenal_insufficiency_0 <- function(m_endo_conditions___2) {
   dplyr::case_when(
@@ -223,60 +217,61 @@ calc_str_adrenal_insufficiency_0 <- function(m_endo_conditions___2) {
 }
 
 
-#' Calculate the systematic DAG variable for possible adrenal insufficiency on Day 0
+#' Calculate the systematic DAG variable for chronic moderate-dose steroid use on Day 0
 #'
-#' `calc_sys_poss_adrenal_insufficiency_0` calculates the systematic DAG variable for
-#' possible adrenal insufficiency from the data. This variable represents chronic
+#' `calc_str_chron_steroid_moddose_0` calculates the systematic DAG variable for
+#' chronic moderate-dose steroid use. This variable represents chronic
 #' moderate-dose steroid use leading to possible adrenal insufficinecy (but not
-#' definite adrenal insufficiency)
+#' definite adrenal insufficiency).
 #'
 #' @param mhccster Character vector. The `mhccster` column from the data.
 #' @param m_endo_conditions___2 Character vector. The `m_endo_conditions___2` column
 #' from the data.
 #' @param m_immunosup_conditions___1 Character vector. The `m_immunosup_conditions___1`
 #' column from the data.
+#' @param m_endocrine Character vector. The `m_endocrine` column from the data.
+#' @param m_immunosuppression Character vector. The `m_immunosuppression` column from the data.
 #'
 #' @returns A vector with values:
 #' - 0 = No possible adrenal insufficiency
 #' - 1 = Possible adrenal insufficiency
+#' - 99 = Unknown
 #' @export
-calc_sys_poss_adrenal_insufficiency_0 <- function(
+calc_sys_chron_steroid_moddose_0 <- function(
   mhccster,
   m_endo_conditions___2,
-  m_immunosup_conditions___1
+  m_immunosup_conditions___1,
+  m_endocrine,
+  m_immunosuppression
 ) {
   dplyr::case_when(
     mhccster == "No" | is_checked(m_endo_conditions___2) | is_checked(m_immunosup_conditions___1) ~ 0,
-    mhccster == "Yes" & is_unchecked(m_endo_conditions___2) & is_unchecked(m_immunosup_conditions___1) ~ 1
+    mhccster == "Yes" & is_unchecked(m_endo_conditions___2) & is_unchecked(m_immunosup_conditions___1) ~ 1,
+    mhccster == "Unknown" | m_endocrine == "Unknown" | m_immunosuppression == "Unknown" ~ 99
   )
 }
 
 
-#' Calculate the streamlined DAG variable for possible adrenal insufficiency on Day 0
+#' Calculate the streamlined DAG variable for chronic moderate-dose steroid use on Day 0
 #'
-#' `calc_sys_poss_adrenal_insufficiency_0` calculates the streamlined DAG variable for
-#' possible adrenal insufficiency from the data. This variable represents chronic
+#' `calc_str_chron_steroid_moddose_0` calculates the streamlined DAG variable for
+#' chronic moderate-dose steroid use. This variable represents chronic
 #' moderate-dose steroid use leading to possible adrenal insufficinecy (but not
-#' definite adrenal insufficiency)
+#' definite adrenal insufficiency).
 #'
-#' @param mhccster Character vector. The `mhccster` column from the data.
-#' @param m_endo_conditions___2 Character vector. The `m_endo_conditions___2` column
-#' from the data.
-#' @param m_immunosup_conditions___1 Character vector. The `m_immunosup_conditions___1`
-#' column from the data.
+#' @inheritParams calc_sys_chron_steroid_moddose_0
 #'
-#' @returns A vector with values:
-#' - 0 = No possible adrenal insufficiency
-#' - 1 = Possible adrenal insufficiency
+#' @inherits calc_sys_chron_steroid_moddose_0 returns
 #' @export
-calc_str_poss_adrenal_insufficiency_0 <- function(
+calc_str_chron_steroid_moddose_0 <- function(
   mhccster,
   m_endo_conditions___2,
-  m_immunosup_conditions___1
+  m_endocrine
 ) {
   dplyr::case_when(
-    mhccster == "No" | is_checked(m_endo_conditions___2) | is_checked(m_immunosup_conditions___1) ~ 0,
-    mhccster == "Yes" & is_unchecked(m_endo_conditions___2) & is_unchecked(m_immunosup_conditions___1) ~ 1
+    mhccster == "No" | is_checked(m_endo_conditions___2) ~ 0,
+    mhccster == "Yes" & is_unchecked(m_endo_conditions___2) ~ 1,
+    mhccster == "Unknown" | m_endocrine == "Unknown" ~ 99
   )
 }
 
