@@ -299,3 +299,115 @@ calc_str_chron_steroid_highdose_0 <- function(m_immunosup_conditions___1) {
     is_checked(m_immunosup_conditions___1) ~ 1
   )
 }
+
+
+#' Calculate the systematic DAG variable for rheumatologic disease on Day 0
+#'
+#' `calc_sys_rheumdis_0` calculates the systematic DAG variable for
+#' rheumatologic disease from the data.
+#'
+#' @param m_rheum_conditions___1 Character vector. The `m_rheum_conditions___1` column
+#' from the data.
+#' @param m_rheum_conditions___2 Character vector. The `m_rheum_conditions___2` column
+#' from the data.
+#' @param m_rheum_conditions___3 Character vector. The `m_rheum_conditions___3` column
+#' from the data.
+#' @param m_rheum_conditions___4 Character vector. The `m_rheum_conditions___4` column
+#' from the data.
+#' @param m_rheum_conditions___5 Character vector. The `m_rhe um_conditions___5` column
+#' from the data.
+#' @param m_rheum_conditions___6 Character vector. The `m_rheum_conditions___6` column
+#' from the data.
+#' @param m_rheum_conditions___7 Character vector. The `m_rheum_conditions___7` column
+#' from the data.
+#' @param m_rheum_conditions___8 Character vector. The `m_rheum_conditions___8` column
+#' from the data.
+#' @param m_rheum_conditions___88 Character vector. The `m_rheum_conditions___88` column
+#' from the data.
+#' @param m_pulm_conditions___6 Character vector. The `m_pulm_conditions___6` column
+#' from the data.
+#'
+#' @returns A vector with values:
+#' - 0 = No rheumatologic disease
+#' - 1 = Rheumatologic disease present
+#' @export
+calc_sys_rheumdis_0 <- function(
+  m_rheum_conditions___1,
+  m_rheum_conditions___2,
+  m_rheum_conditions___3,
+  m_rheum_conditions___4,
+  m_rheum_conditions___5,
+  m_rheum_conditions___6,
+  m_rheum_conditions___7,
+  m_rheum_conditions___8,
+  m_rheum_conditions___88,
+  m_pulm_conditions___6
+  ) {
+    dplyr::case_when(
+      is_unchecked(m_rheum_conditions___1) &
+      is_unchecked(m_rheum_conditions___2) &
+      is_unchecked(m_rheum_conditions___3) &
+      is_unchecked(m_rheum_conditions___4) &
+      is_unchecked(m_rheum_conditions___5) &
+      is_unchecked(m_rheum_conditions___6) &
+      is_unchecked(m_rheum_conditions___7) &
+      is_unchecked(m_rheum_conditions___8) &
+      is_unchecked(m_rheum_conditions___88) &
+      is_unchecked(m_pulm_conditions___6) ~ 0,
+
+      is_checked(m_rheum_conditions___1) |
+      is_checked(m_rheum_conditions___2) |
+      is_checked(m_rheum_conditions___3) |
+      is_checked(m_rheum_conditions___4) |
+      is_checked(m_rheum_conditions___5) |
+      is_checked(m_rheum_conditions___6) |
+      is_checked(m_rheum_conditions___7) |
+      is_checked(m_rheum_conditions___8) |
+      is_checked(m_rheum_conditions___88) |
+      is_checked(m_pulm_conditions___6) ~ 1
+  )
+}
+
+
+#' Calculate the streamlined DAG variable for rheumatologic disease on Day 0
+#'
+#' `calc_str_rheumdis_0` calculates the streamlined DAG variable for
+#' rheumatologic disease from the data.
+#'
+#' @inheritParams calc_sys_rheumdis_0
+#'
+#' @inherits calc_sys_rheumdis_0 returns
+#' @export
+calc_str_rheumdis_0 <- function(
+  m_rheum_conditions___1,
+  m_rheum_conditions___2,
+  m_rheum_conditions___3,
+  m_rheum_conditions___4,
+  m_rheum_conditions___5,
+  m_rheum_conditions___6,
+  m_rheum_conditions___7,
+  m_rheum_conditions___8,
+  m_rheum_conditions___88
+) {
+  dplyr::case_when(
+    is_unchecked(m_rheum_conditions___1) &
+      is_unchecked(m_rheum_conditions___2) &
+      is_unchecked(m_rheum_conditions___3) &
+      is_unchecked(m_rheum_conditions___4) &
+      is_unchecked(m_rheum_conditions___5) &
+      is_unchecked(m_rheum_conditions___6) &
+      is_unchecked(m_rheum_conditions___7) &
+      is_unchecked(m_rheum_conditions___8) &
+      is_unchecked(m_rheum_conditions___88) ~ 0,
+
+    is_checked(m_rheum_conditions___1) |
+      is_checked(m_rheum_conditions___2) |
+      is_checked(m_rheum_conditions___3) |
+      is_checked(m_rheum_conditions___4) |
+      is_checked(m_rheum_conditions___5) |
+      is_checked(m_rheum_conditions___6) |
+      is_checked(m_rheum_conditions___7) |
+      is_checked(m_rheum_conditions___8) |
+      is_checked(m_rheum_conditions___88) ~ 1
+  )
+}

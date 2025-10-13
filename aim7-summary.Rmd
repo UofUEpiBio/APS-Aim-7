@@ -28,7 +28,7 @@ load(file = '../aps-data/20250731_data.RData')
 
 ```{r, echo = FALSE}
 # Source variable derivation code
-source("R/all.R")
+source("R/variables.R")
 ```
 
 ## Missing Record Data
@@ -47,7 +47,8 @@ anti_join(d0_data, ihf_data, by="record_id") |>
 
 Given that this patient is missing, the totals for the derived variables below come to 499 instead of 500.
 
-Matt Shotwell believes this participant was identified as "erroneously included in the N=500 dataset and will be omitted in the final dataset."
+### Matt Shotwell's Response
+> When there is no record for a record id-event pair, it means that no data had been entered for that pair (and no such record exists). However, all participants should have the "Daily In-Hospital Forms" event. I believe this participant was the one we identified as being erroneously included in the N=500 data set and will be omitted in the final N=500 data set. Of course, this participant will appear in subsequent data sets assuming they do not withdraw by the withdrawal cut-off.
 
 ## Streamlined DAG: Neuromuscular Blockade
 
@@ -88,6 +89,11 @@ data |>
   gt()
 ```
 
+#### Matt Shotwell's Response
+> This is likely missing because data were not entered for daily paralysis even though it should have been entered. Although we have many data quality rules and coordinators fix many problems, we are not at 100% (and likely will never be, meaning that this kind of missingness should be considered in the analysis).
+
+Matt then asked two people to look at these (and the other missing values below) to see if there should be additional data quality rules.
+
 #### Valid NA Values
 
 These records were missing `daily_paralysis_0`, but this was considered valid (e.g., "Not Applicable") by the branching logic of `trx_0 == 'Not Available'`. Thus, they were set to `str_nmblockade_0 = 0` according to the variable definition. However, as we are unsure what `trx_0` represents and why it would be marked "Not Available", we've included those records for completeness.
@@ -99,6 +105,9 @@ data |>
   select(record_id, daily_paralysis_0, trx_0) |>
   gt()
 ```
+
+#### Matt Shotwell's Response
+> Agree it seems suspicious that no in-hospital treatments would be available on day 0, even if the participant died shortly after enrollment.
 
 
 ## Streamlined DAG: Inflammatory Profile
@@ -137,6 +146,9 @@ data |>
   select(record_id, daily_crp_8a_0, daily_crp_nc_0) |>
   gt()
 ```
+
+#### Matt Shotwell's Response
+> Again, this is likely missing because data were not entered even though they should have been entered.
 
 ## Systematic DAG: Inflammatory Profile
 
@@ -232,6 +244,9 @@ data |>
   select(record_id, daily_ddimer_8a_0, daily_ddimer_nc_0) |>
   gt()
 ```
+
+#### Matt Shotwell's Response
+> Again, this is likely missing because data were not entered even though they should have been entered.
 
 
 ## Systematic DAG: Respiratory Failure Severity
@@ -581,6 +596,72 @@ data |>
     fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
   )
 ```
+
+## Systematic DAG: Rheumatologic Disease
+
+Binary indicator variable:
+
+- 0 (No) = All m_rheum_conditions* variables == 0 AND m_pulm_conditions__6 == 0
+- 1 (Yes) = Any m_rheum_conditions* variable == 1 OR m_pulm_conditions__6 == 1
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Day 0') |>
+  mutate(sys_rheumdis_0 = calc_sys_rheumdis_0(
+    m_rheum_conditions___1 = m_rheum_conditions___1,
+    m_rheum_conditions___2 = m_rheum_conditions___2,
+    m_rheum_conditions___3 = m_rheum_conditions___3,
+    m_rheum_conditions___4 = m_rheum_conditions___4,
+    m_rheum_conditions___5 = m_rheum_conditions___5,
+    m_rheum_conditions___6 = m_rheum_conditions___6,
+    m_rheum_conditions___7 = m_rheum_conditions___7,
+    m_rheum_conditions___8 = m_rheum_conditions___8,
+    m_rheum_conditions___88 = m_rheum_conditions___88,
+    m_pulm_conditions___6 = m_pulm_conditions___6
+  )) |>
+  count(sys_rheumdis_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+## Streamlined DAG: Rheumatologic Disease
+
+Binary indicator variable:
+
+- 0 (No) = All m_rheum_conditions* variables == 0
+- 1 (Yes) = Any m_rheum_conditions* variable == 1
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Day 0') |>
+  mutate(str_rheumdis_0 = calc_str_rheumdis_0(
+    m_rheum_conditions___1 = m_rheum_conditions___1,
+    m_rheum_conditions___2 = m_rheum_conditions___2,
+    m_rheum_conditions___3 = m_rheum_conditions___3,
+    m_rheum_conditions___4 = m_rheum_conditions___4,
+    m_rheum_conditions___5 = m_rheum_conditions___5,
+    m_rheum_conditions___6 = m_rheum_conditions___6,
+    m_rheum_conditions___7 = m_rheum_conditions___7,
+    m_rheum_conditions___8 = m_rheum_conditions___8,
+    m_rheum_conditions___88 = m_rheum_conditions___88
+  )) |>
+  count(str_rheumdis_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+## (WIP) Streamlined DAG: ILD
+
 
 
 ## Template Section Headers
