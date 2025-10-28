@@ -690,31 +690,139 @@ data |>
   )
 ```
 
-## (WIP) Streamlined DAG: ILD
+## Streamlined DAG: ILD
 
+Binary indicator variable
 
-
-## Template Section Headers
-<!--
-## DAG:
+- 0 (No) = `(m_pulm_conditions__6 == 0)`
+- 1 (Yes) = `(m_pulm_conditions__6 == 1)`
 
 ### Summary
 
 ```{r}
 data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate() |>
-  count() |>
-  gt()
+  filter(event_label == 'Day 0') |>
+  mutate(str_ild_0 = calc_str_ild_0(
+    m_pulmonary = m_pulmonary,
+    m_pulm_conditions___6 = m_pulm_conditions___6
+  )) |>
+  count(str_ild_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
 ```
 
-### Missingness Report
+## Systematic DAG: Obstructive Lung Disease
+
+Binary indicator variable
+
+- 0 (No) = `(m_pulm_conditions___1 == 0)` AND `(m_pulm_conditions___3 == 0)`
+- 1 (Yes) = `(m_pulm_conditions___1 == 1)` OR `(m_pulm_conditions___3 == 1)`
+
+### Summary
 
 ```{r}
 data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  filter() |>
-  select(record_id) |>
-  gt()
+  filter(event_label == 'Day 0') |>
+  mutate(sys_obstruct_lung_0 = calc_sys_obstruct_lung_0(
+    m_pulmonary = m_pulmonary,
+    m_pulm_conditions___1 = m_pulm_conditions___1,
+    m_pulm_conditions___3 = m_pulm_conditions___3
+  )) |>
+  count(sys_obstruct_lung_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
 ```
- -->
+
+## Streamlined DAG: Obstructive Lung Disease
+
+Currently calculated the same as Systematic DAG: Obstructive Lung Disease (see above).
+
+## (WIP) Systematic DAG: Active SARS-CoV-2 Infection
+
+Binary indicator variable
+
+- 0 (No) = If (not positive on OR before Day 0) OR not tested
+- 1 (Yes) = If tested positive on OR before Day 0
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Hospital Discharge and Summary') |>
+  left_join(
+    get_code_label_map('cxpos', dictionary),
+    by ='cxpos'
+    ) |>
+  left_join(
+    get_code_label_map('resp_pathogen', dictionary),
+    by ='resp_pathogen'
+    ) |>
+  mutate(sys_active_covid19_0 = calc_sys_active_covid19_0(
+    pathogen_date = pathogen_date,
+    resp_pathogen_code = resp_pathogen_code,
+    cxpos_code = cxpos_code
+  )) |>
+  count(sys_active_covid19_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+## Streamlined DAG: Active SARS-CoV-2 Infection
+
+Currently calculated the same as Systematic DAG: Active SARS-CoV-2 Infection (see above).
+
+## Systematic DAG: Chronic Immunocompromise
+
+- 0 (No) = All `(m_immunosup_conditions___* == 0)` (excluding `m_immunosup_conditions___1`)
+- 1 (Yes) = Any `(m_immunosup_conditions___* == 1)` (excluding `m_immunosup_conditions___1`)
+
+### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Day 0') |>
+  mutate(sys_chron_immunocomp_0 = calc_sys_chron_immunocomp_0(
+    m_immunosup_conditions___2 = m_immunosup_conditions___2,
+    m_immunosup_conditions___3 = m_immunosup_conditions___3,
+    m_immunosup_conditions___4 = m_immunosup_conditions___4,
+    m_immunosup_conditions___5 = m_immunosup_conditions___5,
+    m_immunosup_conditions___6 = m_immunosup_conditions___6,
+    m_immunosup_conditions___7 = m_immunosup_conditions___7,
+    m_immunosup_conditions___88 = m_immunosup_conditions___88
+  )) |>
+  count(sys_chron_immunocomp_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+## Streamlined DAG: Chronic Immunocompromise
+
+Currently calculated the same as Systematic DAG: Chronic Immunocompromise (see above).
+
+## (WIP) Systematic DAG: Hyperglycemia
+
+### Summary
+
+## (WIP) Streamlined DAG: Hyperglycemia
+
+### Summary
+
+## (WIP) Systematic DAG: Active Influenza Infection
+
+### Summary
+
+## (WIP) Streamlined DAG: Active Influenza Infection
+
+### Summary

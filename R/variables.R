@@ -406,3 +406,126 @@ calc_str_rheumdis_0 <- function(
       is_checked(m_rheum_conditions___88) ~ 1
   )
 }
+
+
+#' Calculate the streamlined DAG variable for ILD on Day 0
+#'
+#' `calc_str_ild_0` calculates the streamlined DAG variable for
+#' interstitial lung disease from the data.
+#'
+#' @param m_pulmonary Character vector. The `m_pulmonary` column from the data.
+#' @param m_pulm_conditions___6 Character vector. The `m_pulm_conditions___6` column
+#' from the data.
+#'
+#' @returns A vector with values:
+#' - 0 = No ILD
+#' - 1 = ILD present
+#' @export
+calc_str_ild_0 <- function(
+  m_pulmonary,
+  m_pulm_conditions___6
+) {
+  dplyr::case_when(
+    m_pulmonary == "Yes" & is_checked(m_pulm_conditions___6) ~ 1,
+    m_pulmonary == "No" | is_unchecked(m_pulm_conditions___6) ~ 0
+  )
+}
+
+
+#' Calculate the streamlined DAG variable for obstructive lung disease on Day 0
+#'
+#' `calc_sys_obstruct_lung_0` calculates the streamlined DAG variable for
+#' obstructive lung disease from the data.
+#'
+#' @param m_pulmonary Character vector. The `m_pulmonary` column from the data.
+#' @param m_pulm_conditions___1 Character vector. The `m_pulm_conditions___1` column
+#' from the data.
+#' @param m_pulm_conditions___3 Character vector. The `m_pulm_conditions___3` column
+#' from the data.
+#'
+#' @returns A vector with values:
+#' - 0 = No obstructive lung disease
+#' - 1 = Obstructive lung disease present
+calc_sys_obstruct_lung_0 <- function(
+  m_pulmonary,
+  m_pulm_conditions___1,
+  m_pulm_conditions___3
+) {
+  dplyr::case_when(
+    m_pulmonary == "Yes" &
+      (is_checked(m_pulm_conditions___1) | is_checked(m_pulm_conditions___3)) ~ 1,
+    m_pulmonary == "No" |
+      (is_unchecked(m_pulm_conditions___1) & is_unchecked(m_pulm_conditions___3)) ~ 0
+  )
+}
+
+
+#' WIP
+calc_sys_active_covid19_0 <- function(
+  pathogen_date,
+  resp_pathogen_code,
+  cxpos_code
+) {
+  dplyr::case_when(
+    !is.na(pathogen_date) &
+      resp_pathogen_code == 6 &
+      cxpos_code == 3 ~ 1,
+
+    is.na(pathogen_date) |
+      resp_pathogen_code != 6 |
+      cxpos_code != 3 ~ 0
+  )
+}
+
+
+#' Calculate the streamlined DAG variable for chronic immunocompromise on Day 0
+#'
+#' `calc_sys_chron_immunocomp_0` calculates the streamlined DAG variable for
+#' chronic immunocompromise from the data.
+#'
+#' @param m_immunosup_conditions___2 Character vector. The `m_immunosup_conditions___2` column
+#' from the data.
+#' @param m_immunosup_conditions___3 Character vector. The `m_immunosup_conditions___3` column
+#' from the data.
+#' @param m_immunosup_conditions___4 Character vector. The `m_immunosup_conditions___4` column
+#' from the data.
+#' @param m_immunosup_conditions___5 Character vector. The `m_immunosup_conditions___5` column
+#' from the data.
+#' @param m_immunosup_conditions___6 Character vector. The `m_immunosup_conditions___6` column
+#' from the data.
+#' @param m_immunosup_conditions___7 Character vector. The `m_immunosup_conditions___7` column
+#' from the data.
+#' @param m_immunosup_conditions___88 Character vector. The `m_immunosup_conditions___88` column
+#' from the data.
+#'
+#' @returns A vector with values:
+#' - 0 = No chronic immunocompromise
+#' - 1 = Chronic immunocompromise present
+#' @export
+calc_sys_chron_immunocomp_0 <- function(
+  m_immunosup_conditions___2,
+  m_immunosup_conditions___3,
+  m_immunosup_conditions___4,
+  m_immunosup_conditions___5,
+  m_immunosup_conditions___6,
+  m_immunosup_conditions___7,
+  m_immunosup_conditions___88
+) {
+  dplyr::case_when(
+    is_unchecked(m_immunosup_conditions___2) &
+      is_unchecked(m_immunosup_conditions___3) &
+      is_unchecked(m_immunosup_conditions___4) &
+      is_unchecked(m_immunosup_conditions___5) &
+      is_unchecked(m_immunosup_conditions___6) &
+      is_unchecked(m_immunosup_conditions___7) &
+      is_unchecked(m_immunosup_conditions___88) ~ 0,
+
+    is_checked(m_immunosup_conditions___2) |
+      is_checked(m_immunosup_conditions___3) |
+      is_checked(m_immunosup_conditions___4) |
+      is_checked(m_immunosup_conditions___5) |
+      is_checked(m_immunosup_conditions___6) |
+      is_checked(m_immunosup_conditions___7) |
+      is_checked(m_immunosup_conditions___88) ~ 1
+  )
+}
