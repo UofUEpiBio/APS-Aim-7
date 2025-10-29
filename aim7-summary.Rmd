@@ -811,13 +811,126 @@ data |>
 
 Currently calculated the same as Systematic DAG: Chronic Immunocompromise (see above).
 
-## (WIP) Systematic DAG: Hyperglycemia
+## Systematic DAG: Hyperglycemia
+
+### Variable 1: Diabetes Medical History
+
+Binary indicator variable:
+
+- 0 (No) = `(m_endo_conditions___1 == 0)`
+- 1 (Yes) = `(m_endo_conditions___1 == 1)`
+
+#### Summary
+
+```{r}
+data |>
+  filter(event_label == 'Day 0') |>
+  mutate(sys_hyperglyc_hist_0 = calc_sys_hyperglyc_hist_0(
+    m_endo_conditions___1 = m_endo_conditions___1
+  )) |>
+  count(sys_hyperglyc_hist_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+### Variable 2: Glucose Level
+
+Continuous variable: Day 0 glucose measurement (`daily_gluc_8a_0`)
+
+#### Summary
+
+```{r}
+data_with_sys_hyperglyc_gluc_0 <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(sys_hyperglyc_gluc_0 = calc_sys_hyperglyc_gluc_0(
+    daily_gluc_8a_0 = daily_gluc_8a_0,
+    daily_gluc_nc_0 = daily_gluc_nc_0
+  ))
+```
+
+```{r}
+data_with_sys_hyperglyc_gluc_0 |>
+  select(sys_hyperglyc_gluc_0) |>
+  filter(!is.na(sys_hyperglyc_gluc_0) & sys_hyperglyc_gluc_0 > -1) |>
+  ggplot(aes(sys_hyperglyc_gluc_0)) +
+    geom_histogram(bins = 40)
+```
+#### Missingness Report
+
+The branching logic for `daily_gluc_nc_0` and `daily_gluc_8a_0` states that if `daily_gluc_8a_0` is missing (NA), then `daily_gluc_nc_0 == "Not Collected`.
+
+Thus, according to the branching logic, these records were incorrectly missing `daily_gluc_8a_0` or `daily_gluc_nc_0`:
+
+```{r}
+data_with_sys_hyperglyc_gluc_0 |>
+  filter(is.na(sys_hyperglyc_gluc_0)) |>
+  select(
+    record_id,
+    daily_gluc_nc_0,
+    daily_gluc_8a_0,
+    sys_hyperglyc_gluc_0
+  ) |>
+  gt()
+```
+
+##### Valid NA
+
+These records are missing a daily glucose measurement, but this is satisfied by the branching logic of `daily_gluc_nc_0 == "Not Collected"`. For these cases, the value of the variable `sys_hyperglyc_gluc_0` is set to `-1`.
+
+```{r}
+data_with_sys_hyperglyc_gluc_0 |>
+  filter(sys_hyperglyc_gluc_0 == -1) |>
+  select(
+    record_id,
+    sys_hyperglyc_gluc_0,
+    daily_gluc_nc_0,
+    daily_gluc_8a_0
+  ) |>
+  gt()
+```
+
+## Streamlined DAG: Hyperglycemia
+
+Binary indicator variable:
+
+
+- 0 (No) = `(daily_gluc_8a_0 <= 250)` OR missing (NA)
+- 1 (Yes) = `(daily_gluc_8a_0 > 250)`
 
 ### Summary
 
-## (WIP) Streamlined DAG: Hyperglycemia
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(str_hyperglyc_hist_0 = calc_str_hyperglyc_hist_0(
+    daily_gluc_8a_0 = daily_gluc_8a_0,
+    daily_gluc_nc_0 = daily_gluc_nc_0
+  )) |>
+  count(str_hyperglyc_hist_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+### Missingness Report
 
-### Summary
+According to the variable definition, all records can be assigned a value for this variable. However, as mentioned under Systematic DAG: Hyperglycemia Variable 2, these records missing `daily_gluc_8a_0` have invalid branching logic:
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  filter(is.na(daily_gluc_8a_0) & is.na(daily_gluc_nc_0)) |>
+  select(
+    record_id,
+    daily_gluc_nc_0,
+    daily_gluc_8a_0
+  ) |>
+  gt()
+```
+According to the variable definition, they were assigned `0` for `str_hyperglyc_hist_0`, but they should be looked at more closely.
 
 ## (WIP) Systematic DAG: Active Influenza Infection
 
