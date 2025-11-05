@@ -41,6 +41,22 @@ view_dict <- function(field, dictionary) {
 }
 
 
+#' Helper function to identify "Checked" values
+is_checked <- function(x) {
+  x == "Checked"
+}
+
+#' Helper function to identify "Unchecked" values
+is_unchecked <- function(x) {
+  x == "Unchecked"
+}
+
+#' Helper function to identify "Unknown" values
+is_unknown <- function(x) {
+  x == "Unknown"
+}
+
+
 
 ## SOFA score functions
 
