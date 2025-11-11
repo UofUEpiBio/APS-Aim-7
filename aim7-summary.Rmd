@@ -641,11 +641,79 @@ data |>
 Currently calculated the same as Systematic DAG: Delirium (see above).
 
 
-## (WIP) Active Fungal Infection -- Systematic DAG
+## Active Fungal Infection -- Systematic DAG
 
 **Variable Definition:**
 
+Binary indicator variable:
+
+- 0 (No) = `(mhantifungals == "No")` AND `(daily_antifungal_0 == "Not administered")`
+- 1 (Yes) = `(mhantifungals == "Yes")` OR `(daily_antifungal_0 == "Administered")`
+- 99 (Unknown) = `(mhantifungals == "Unknown")` OR `(daily_antifungal_0 == "UNK")` (and first two conditions not met)
+
 **Summary:**
+
+```{r}
+data_with_daily_fungal_0 <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  select(record_id, daily_antifungal_0, trx_0)
+
+data_with_mhantifungals <- data |>
+  filter(event_label == 'Day 0') |>
+  select(record_id, mhantifungals)
+
+data_fungal_joined <- data_with_daily_fungal_0 |>
+  left_join(
+    data_with_mhantifungals,
+    by ='record_id'
+    )
+
+data_with_active_fungal_0 <- data_fungal_joined |>
+  mutate(sys_active_fungal_0 = calc_sys_active_fungal_0(
+    mhantifungals = mhantifungals,
+    daily_antifungal_0 = daily_antifungal_0,
+    trx_0 = trx_0
+  ))
+
+data_with_active_fungal_0 |>
+  count(sys_active_fungal_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown Values
+
+These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" or "0" and having "Unknown" for `mhantifungals` or `daily_antifungal_0`:
+
+```{r}
+data_with_active_fungal_0 |>
+  filter(sys_active_fungal_0 == 99) |>
+  select(
+    record_id,
+    mhantifungals,
+    daily_antifungal_0
+  ) |>
+  gt()
+```
+
+### Missing Values
+
+According to the branching logic, `daily_antifungal_0` will only have a value if `trx_0 == "Available"` and `trx_0` should have a value of either "Available" or "Not Available". These records were incorrectly missing (NA) `daily_antifungal_0` and/or `trx_0`:
+
+```{r}
+data_with_active_fungal_0 |>
+  filter(is.na(sys_active_fungal_0)) |>
+  select(
+    record_id,
+    mhantifungals,
+    daily_antifungal_0,
+    trx_0
+  ) |>
+  gt()
+```
 
 ## Active Fungal Infection -- Streamlined DAG
 
