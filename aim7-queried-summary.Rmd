@@ -437,7 +437,7 @@ Currently calculated the same as Variable 2 from the Systematic DAG Respiratory 
 
 
 
-## Chronic Moderate-Dose Steroid Use -- Systematic DAG (RE-QUERY)
+## (RE-QUERY) Chronic Moderate-Dose Steroid Use -- Systematic DAG
 
 **Variable Definition:**
 
@@ -503,7 +503,7 @@ data_with_sys_chron_steroid_moddose_0 |>
 
 According to the branching logic, `m_endo_conditions___*` will only have a value if `m_endocrine == "Yes"` and `m_immunosup_conditions___*` will only have a value if `m_immunosuppression == "Yes"`. One record was missing (NA) `mhccster`, `m_endocrine`, and `m_immunosuppression`, but this is the same record missing from the N=500 dataset and does not need to be queried further.
 
-## Chronic Moderate-Dose Steroid Use -- Streamlined DAG (RE-QUERY)
+## (RE-QUERY) Chronic Moderate-Dose Steroid Use -- Streamlined DAG
 
 **Variable Definition:**
 

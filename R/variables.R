@@ -1,3 +1,7 @@
+## -----------------------------------------------------------------------------
+## Definite Adrenal Insufficiency (Systematic & Streamlined DAG)
+## -----------------------------------------------------------------------------
+
 #' Calculate the systematic DAG variable for adrenal insufficiency on Day 0
 #'
 #' `calc_sys_def_adrenal_insufficiency_0` calculates the systematic DAG variable for
@@ -53,6 +57,11 @@ calc_str_adrenal_insufficiency_0 <- function(
 }
 
 
+## -----------------------------------------------------------------------------
+## Chronic Steroids High Dose (Streamlined DAG)
+## -----------------------------------------------------------------------------
+
+
 #' Calculate the streamlined DAG variable for chronic high-dose steroid use on Day 0
 #'
 #' `calc_str_chron_steroid_highdose_0` calculates the streamlined DAG variable for
@@ -76,6 +85,11 @@ calc_str_chron_steroid_highdose_0 <- function(
     is_unknown(m_immunosuppression) ~ 99
   )
 }
+
+
+## -----------------------------------------------------------------------------
+## Rheumatologic Disease (Systematic & Streamlined DAG)
+## -----------------------------------------------------------------------------
 
 
 #' Calculate the systematic DAG variable for rheumatologic disease on Day 0
@@ -207,6 +221,11 @@ calc_str_rheumdis_0 <- function(
 }
 
 
+## -----------------------------------------------------------------------------
+## ILD (Streamlined DAG)
+## -----------------------------------------------------------------------------
+
+
 #' Calculate the streamlined DAG variable for ILD on Day 0
 #'
 #' `calc_str_ild_0` calculates the streamlined DAG variable for
@@ -231,6 +250,11 @@ calc_str_ild_0 <- function(
     m_pulmonary == "Unknown" ~ 99
   )
 }
+
+
+## -----------------------------------------------------------------------------
+## Obstructive Lung Disease (Systematic & Streamlined DAG)
+## -----------------------------------------------------------------------------
 
 
 #' Calculate the streamlined DAG variable for obstructive lung disease on Day 0
@@ -264,6 +288,11 @@ calc_sys_obstruct_lung_0 <- function(
 }
 
 
+## -----------------------------------------------------------------------------
+## Active SARS-CoV-2 Infection (Systematic & Streamlined DAG)
+## -----------------------------------------------------------------------------
+
+
 #' WIP
 calc_sys_active_covid19_0 <- function(
   pathogen_date,
@@ -280,6 +309,11 @@ calc_sys_active_covid19_0 <- function(
       cxpos_code != 3 ~ 0
   )
 }
+
+
+## -----------------------------------------------------------------------------
+## Chronic Immunocompromise (Systematic & Streamlined DAG)
+## -----------------------------------------------------------------------------
 
 
 #' Calculate the streamlined DAG variable for chronic immunocompromise on Day 0
@@ -341,6 +375,11 @@ calc_sys_chron_immunocomp_0 <- function(
     m_immunosuppression == "Unknown" ~ 99
   )
 }
+
+
+## -----------------------------------------------------------------------------
+## Hyperglycemia (Systematic & Streamlined DAG)
+## -----------------------------------------------------------------------------
 
 
 #' Calculate the systematic DAG variable 1 for hyperglycemia on Day 0
@@ -414,6 +453,50 @@ calc_str_hyperglyc_hist_0 <- function(
 }
 
 
+## -----------------------------------------------------------------------------
+## Baseline Performance Status (Systematic DAG)
+## -----------------------------------------------------------------------------
+
+
+#' Calculate the systematic DAG variable for frailty status on Day 0
+#'
+#' `calc_sys_frailty_status_0` calculates the first variable component of
+#' the systematic DAG variable for baseline performance status from the data.
+#'
+#' @param frailty_base_code Integer vector. The `frailty_base_code` code map from the
+#' `frailty_base` column from the data.
+#' @param frailty_perf Character vector. The `frailty_perf` column from the data.
+#'
+#' @returns A vector with values:
+#' - 0 = Not performed
+#' - 1 = Very Fit
+#' - 2 = Fit
+#' - 3 = Managing Well
+#' - 4 = Living with very mild frailty
+#' - 5 = Living with mild frailty
+#' - 6 = Living with moderate frailty
+#' - 7 = Living with severe frailty
+#' - 8 = Living with very severe frailty
+#' - 9 = Terminally ill
+#' - 99 = Unknown
+#' @export
+calc_sys_frailty_status_0 <- function(
+  frailty_base_code,
+  frailty_perf
+) {
+  dplyr::case_when(
+    frailty_perf == "No" ~ 0,
+    frailty_perf == "Yes" & !is.na(frailty_base_code) ~ as.numeric(frailty_base_code),
+    frailty_perf == "Yes" & is.na(frailty_base_code) ~ 99
+  )
+}
+
+
+## -----------------------------------------------------------------------------
+## Age (Streamlined DAG)
+## -----------------------------------------------------------------------------
+
+
 #' Calculate the streamlined DAG variable for age on Day 0
 #'
 #' `calc_age_0` calculates the streamlined DAG variable for age from the data.
@@ -422,7 +505,7 @@ calc_str_hyperglyc_hist_0 <- function(
 #'
 #' @returns A numeric vector representing age on day 0.
 #' @export
-calc_age_0 <- function(
+calc_str_age_0 <- function(
   age
 ) {
   dplyr::case_when(

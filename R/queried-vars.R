@@ -1,5 +1,5 @@
 ## -----------------------------------------------------------------------------
-## Streamlined DAG: Neuromuscular Blockade
+## Neuromuscular Blockade (Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
 #' Calculate the streamlined DAG variable for neuromuscular blockade on Day 0
@@ -95,7 +95,8 @@ calc_ddimer_0 <- function(daily_ddimer_8a_0, daily_ddimer_nc_0) {
 #' component of the systematic DAG variable for respiratory failure severity
 #' from the data.
 #'
-#' @param daily_resp_8a_0_code Integer vector. The `daily_resp_8a_0_code` column from the data.
+#' @param daily_resp_8a_0_code Integer vector. The `daily_resp_8a_0_code` code map from the
+#' `daily_resp_8a_0` column from the data.
 #' @param dailysofa_perf_0 Character vector. The `dailysofa_perf_0` column from the data.
 #' @param daily_standard_flow_8a_0 Numeric vector. The `daily_standard_flow_8a_0` column from the data.
 #' @param daily_hfnc_fi02_8a_0 Numeric vector. The `daily_hfnc_fi02_8a_0` column from the data.
