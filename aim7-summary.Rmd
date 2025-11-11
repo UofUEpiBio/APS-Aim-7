@@ -545,3 +545,25 @@ According to the variable definition, they were assigned `0` for `str_hyperglyc_
 ## (WIP) Active Influenza Infection -- Streamlined DAG
 
 **Summary:**
+
+
+## Age -- Streamlined DAG
+
+**Variable Definition:**
+
+Age at enrollment (continuous variable)
+
+**Summary:**
+
+```{r}
+data |>
+  filter(event_label == 'Day 0') |>
+  mutate(age_0 = calc_age_0(
+    age = age
+  )) |>
+  ggplot(aes(age_0)) +
+    geom_histogram(bins = 10) +
+    ggtitle("Age at Enrollment")
+```
+
+There are no records missing `age_0`.
