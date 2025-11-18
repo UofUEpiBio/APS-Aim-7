@@ -222,37 +222,6 @@ calc_str_rheumdis_0 <- function(
 
 
 ## -----------------------------------------------------------------------------
-## ILD (Streamlined DAG)
-## -----------------------------------------------------------------------------
-
-
-#' Calculate the streamlined DAG variable for ILD on Day 0
-#'
-#' `calc_str_ild_0` calculates the streamlined DAG variable for
-#' interstitial lung disease from the data.
-#'
-#' @param m_pulmonary Character vector. The `m_pulmonary` column from the data.
-#' @param m_pulm_conditions___6 Character vector. The `m_pulm_conditions___6` column
-#' from the data.
-#'
-#' @returns A vector with values:
-#' - 0 = No ILD
-#' - 1 = ILD present
-#' - 99 = Unknown
-#' @export
-calc_str_ild_0 <- function(
-  m_pulmonary,
-  m_pulm_conditions___6
-) {
-  dplyr::case_when(
-    m_pulmonary == "Yes" & is_checked(m_pulm_conditions___6) ~ 1,
-    m_pulmonary %in% c("Yes", "No") & is_unchecked(m_pulm_conditions___6) ~ 0,
-    m_pulmonary == "Unknown" ~ 99
-  )
-}
-
-
-## -----------------------------------------------------------------------------
 ## Obstructive Lung Disease (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 

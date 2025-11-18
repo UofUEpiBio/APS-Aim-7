@@ -271,40 +271,6 @@ Those with "Unknown" for `mhrheumd` listed under the variable "Rheumatologic Dis
 The record missing (NA) for the variable "Rheumatologic Disease" (Systematic DAG) above is also missing for this variable.
 
 
-## ILD -- Streamlined DAG
-
-**Variable Definition:**
-
-Binary indicator variable
-
-- 0 (No) = `(m_pulm_conditions___6 == 0)`
-- 1 (Yes) = `(m_pulm_conditions___6 == 1)`
-- 99 (Unknown) = `m_pulmonary == "Unknown"` (and first two conditions not met)
-
-**Summary:**
-
-```{r}
-data |>
-  filter(event_label == 'Day 0') |>
-  mutate(str_ild_0 = calc_str_ild_0(
-    m_pulmonary = m_pulmonary,
-    m_pulm_conditions___6 = m_pulm_conditions___6
-  )) |>
-  count(str_ild_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown and Missing Values
-
-Those with "Unknown" for `m_pulmonary` listed under the variable "Rheumatologic Disease" (Systematic DAG) above are also "Unknown" for this variable.
-
-The record missing (NA) for the variable "Rheumatologic Disease" (Systematic DAG) above is also missing for this variable.
-
-
 ## Obstructive Lung Disease -- Systematic DAG
 
 **Variable Definition:**
