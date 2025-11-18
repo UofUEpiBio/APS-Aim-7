@@ -51,7 +51,7 @@ Given that this patient is missing, the totals for the derived variables below c
 > When there is no record for a record id-event pair, it means that no data had been entered for that pair (and no such record exists). However, all participants should have the "Daily In-Hospital Forms" event. I believe this participant was the one we identified as being erroneously included in the N=500 data set and will be omitted in the final N=500 data set. Of course, this participant will appear in subsequent data sets assuming they do not withdraw by the withdrawal cut-off.
 
 
-## Neuromuscular Blockade -- Streamlined DAG
+## Neuromuscular Blockade -- Systematic DAG
 
 **Variable Definition:**
 
@@ -63,11 +63,11 @@ Given that this patient is missing, the totals for the derived variables below c
 ```{r}
 data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(str_nmblockade_0 = calc_str_nmblockade_0(
+  mutate(sys_nmblockade_0 = calc_sys_nmblockade_0(
     daily_paralysis_0 = daily_paralysis_0,
     trx_0 = trx_0
   )) |>
-  count(str_nmblockade_0) |>
+  count(sys_nmblockade_0) |>
   gt() |>
   grand_summary_rows(
     columns = n,
@@ -99,7 +99,7 @@ Matt then asked two people to look at these (and the other missing values below)
 
 #### Valid NA Values
 
-These records were missing `daily_paralysis_0`, but this was considered valid (e.g., "Not Applicable") by the branching logic of `trx_0 == 'Not Available'`. Thus, they were set to `str_nmblockade_0 = 0` according to the variable definition. However, as we are unsure what `trx_0` represents and why it would be marked "Not Available", we've included those records for completeness.
+These records were missing `daily_paralysis_0`, but this was considered valid (e.g., "Not Applicable") by the branching logic of `trx_0 == 'Not Available'`. Thus, they were set to `sys_nmblockade_0 = 0` according to the variable definition. However, as we are unsure what `trx_0` represents and why it would be marked "Not Available", we've included those records for completeness.
 
 ```{r}
 data |>
@@ -113,7 +113,9 @@ data |>
 > Agree it seems suspicious that no in-hospital treatments would be available on day 0, even if the participant died shortly after enrollment.
 
 
+## Neuromuscular Blockade -- Streamlined DAG
 
+Currently calculated the same as the Systematic DAG Neuromuscular Blockade (see above).
 
 
 ## Inflammatory Profile -- Streamlined DAG

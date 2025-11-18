@@ -37,13 +37,6 @@ source("R/variables.R")
 
 **Summary:**
 
-## (WIP) Global Physiology Severity -- Streamlined DAG
-
-**Variable Definition:**
-
-**Summary:**
-
-
 ## (WIP) Hypotension Severity -- Systematic DAG
 
 **Variable Definition:**
