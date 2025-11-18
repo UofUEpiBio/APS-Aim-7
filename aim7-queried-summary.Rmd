@@ -273,6 +273,7 @@ data |>
 - 4 = NIV
 - 5 = (IMV AND PEEP < 12) but NOT ECMO
 - 6 = (IMV AND PEEP ≥ 12) OR ECMO
+- 99 = Unknown
 
 **Summary:**
 
@@ -302,29 +303,43 @@ data_with_sysrespfail_var1 |>
   )
 ```
 
-#### Missingness Report
+#### Unknown Values
 
-Several records had an unknown support type (`daily_resp_8a_0 == 'Unknown'`). Since this is not one of the possible conditions in the variable definition, these were treated as missing (NA):
+These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" - "6" and having "Unknown" for either `daily_resp_8a_0`:
 
 ```{r}
 data_with_sysrespfail_var1 |>
-  filter(is.na(resp_support_type_0) & daily_resp_8a_0_code == 99) |>
-  select(record_id, daily_resp_8a_0_code, daily_resp_8a_0, resp_support_type_0) |>
+  filter(resp_support_type_0 == 99) |>
+  select(
+    record_id,
+    daily_resp_8a_0_code,
+    daily_resp_8a_0
+    ) |>
   gt()
 ```
 
-Other records were missing due to invalid branching logic.
+
+#### Missing Values
+
+These records couldn't be defined due to invalid branching logic.
 
 When respiratory support type is "Invasive mechanical ventilation without ECMO" (`daily_resp_8a_0_code == 3`), the branching logic expects values for `daily_imv_mode_8a_0` and `daily_epap_8a_0`.
 
 When support type is "Non-invasive ventilation" (`daily_resp_8a_0_code == 4`), the branching logic expects a value for `daily_niv_fi02_8a_0`.
 
-According to the branching logic, these records were incorrectly missing:
+These records are missing one or both of those expected values:
 
 ```{r}
 data_with_sysrespfail_var1 |>
-  filter(is.na(resp_support_type_0) & daily_resp_8a_0_code != 99) |>
-  select(record_id, daily_resp_8a_0_code, daily_resp_8a_0, daily_imv_mode_8a_0, daily_epap_8a_0, daily_niv_fi02_8a_0, resp_support_type_0) |>
+  filter(is.na(resp_support_type_0)) |>
+  select(
+    record_id,
+    daily_resp_8a_0_code,
+    daily_resp_8a_0,
+    daily_imv_mode_8a_0,
+    daily_epap_8a_0,
+    daily_niv_fi02_8a_0
+    ) |>
   gt() |>
   tab_style(
     style = list(
@@ -347,7 +362,7 @@ data_with_sysrespfail_var1 |>
 ```
 
 
-##### Valid NA Values
+#### "Valid" Missing Values
 
 One record was missing `daily_resp_8a_0`, but this was satisfied by the branching logic with `dailysofa_perf_0 == 'Not Available'`. Thus, `resp_support_type_0` was set to "1" (no oxygen/not applicable) according to the variable definition, but due to missing measurements couldn't be defined under Variable 2 (below).
 

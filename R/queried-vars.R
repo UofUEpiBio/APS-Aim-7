@@ -111,6 +111,7 @@ calc_ddimer_0 <- function(daily_ddimer_8a_0, daily_ddimer_nc_0) {
 #' - 4 = NIV
 #' - 5 = IMV with PEEP < 12 but no ECMO
 #' - 6 = IMV with PEEP ≥ 12 or ECMO
+#' - 99 = Unknown
 #' @export
 calc_resp_support_type_0 <- function(
   daily_resp_8a_0_code,
@@ -136,7 +137,9 @@ calc_resp_support_type_0 <- function(
     # Standard flow
     (daily_resp_8a_0_code == 6) & !is.na(daily_standard_flow_8a_0) ~ 2,
     # No respiratory support on day 0 or not applicable
-    (daily_resp_8a_0_code == 7 | dailysofa_perf_0 == 'Not Available') ~ 1
+    (daily_resp_8a_0_code == 7 | dailysofa_perf_0 == 'Not Available') ~ 1,
+    # Unknown
+    daily_resp_8a_0_code == 99 ~ 99
   )
 }
 
