@@ -164,7 +164,7 @@ Those with "Unknown" for `m_immunosuppression` listed under the variable "Defini
 The record missing (NA) for the variable "Definite Adrenal Insufficiency" (Systematic DAG) above is also missing for this variable.
 
 
-## Rheumatologic Disease -- Systematic DAG
+## Steroid Responsive Comorbidity -- Systematic DAG
 
 **Variable Definition:**
 
@@ -177,9 +177,9 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
-data_with_sys_rheumdis_0 <- data |>
+data_with_sys_steroid_comorb_0 <- data |>
   filter(event_label == 'Day 0') |>
-  mutate(sys_rheumdis_0 = calc_sys_rheumdis_0(
+  mutate(sys_steroid_comorb_0 = calc_sys_steroid_comorb_0(
     mhrheumd = mhrheumd,
     m_rheum_conditions___1 = m_rheum_conditions___1,
     m_rheum_conditions___2 = m_rheum_conditions___2,
@@ -194,8 +194,8 @@ data_with_sys_rheumdis_0 <- data |>
     m_pulm_conditions___6 = m_pulm_conditions___6
   ))
 
-data_with_sys_rheumdis_0 |>
-  count(sys_rheumdis_0) |>
+data_with_sys_steroid_comorb_0 |>
+  count(sys_steroid_comorb_0) |>
   gt() |>
   grand_summary_rows(
     columns = n,
@@ -208,8 +208,8 @@ data_with_sys_rheumdis_0 |>
 These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" or "0" and having "Unknown" for `mhrheumd` or `m_pulmonary`:
 
 ```{r}
-data_with_sys_rheumdis_0 |>
-  filter(sys_rheumdis_0 == 99) |>
+data_with_sys_steroid_comorb_0 |>
+  filter(sys_steroid_comorb_0 == 99) |>
   select(
     record_id,
     mhrheumd,
@@ -222,22 +222,22 @@ data_with_sys_rheumdis_0 |>
 
 According to the branching logic, `m_rheum_conditions___*` will only have a value if `mhrheumd == "Yes"` and `m_pulm_conditions___*` will only have a value if `m_pulmonary == "Yes"`. One record was missing (NA) `mhrheumd` and `m_pulmonary`, but this is the same record missing from the N=500 dataset and does not need to be queried further.
 
-## Rheumatologic Disease -- Streamlined DAG
+## Steroid Responsive Comorbidity -- Streamlined DAG
 
 **Variable Definition:**
 
 Binary indicator variable:
 
-- 0 (No) = All `(m_rheum_conditions___* == 0)`
-- 1 (Yes) = Any `(m_rheum_conditions___* == 1)`
-- 99 (Unknown) = `mhrheumd == "Unknown"` (and first two conditions not met)
+- 0 (No) = All `(m_rheum_conditions___* == 0)` (ignoring `m_rheum_conditions___8`) OR (`m_immunosup_conditions___4 == 0` AND `mhccster == 0`)
+- 1 (Yes) = Any `(m_rheum_conditions___* == 1)` (ignoring `m_rheum_conditions___8`) AND (`m_immunosup_conditions___4 == 1` OR `mhccster == 1`)
+- 99 (Unknown) = `mhrheumd == "Unknown"` OR `m_immunosuppression == "Unknown"` OR `mhccster == "Unknown"` (and first two conditions not met)
 
 **Summary:**
 
 ```{r}
-data |>
+data_with_str_steroid_comorb_0 <- data |>
   filter(event_label == 'Day 0') |>
-  mutate(str_rheumdis_0 = calc_str_rheumdis_0(
+  mutate(str_steroid_comorb_0 = calc_str_steroid_comorb_0(
     mhrheumd = mhrheumd,
     m_rheum_conditions___1 = m_rheum_conditions___1,
     m_rheum_conditions___2 = m_rheum_conditions___2,
@@ -246,10 +246,14 @@ data |>
     m_rheum_conditions___5 = m_rheum_conditions___5,
     m_rheum_conditions___6 = m_rheum_conditions___6,
     m_rheum_conditions___7 = m_rheum_conditions___7,
-    m_rheum_conditions___8 = m_rheum_conditions___8,
-    m_rheum_conditions___88 = m_rheum_conditions___88
-  )) |>
-  count(str_rheumdis_0) |>
+    m_rheum_conditions___88 = m_rheum_conditions___88,
+    m_immunosuppression = m_immunosuppression,
+    m_immunosup_conditions___4 = m_immunosup_conditions___4,
+    mhccster = mhccster
+  ))
+
+data_with_str_steroid_comorb_0 |>
+  count(str_steroid_comorb_0) |>
   gt() |>
   grand_summary_rows(
     columns = n,
@@ -257,11 +261,25 @@ data |>
   )
 ```
 
-### Unknown and Missing Values
+### Unknown
 
-Those with "Unknown" for `mhrheumd` listed under the variable "Rheumatologic Disease" (Systematic DAG) above are also "Unknown" for this variable.
+These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" or "0" and having "Unknown" for `mhrheumd` or `m_immunosuppression` or `mhccster`:
 
-The record missing (NA) for the variable "Rheumatologic Disease" (Systematic DAG) above is also missing for this variable.
+```{r}
+data_with_str_steroid_comorb_0 |>
+  filter(str_steroid_comorb_0 == 99) |>
+  select(
+    record_id,
+    mhrheumd,
+    m_immunosuppression,
+    mhccster
+  ) |>
+  gt()
+```
+
+### Missing Values
+
+The record missing (NA) for the variable "Steroid Responsive Comorbidity" (Systematic DAG) above is also missing for this variable.
 
 
 ## Obstructive Lung Disease -- Systematic DAG
@@ -294,9 +312,9 @@ data |>
 
 ### Unknown and Missing Values
 
-Those with "Unknown" for `m_pulmonary` listed under the variable "Rheumatologic Disease" (Systematic DAG) above are also "Unknown" for this variable.
+Those with "Unknown" for `m_pulmonary` listed under the variable "Steroid Responsive Comorbidity" (Systematic DAG) above are also "Unknown" for this variable.
 
-The record missing (NA) for the variable "Rheumatologic Disease" (Systematic DAG) above is also missing for this variable.
+The record missing (NA) for the variable "Steroid Responsive Comorbidity" (Systematic DAG) above is also missing for this variable.
 
 
 ## Obstructive Lung Disease -- Streamlined DAG
@@ -380,10 +398,6 @@ data |>
 Those with "Unknown" for `m_immunosuppression` listed under the variable "Definite Adrenal Insufficiency" (Systematic DAG) above are also "Unknown" for this variable.
 
 The record missing (NA) for the variable "Definite Adrenal Insufficiency" (Systematic DAG) above is also missing for this variable.
-
-## Chronic Immunocompromise -- Streamlined DAG
-
-Currently calculated the same as Systematic DAG: Chronic Immunocompromise (see above).
 
 ## Hyperglycemia -- Systematic DAG
 
