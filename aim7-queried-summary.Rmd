@@ -118,49 +118,7 @@ data |>
 Currently calculated the same as the Systematic DAG Neuromuscular Blockade (see above).
 
 
-## Inflammatory Profile -- Streamlined DAG
-
-**Variable Definition:**
-
-- 0 = Day 0 CRP not checked
-- 1 = Day 0 CRP checked and < 15
-- 2 = Day 0 CRP checked and ≥ 15
-
-**Summary:**
-
-```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(str_inflamprofile_0 = calc_str_inflamprofile_0(
-    daily_crp_8a_0 = daily_crp_8a_0,
-    daily_crp_nc_0 = daily_crp_nc_0
-  )) |>
-  count(str_inflamprofile_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Missingness Report
-
-This variable is computed from the paired variables `daily_crp_8a_0` and `daily_crp_nc_0`. The `*_nc_*` suffix indicates "not collected", while the `*_8a_*` suffix contains the value of the measurement. The branching logic for this pair makes them mutually exclusive. Thus, if one variable is present, the other should be missing (NA).
-
-According to the branching logic, these records were incorrectly missing both `daily_crp_8a_0` and `daily_crp_nc_0`:
-
-```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  filter(is.na(daily_crp_8a_0) & is.na(daily_crp_nc_0)) |>
-  select(record_id, daily_crp_8a_0, daily_crp_nc_0) |>
-  gt()
-```
-
-#### Query Response
-> Again, this is likely missing because data were not entered even though they should have been entered.
-
-## Inflammatory Profile -- Systematic DAG
+## (REWORKED) Inflammatory Profile -- Systematic DAG
 
 **Variable Definition:**
 
@@ -183,15 +141,47 @@ Four variables, one for each element:
   - 1 = Day 0 D-dimer checked and < 1500
   - 2 = Day 0 D-dimer checked and ≥ 1500
 
+For each variable, if Day 0 lab results are missing, prior lab values (Day -1 or Day -2) are used.
+
 **Summary:**
 
 ```{r}
-data |>
+data_with_sys_inflamprofile_0 <- data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(crp_0 = calc_crp_0(daily_crp_8a_0, daily_crp_nc_0)) |>
-  mutate(ferritin_0 = calc_ferritin_0(daily_ferritin_8a_0, daily_ferritin_nc_0)) |>
-  mutate(fibrinogen_0 = calc_fibrinogen_0(daily_fibrinogen_8a_0, daily_fibrinogen_nc_0)) |>
-  mutate(ddimer_0 = calc_ddimer_0(daily_ddimer_8a_0, daily_ddimer_nc_0)) |>
+  mutate(crp_0 = calc_crp_0(
+    daily_crp_8a_0,
+    daily_crp_nc_0,
+    daily_crp_8a_m1,
+    daily_crp_nc_m1,
+    daily_crp_8a_m2,
+    daily_crp_nc_m2
+    )) |>
+  mutate(ferritin_0 = calc_ferritin_0(
+    daily_ferritin_8a_0,
+    daily_ferritin_nc_0,
+    daily_ferritin_8a_m1,
+    daily_ferritin_nc_m1,
+    daily_ferritin_8a_m2,
+    daily_ferritin_nc_m2
+    )) |>
+  mutate(fibrinogen_0 = calc_fibrinogen_0(
+    daily_fibrinogen_8a_0,
+    daily_fibrinogen_nc_0,
+    daily_fibrinogen_8a_m1,
+    daily_fibrinogen_nc_m1,
+    daily_fibrinogen_8a_m2,
+    daily_fibrinogen_nc_m2
+    )) |>
+  mutate(ddimer_0 = calc_ddimer_0(
+    daily_ddimer_8a_0,
+    daily_ddimer_nc_0,
+    daily_ddimer_8a_m1,
+    daily_ddimer_nc_m1,
+    daily_ddimer_8a_m2,
+    daily_ddimer_nc_m2
+    ))
+
+data_with_sys_inflamprofile_0 |>
   pivot_longer(
     cols = c(crp_0, ferritin_0, fibrinogen_0, ddimer_0),
     names_to = "variable",
@@ -213,55 +203,87 @@ data |>
   )
 ```
 
-### Missingness Report
+### Missing Values
 
-Each variable is computed from a pair of variables `daily_<element_name>_8a_0` and `daily_<element_name>_nc_0` (e.g., `daily_crp_8a_0` and `daily_crp_nc_0`). The `*_nc_*` suffix indicates "not collected", while the `*_8a_*` suffix contains the value of the measurement. The branching logic makes each pair mutually exclusive. Thus, if one variable in the pair is present, the other should be missing (NA).
+Each variable is computed from thee pairs (Days 0, -1, -2) of variables `daily_<element_name>_8a_<day_num>` and `daily_<element_name>_nc_<day_num>` (e.g., `daily_crp_8a_0` and `daily_crp_nc_0` for Day 0). The `*_nc_*` suffix indicates "not collected", while the `*_8a_*` suffix contains the value of the measurement. The branching logic makes each pair mutually exclusive. Thus, if one variable in the pair is present, the other should be missing (NA).
 
-According to the branching logic, these records were incorrectly missing both `daily_crp_8a_0` and `daily_crp_nc_0` (same list as for the streamlined DAG inflammatory profile variable above):
+According to the branching logic, these records were missing all three pairs (all days) for all four variables:
 
 ```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  filter(is.na(daily_crp_8a_0) & is.na(daily_crp_nc_0)) |>
-  select(record_id, daily_crp_8a_0, daily_crp_nc_0) |>
+data_with_sys_inflamprofile_0 |>
+  filter(is.na(crp_0) | is.na(ferritin_0) | is.na(fibrinogen_0) | is.na(ddimer_0)) |>
+  select(
+    record_id,
+    daily_crp_8a_0,
+    daily_crp_nc_0,
+    daily_crp_8a_m1,
+    daily_crp_nc_m1,
+    daily_crp_8a_m2,
+    daily_crp_nc_m2,
+    daily_ferritin_8a_0,
+    daily_ferritin_nc_0,
+    daily_ferritin_8a_m1,
+    daily_ferritin_nc_m1,
+    daily_ferritin_8a_m2,
+    daily_ferritin_nc_m2,
+    daily_fibrinogen_8a_0,
+    daily_fibrinogen_nc_0,
+    daily_fibrinogen_8a_m1,
+    daily_fibrinogen_nc_m1,
+    daily_fibrinogen_8a_m2,
+    daily_fibrinogen_nc_m2,
+    daily_ddimer_8a_0,
+    daily_ddimer_nc_0,
+    daily_ddimer_8a_m1,
+    daily_ddimer_nc_m1,
+    daily_ddimer_8a_m2,
+    daily_ddimer_nc_m2
+  ) |>
   gt()
 ```
 
-These records were incorrectly missing both `daily_ferritin_8a_0` and `daily_ferritin_nc_0`:
-
-```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  filter(is.na(daily_ferritin_8a_0) & is.na(daily_ferritin_nc_0)) |>
-  select(record_id, daily_ferritin_8a_0, daily_ferritin_nc_0) |>
-  gt()
-```
-
-These records were incorrectly missing both `daily_fibrinogen_8a_0` and `daily_fibrinogen_nc_0`:
-
-```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  filter(is.na(daily_fibrinogen_8a_0) & is.na(daily_fibrinogen_nc_0)) |>
-  select(record_id, daily_fibrinogen_8a_0, daily_fibrinogen_nc_0) |>
-  gt()
-```
-
-These records were incorrectly missing both `daily_ddimer_8a_0` and `daily_ddimer_nc_0`:
-
-```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  filter(is.na(daily_ddimer_8a_0) & is.na(daily_ddimer_nc_0)) |>
-  select(record_id, daily_ddimer_8a_0, daily_ddimer_nc_0) |>
-  gt()
-```
 
 #### Query Response
 > Again, this is likely missing because data were not entered even though they should have been entered.
 
 
 
+
+
+## (REWORKED) Inflammatory Profile -- Streamlined DAG
+
+**Variable Definition:**
+
+- 0 = Day 0 CRP not checked
+- 1 = Day 0 CRP checked and < 15
+- 2 = Day 0 CRP checked and ≥ 15
+
+If Day 0 lab results are missing, prior lab values (Day -1 or Day -2) are used.
+
+**Summary:**
+
+```{r}
+data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(str_inflamprofile_0 = calc_str_inflamprofile_0(
+    daily_crp_8a_0,
+    daily_crp_nc_0,
+    daily_crp_8a_m1,
+    daily_crp_nc_m1,
+    daily_crp_8a_m2,
+    daily_crp_nc_m2
+  )) |>
+  count(str_inflamprofile_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Missing Values
+
+The records missing (NA) for the `crp` component variable of "Inflammatory Profile" (Systematic DAG) above is also missing for this variable.
 
 ## Respiratory Failure Severity -- Systematic DAG
 
@@ -898,7 +920,7 @@ Those with "Unknown" for `m_immunosuppression` listed under the variable "Defini
 
 The record missing (NA) for the variable "Definite Adrenal Insufficiency" (Systematic DAG) above is also missing for this variable.
 
-## Hyperglycemia -- Systematic DAG
+## (REWORK) Hyperglycemia -- Systematic DAG
 
 ### Variable 1: Diabetes Medical History
 
@@ -990,7 +1012,7 @@ data_with_sys_hyperglyc_gluc_0 |>
   gt()
 ```
 
-## Hyperglycemia -- Streamlined DAG
+## (REWORK) Hyperglycemia -- Streamlined DAG
 
 **Variable Definition:**
 
