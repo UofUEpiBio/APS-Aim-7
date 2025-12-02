@@ -48,7 +48,7 @@ source("R/variables.R")
 
 Currently calculated the same as Systematic DAG: Hypotension Severity (see above).
 
-## (WIP, BLOCKED) Active SARS-CoV-2 Infection -- Systematic DAG
+## (WIP) Active SARS-CoV-2 Infection -- Systematic DAG
 
 **Variable Definition:**
 
@@ -60,21 +60,42 @@ Binary indicator variable
 **Summary:**
 
 ```{r}
-data |>
+# Get enrollment times
+data_enrollment <- data |>
+  filter(event_label == 'Day 0') |>
+  select(record_id, enrollment_time)
+
+# Get all COVID-19 positive tests on or before enrollment
+data_positive_covid <- data |>
   filter(event_label == 'Hospital Discharge and Summary') |>
   left_join(
     get_code_label_map('cxpos', dictionary),
-    by ='cxpos'
-    ) |>
+    by = 'cxpos'
+  ) |>
   left_join(
     get_code_label_map('resp_pathogen', dictionary),
-    by ='resp_pathogen'
-    ) |>
+    by = 'resp_pathogen'
+  ) |>
+  filter(cxpos_code == 3 & resp_pathogen_code == 6) |>
+  select(record_id, pathogen_date) |>
+  left_join(data_enrollment, by = 'record_id') |>
+  # Calculate if positive test was on or before enrollment
+  mutate(positive_before_enrollment = pathogen_date <= enrollment_time) |>
+  # Keep only tests on or before enrollment
+  filter(positive_before_enrollment) |>
+  # Group by patient and check if ANY test was positive before enrollment
+  group_by(record_id) |>
+  summarise(has_pos_covid_0 = 1, .groups = 'drop')
+
+# Create final classification for variable
+data_active_covid19 <- data_enrollment |>
+  left_join(data_positive_covid, by = 'record_id') |>
   mutate(sys_active_covid19_0 = calc_sys_active_covid19_0(
-    pathogen_date = pathogen_date,
-    resp_pathogen_code = resp_pathogen_code,
-    cxpos_code = cxpos_code
+    has_pos_covid_0 = has_pos_covid_0
   )) |>
+  select(record_id, sys_active_covid19_0)
+
+data_active_covid19 |>
   count(sys_active_covid19_0) |>
   gt() |>
   grand_summary_rows(
@@ -82,6 +103,15 @@ data |>
     fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
   )
 ```
+
+
+### Unknown/Missing Values
+
+TODO: Make proper missingness check against branching logic
+
+Calculating missingness for this variable is tricky. In previous variables, by simply following the logic of how to classify a given record, all records were accounted for or missing. They either had the relevant data or didn't. All counts automatically added up to 499 or 500 (depending on the variable).
+
+For this one, simply following the logic won't necessarily result in making a single classification per record, because a given patient could have multiple pathogens or none. Thus, simply following the logic will see a given record_id receive multiple classifications. So, we'll have to classify all records that explicitly meet the criteria for "1", then assign whatever records are leftover to the value of "0". Missingness will need to be assessed separately by just running checks against the branching logic.
 
 ## Active SARS-CoV-2 Infection -- Streamlined DAG
 
@@ -141,7 +171,7 @@ data |>
 ```
 
 
-### (WIP) Variable 2: Comorbidity Burden
+### (WIP, BLOCKED) Variable 2: Comorbidity Burden
 
 **Variable Definition:**
 
@@ -166,6 +196,51 @@ data |>
 Currently calculated the same as Systematic DAG: Delirium (see above).
 
 
+## (WIP) Presence of Sepsis Syndrome -- Systematic DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+
+## (WIP) Presence of ARDS Syndrome -- Systematic DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+
+## Presence of ARDS Syndrome -- Streamlined DAG
+
+Currently calculated the same as Systematic DAG: Presence of ARDS Syndrome (see above).
+
+## (WIP) Presence of Pneumonia Syndrome -- Systematic DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+
+## Presence of Pneumonia Syndrome -- Streamlined DAG
+
+Currently calculated the same as Systematic DAG: Presence of Pneumonia Syndrome (see above).
+
+## (WIP) Septic Shock -- Systematic DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+
+## (WIP) Septic Shock -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+
+
+
 ## (WIP) Gastrointestinal Bleeding -- Streamlined DAG
 
 **Variable Definition:**
@@ -173,6 +248,96 @@ Currently calculated the same as Systematic DAG: Delirium (see above).
 **Summary:**
 
 ## (WIP) Major Recent Surgery -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Dementia -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Acute Allergic Reaction -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Diffuse Alveolar Hemorrhage -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Acute Inflammatory Drug Toxicity -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Acute Cryptogenic Organizing Pneumonia -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Respiratory Rate -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion BUN Value -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Acidosis -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Bilateral Opacities -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Leukopenia -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Thrombocytopenia -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Hypothermia -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Chronic Neuromuscular Disease -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) PSI Score -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Active Vasculitis -- Streamlined DAG
 
 **Variable Definition:**
 
