@@ -1,4 +1,113 @@
 ## -----------------------------------------------------------------------------
+## Global Physiology Severity (Systematic DAG)
+## -----------------------------------------------------------------------------
+
+calc_sys_global_phys_sev_0 <- function(
+  # day0_vars
+  vs_perf, # branching logic
+  hightemp_vsorres,
+  lowtemp_vsorres,
+  highhr_vsorres,
+  lowhr_vsorres,
+  highrr_vsorres,
+  lowrr_vsorres,
+  lowsysbp_vsorres,
+  lowdbp_vsorres,
+
+  # hospitalform_vars
+  ## - Day 0
+  dailysofa_perf_0, # branching logic
+  daily_resp_8a_0, # branching logic
+  daily_imv_mode_8a_0,
+  daily_imv_fio2_8a_0,
+  daily_pao2_occur_0, # branching logic
+  daily_pa02_lowest_0,
+  daily_paco2_lowest_0,
+  daily_ph_lowest_0,
+  daily_k_nc_0, # branching logic
+  daily_k_8a_0,
+  daily_na_nc_0, # branching logic
+  daily_na_8a_0,
+  daily_alb_nc_0, # branching logic
+  daily_alb_8a_0,
+  daily_tbili_nc_0, # branching logic
+  daily_tbili_8a_0,
+  daily_hct_nc_0, # branching logic
+  daily_hct_8a_0,
+  daily_wbc_nc_0, # branching logic
+  daily_wbc_8a_0,
+  daily_gluc_nc_0, # branching logic
+  daily_gluc_8a_0,
+  daily_bun_nc_0, # branching logic
+  daily_bun_8a_0,
+  daily_cr_nc_0, # branching logic
+  daily_cr_8a_0,
+  daily_gcs_8a_0,
+
+  ## - Day -1
+  dailysofa_perf_m1, # branching logic
+  daily_resp_8a_m1, # branching logic
+  daily_imv_mode_8a_m1,
+  daily_imv_fio2_8a_m1,
+  daily_pao2_occur_m1, # branching logic
+  daily_pa02_lowest_m1,
+  daily_paco2_lowest_m1,
+  daily_ph_lowest_m1,
+  daily_k_nc_m1, # branching logic
+  daily_k_8a_m1,
+  daily_na_nc_m1, # branching logic
+  daily_na_8a_m1,
+  daily_alb_nc_m1, # branching logic
+  daily_alb_8a_m1,
+  daily_tbili_nc_m1, # branching logic
+  daily_tbili_8a_m1,
+  daily_hct_nc_m1, # branching logic
+  daily_hct_8a_m1,
+  daily_wbc_nc_m1, # branching logic
+  daily_wbc_8a_m1,
+  daily_gluc_nc_m1, # branching logic
+  daily_gluc_8a_m1,
+  daily_bun_nc_m1, # branching logic
+  daily_bun_8a_m1,
+  daily_cr_nc_m1, # branching logic
+  daily_cr_8a_m1,
+  daily_gcs_8a_m1,
+
+  ## - Day -2
+  dailysofa_perf_m2, # branching logic
+  daily_resp_8a_m2, # branching logic
+  daily_imv_mode_8a_m2,
+  daily_imv_fio2_8a_m2,
+  daily_pao2_occur_m2, # branching logic
+  daily_pa02_lowest_m2,
+  daily_paco2_lowest_m2,
+  daily_ph_lowest_m2,
+  daily_k_nc_m2, # branching logic
+  daily_k_8a_m2,
+  daily_na_nc_m2, # branching logic
+  daily_na_8a_m2,
+  daily_alb_nc_m2, # branching logic
+  daily_alb_8a_m2,
+  daily_tbili_nc_m2, # branching logic
+  daily_tbili_8a_m2,
+  daily_hct_nc_m2, # branching logic
+  daily_hct_8a_m2,
+  daily_wbc_nc_m2, # branching logic
+  daily_wbc_8a_m2,
+  daily_gluc_nc_m2, # branching logic
+  daily_gluc_8a_m2,
+  daily_bun_nc_m2, # branching logic
+  daily_bun_8a_m2,
+  daily_cr_nc_m2, # branching logic
+  daily_cr_8a_m2,
+  daily_gcs_8a_m2
+) {
+  dplyr::case_when(
+
+  )
+}
+
+## -----------------------------------------------------------------------------
 ## Active SARS-CoV-2 Infection (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
