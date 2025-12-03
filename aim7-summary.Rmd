@@ -48,7 +48,7 @@ source("R/variables.R")
 
 Currently calculated the same as Systematic DAG: Hypotension Severity (see above).
 
-## (WIP) Active SARS-CoV-2 Infection -- Systematic DAG
+## Active SARS-CoV-2 Infection -- Systematic DAG
 
 **Variable Definition:**
 
@@ -65,7 +65,7 @@ data_enrollment <- data |>
   filter(event_label == 'Day 0') |>
   select(record_id, enrollment_time)
 
-# Get all COVID-19 positive tests on or before enrollment
+# Get all positive COVID-19 tests on or before enrollment
 data_positive_covid <- data |>
   filter(event_label == 'Hospital Discharge and Summary') |>
   left_join(
@@ -107,27 +107,75 @@ data_active_covid19 |>
 
 ### Unknown/Missing Values
 
-TODO: Make proper missingness check against branching logic
-
-Calculating missingness for this variable is tricky. In previous variables, by simply following the logic of how to classify a given record, all records were accounted for or missing. They either had the relevant data or didn't. All counts automatically added up to 499 or 500 (depending on the variable).
-
-For this one, simply following the logic won't necessarily result in making a single classification per record, because a given patient could have multiple pathogens or none. Thus, simply following the logic will see a given record_id receive multiple classifications. So, we'll have to classify all records that explicitly meet the criteria for "1", then assign whatever records are leftover to the value of "0". Missingness will need to be assessed separately by just running checks against the branching logic.
+After checking the branching logic, it appears there are no unknown or missing values for this variable.
 
 ## Active SARS-CoV-2 Infection -- Streamlined DAG
 
 Currently calculated the same as Systematic DAG: Active SARS-CoV-2 Infection (see above).
 
-## (WIP, BLOCKED) Active Influenza Infection -- Systematic DAG
+## Active Influenza Infection -- Systematic DAG
 
 **Variable Definition:**
 
+Binary indicator variable
+
+- 0 (No) = If (not positive on OR before Day 0) OR not tested
+- 1 (Yes) = If tested positive on OR before Day 0
+
 **Summary:**
 
-## (WIP, BLOCKED) Active Influenza Infection -- Streamlined DAG
+```{r}
+# Get enrollment times
+data_enrollment <- data |>
+  filter(event_label == 'Day 0') |>
+  select(record_id, enrollment_time)
 
-**Variable Definition:**
+# Get all positive influenza tests on or before enrollment
+data_positive_influenza <- data |>
+  filter(event_label == 'Hospital Discharge and Summary') |>
+  left_join(
+    get_code_label_map('cxpos', dictionary),
+    by = 'cxpos'
+  ) |>
+  left_join(
+    get_code_label_map('resp_pathogen', dictionary),
+    by = 'resp_pathogen'
+  ) |>
+  filter(cxpos_code == 3 & resp_pathogen_code %in% c(15, 16)) |>
+  select(record_id, pathogen_date) |>
+  left_join(data_enrollment, by = 'record_id') |>
+  # Calculate if positive test was on or before enrollment
+  mutate(positive_before_enrollment = pathogen_date <= enrollment_time) |>
+  # Keep only tests on or before enrollment
+  filter(positive_before_enrollment) |>
+  # Group by patient and check if ANY test was positive before enrollment
+  group_by(record_id) |>
+  summarise(has_pos_influenza_0 = 1, .groups = 'drop')
 
-**Summary:**
+# Create final classification for variable
+data_active_influenza <- data_enrollment |>
+  left_join(data_positive_influenza, by = 'record_id') |>
+  mutate(sys_active_influenza_0 = calc_sys_active_influenza_0(
+    has_pos_influenza_0 = has_pos_influenza_0
+  )) |>
+  select(record_id, sys_active_influenza_0)
+
+data_active_influenza |>
+  count(sys_active_influenza_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+After checking the branching logic, it appears there are no unknown or missing values for this variable.
+
+## Active Influenza Infection -- Streamlined DAG
+
+Currently calculated the same as Systematic DAG: Active Influenza Infection (see above).
 
 
 ## (WIP) Baseline Performance Status -- Systematic DAG
