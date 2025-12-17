@@ -73,18 +73,10 @@ data_hospitalform_vars <- data |>
     daily_k_8a_0,
     daily_na_nc_0, # branching logic
     daily_na_8a_0,
-    daily_alb_nc_0, # branching logic
-    daily_alb_8a_0,
-    daily_tbili_nc_0, # branching logic
-    daily_tbili_8a_0,
     daily_hct_nc_0, # branching logic
     daily_hct_8a_0,
     daily_wbc_nc_0, # branching logic
     daily_wbc_8a_0,
-    daily_gluc_nc_0, # branching logic
-    daily_gluc_8a_0,
-    daily_bun_nc_0, # branching logic
-    daily_bun_8a_0,
     daily_cr_nc_0, # branching logic
     daily_cr_8a_0,
     daily_gcs_8a_0,
@@ -102,18 +94,10 @@ data_hospitalform_vars <- data |>
     daily_k_8a_m1,
     daily_na_nc_m1, # branching logic
     daily_na_8a_m1,
-    daily_alb_nc_m1, # branching logic
-    daily_alb_8a_m1,
-    daily_tbili_nc_m1, # branching logic
-    daily_tbili_8a_m1,
     daily_hct_nc_m1, # branching logic
     daily_hct_8a_m1,
     daily_wbc_nc_m1, # branching logic
     daily_wbc_8a_m1,
-    daily_gluc_nc_m1, # branching logic
-    daily_gluc_8a_m1,
-    daily_bun_nc_m1, # branching logic
-    daily_bun_8a_m1,
     daily_cr_nc_m1, # branching logic
     daily_cr_8a_m1,
     daily_gcs_8a_m1,
@@ -131,18 +115,10 @@ data_hospitalform_vars <- data |>
     daily_k_8a_m2,
     daily_na_nc_m2, # branching logic
     daily_na_8a_m2,
-    daily_alb_nc_m2, # branching logic
-    daily_alb_8a_m2,
-    daily_tbili_nc_m2, # branching logic
-    daily_tbili_8a_m2,
     daily_hct_nc_m2, # branching logic
     daily_hct_8a_m2,
     daily_wbc_nc_m2, # branching logic
     daily_wbc_8a_m2,
-    daily_gluc_nc_m2, # branching logic
-    daily_gluc_8a_m2,
-    daily_bun_nc_m2, # branching logic
-    daily_bun_8a_m2,
     daily_cr_nc_m2, # branching logic
     daily_cr_8a_m2,
     daily_gcs_8a_m2
@@ -181,18 +157,10 @@ data_aps_vars <- data_day0_vars |>
     daily_k_8a_0,
     daily_na_nc_0, # branching logic
     daily_na_8a_0,
-    daily_alb_nc_0, # branching logic
-    daily_alb_8a_0,
-    daily_tbili_nc_0, # branching logic
-    daily_tbili_8a_0,
     daily_hct_nc_0, # branching logic
     daily_hct_8a_0,
     daily_wbc_nc_0, # branching logic
     daily_wbc_8a_0,
-    daily_gluc_nc_0, # branching logic
-    daily_gluc_8a_0,
-    daily_bun_nc_0, # branching logic
-    daily_bun_8a_0,
     daily_cr_nc_0, # branching logic
     daily_cr_8a_0,
     daily_gcs_8a_0,
@@ -210,18 +178,10 @@ data_aps_vars <- data_day0_vars |>
     daily_k_8a_m1,
     daily_na_nc_m1, # branching logic
     daily_na_8a_m1,
-    daily_alb_nc_m1, # branching logic
-    daily_alb_8a_m1,
-    daily_tbili_nc_m1, # branching logic
-    daily_tbili_8a_m1,
     daily_hct_nc_m1, # branching logic
     daily_hct_8a_m1,
     daily_wbc_nc_m1, # branching logic
     daily_wbc_8a_m1,
-    daily_gluc_nc_m1, # branching logic
-    daily_gluc_8a_m1,
-    daily_bun_nc_m1, # branching logic
-    daily_bun_8a_m1,
     daily_cr_nc_m1, # branching logic
     daily_cr_8a_m1,
     daily_gcs_8a_m1,
@@ -239,18 +199,10 @@ data_aps_vars <- data_day0_vars |>
     daily_k_8a_m2,
     daily_na_nc_m2, # branching logic
     daily_na_8a_m2,
-    daily_alb_nc_m2, # branching logic
-    daily_alb_8a_m2,
-    daily_tbili_nc_m2, # branching logic
-    daily_tbili_8a_m2,
     daily_hct_nc_m2, # branching logic
     daily_hct_8a_m2,
     daily_wbc_nc_m2, # branching logic
     daily_wbc_8a_m2,
-    daily_gluc_nc_m2, # branching logic
-    daily_gluc_8a_m2,
-    daily_bun_nc_m2, # branching logic
-    daily_bun_8a_m2,
     daily_cr_nc_m2, # branching logic
     daily_cr_8a_m2,
     daily_gcs_8a_m2
@@ -267,136 +219,6 @@ data_aps_vars <- data_day0_vars |>
 ## Hypotension Severity -- Streamlined DAG
 
 Currently calculated the same as Systematic DAG: Hypotension Severity (see above).
-
-## Active SARS-CoV-2 Infection -- Systematic DAG
-
-**Variable Definition:**
-
-Binary indicator variable
-
-- 0 (No) = If (not positive on OR before Day 0) OR not tested
-- 1 (Yes) = If tested positive on OR before Day 0
-
-**Summary:**
-
-```{r}
-# Get enrollment times
-data_enrollment <- data |>
-  filter(event_label == 'Day 0') |>
-  select(record_id, enrollment_time)
-
-# Get all positive COVID-19 tests on or before enrollment
-data_positive_covid <- data |>
-  filter(event_label == 'Hospital Discharge and Summary') |>
-  left_join(
-    get_code_label_map('cxpos', dictionary),
-    by = 'cxpos'
-  ) |>
-  left_join(
-    get_code_label_map('resp_pathogen', dictionary),
-    by = 'resp_pathogen'
-  ) |>
-  filter(cxpos_code == 3 & resp_pathogen_code == 6) |>
-  select(record_id, pathogen_date) |>
-  left_join(data_enrollment, by = 'record_id') |>
-  # Calculate if positive test was on or before enrollment
-  mutate(positive_before_enrollment = pathogen_date <= enrollment_time) |>
-  # Keep only tests on or before enrollment
-  filter(positive_before_enrollment) |>
-  # Group by patient and check if ANY test was positive before enrollment
-  group_by(record_id) |>
-  summarise(has_pos_covid_0 = 1, .groups = 'drop')
-
-# Create final classification for variable
-data_active_covid19 <- data_enrollment |>
-  left_join(data_positive_covid, by = 'record_id') |>
-  mutate(sys_active_covid19_0 = calc_sys_active_covid19_0(
-    has_pos_covid_0 = has_pos_covid_0
-  )) |>
-  select(record_id, sys_active_covid19_0)
-
-data_active_covid19 |>
-  count(sys_active_covid19_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-
-### Unknown/Missing Values
-
-After checking the branching logic, it appears there are no unknown or missing values for this variable.
-
-## Active SARS-CoV-2 Infection -- Streamlined DAG
-
-Currently calculated the same as Systematic DAG: Active SARS-CoV-2 Infection (see above).
-
-## Active Influenza Infection -- Systematic DAG
-
-**Variable Definition:**
-
-Binary indicator variable
-
-- 0 (No) = If (not positive on OR before Day 0) OR not tested
-- 1 (Yes) = If tested positive on OR before Day 0
-
-**Summary:**
-
-```{r}
-# Get enrollment times
-data_enrollment <- data |>
-  filter(event_label == 'Day 0') |>
-  select(record_id, enrollment_time)
-
-# Get all positive influenza tests on or before enrollment
-data_positive_influenza <- data |>
-  filter(event_label == 'Hospital Discharge and Summary') |>
-  left_join(
-    get_code_label_map('cxpos', dictionary),
-    by = 'cxpos'
-  ) |>
-  left_join(
-    get_code_label_map('resp_pathogen', dictionary),
-    by = 'resp_pathogen'
-  ) |>
-  filter(cxpos_code == 3 & resp_pathogen_code %in% c(15, 16)) |>
-  select(record_id, pathogen_date) |>
-  left_join(data_enrollment, by = 'record_id') |>
-  # Calculate if positive test was on or before enrollment
-  mutate(positive_before_enrollment = pathogen_date <= enrollment_time) |>
-  # Keep only tests on or before enrollment
-  filter(positive_before_enrollment) |>
-  # Group by patient and check if ANY test was positive before enrollment
-  group_by(record_id) |>
-  summarise(has_pos_influenza_0 = 1, .groups = 'drop')
-
-# Create final classification for variable
-data_active_influenza <- data_enrollment |>
-  left_join(data_positive_influenza, by = 'record_id') |>
-  mutate(sys_active_influenza_0 = calc_sys_active_influenza_0(
-    has_pos_influenza_0 = has_pos_influenza_0
-  )) |>
-  select(record_id, sys_active_influenza_0)
-
-data_active_influenza |>
-  count(sys_active_influenza_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-After checking the branching logic, it appears there are no unknown or missing values for this variable.
-
-## Active Influenza Infection -- Streamlined DAG
-
-Currently calculated the same as Systematic DAG: Active Influenza Infection (see above).
-
 
 ## (WIP) Baseline Performance Status -- Systematic DAG
 

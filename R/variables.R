@@ -28,19 +28,10 @@ calc_sys_global_phys_sev_0 <- function(
   daily_k_8a_0,
   daily_na_nc_0, # branching logic
   daily_na_8a_0,
-  daily_alb_nc_0, # branching logic
-  daily_alb_8a_0,
-  # QUESTION: several of these not needed, is that correct?
-  daily_tbili_nc_0, # branching logic
-  daily_tbili_8a_0,
   daily_hct_nc_0, # branching logic
   daily_hct_8a_0,
   daily_wbc_nc_0, # branching logic
   daily_wbc_8a_0,
-  daily_gluc_nc_0, # branching logic
-  daily_gluc_8a_0,
-  daily_bun_nc_0, # branching logic
-  daily_bun_8a_0,
   daily_cr_nc_0, # branching logic
   daily_cr_8a_0,
   daily_gcs_8a_0,
@@ -58,18 +49,10 @@ calc_sys_global_phys_sev_0 <- function(
   daily_k_8a_m1,
   daily_na_nc_m1, # branching logic
   daily_na_8a_m1,
-  daily_alb_nc_m1, # branching logic
-  daily_alb_8a_m1,
-  daily_tbili_nc_m1, # branching logic
-  daily_tbili_8a_m1,
   daily_hct_nc_m1, # branching logic
   daily_hct_8a_m1,
   daily_wbc_nc_m1, # branching logic
   daily_wbc_8a_m1,
-  daily_gluc_nc_m1, # branching logic
-  daily_gluc_8a_m1,
-  daily_bun_nc_m1, # branching logic
-  daily_bun_8a_m1,
   daily_cr_nc_m1, # branching logic
   daily_cr_8a_m1,
   daily_gcs_8a_m1,
@@ -87,18 +70,10 @@ calc_sys_global_phys_sev_0 <- function(
   daily_k_8a_m2,
   daily_na_nc_m2, # branching logic
   daily_na_8a_m2,
-  daily_alb_nc_m2, # branching logic
-  daily_alb_8a_m2,
-  daily_tbili_nc_m2, # branching logic
-  daily_tbili_8a_m2,
   daily_hct_nc_m2, # branching logic
   daily_hct_8a_m2,
   daily_wbc_nc_m2, # branching logic
   daily_wbc_8a_m2,
-  daily_gluc_nc_m2, # branching logic
-  daily_gluc_8a_m2,
-  daily_bun_nc_m2, # branching logic
-  daily_bun_8a_m2,
   daily_cr_nc_m2, # branching logic
   daily_cr_8a_m2,
   daily_gcs_8a_m2
@@ -167,13 +142,15 @@ calc_sys_global_phys_sev_0 <- function(
   )
 
   # 5. Oxygenation: A-aDO2 if FiO2 >= 0.5, else PaO2
+  # TODO: check other fio2 variables, use denominator of calc_sfratio_8a_0 (check calc_resp_support_type_0)
+  # If ECMO, give 4 points
   fio2 <- get_value_with_lookback(daily_imv_fio2_8a_0, daily_imv_fio2_8a_m1, daily_imv_fio2_8a_m2)
   pao2 <- get_value_with_lookback(daily_pa02_lowest_0, daily_pa02_lowest_m1, daily_pa02_lowest_m2)
   paco2 <- get_value_with_lookback(daily_paco2_lowest_0, daily_paco2_lowest_m1, daily_paco2_lowest_m2)
 
   # Calculate A-aDO2 if FiO2 >= 0.5 (need PaCO2 for this)
   # A-aDO2 = (FiO2 * (760 - 47)) - (PaCO2 / 0.8) - PaO2
-  # QUESTION: confirm formula?
+  # QUESTION: confirm formula? YES
   aado2 <- ifelse(!is.na(fio2) & fio2 >= 0.5 & !is.na(paco2) & !is.na(pao2),
                   (fio2 * (760 - 47)) - (paco2 / 0.8) - pao2,
                   NA)
@@ -183,6 +160,7 @@ calc_sys_global_phys_sev_0 <- function(
   oxy_points <- dplyr::case_when(
     # A-aDO2 used if FiO2 >= 0.5
     # QUESTION: what to do if fio2 is missing? (particularly for checking fio2 >= 0.5)
+    # - ASSUME < 0.5 (should be handled by above formula fix checking resp support type)
     !is.na(aado2) & aado2 >= 500 ~ 4,
     !is.na(aado2) & aado2 >= 350 ~ 3,
     !is.na(aado2) & aado2 >= 200 ~ 2,
@@ -232,12 +210,36 @@ calc_sys_global_phys_sev_0 <- function(
   )
 
   # 9. Serum Creatinine (mg/dL)
-  # QUESTION: DO I need to check acute renal failure (x2 points)? If so, what variables indicate this?
+  # QUESTION: what about missing or "unknown" for `sofa_base_renal_dysnfx`?
   creatinine <- get_value_with_lookback(daily_cr_8a_0, daily_cr_8a_m1, daily_cr_8a_m2)
+
   cr_points <- dplyr::case_when(
+
+    # Check whether or not to double points
+    creatinine >= 3.5 & (
+      sofa_base_renal_dysnfx != "Yes" |
+      (
+        sofa_base_renal_dysnfx == "Yes" &
+        sofa_base_renal_chronic %in% c(
+          "Creatinine 1.2 - 1.9 mg/dL",
+          "Creatinine 2.0 - 3.4 mg/dL"
+        )
+      )
+    ) ~ 8,
     creatinine >= 3.5 ~ 4,
+
+    # Check whether or not to double points
+    creatinine >= 2 & (
+      sofa_base_renal_dysnfx != "Yes" |
+      (sofa_base_renal_dysnfx == "Yes" & sofa_base_renal_chronic == "Creatinine 1.2 - 1.9 mg/dL")
+    ) ~ 6,
     creatinine >= 2 ~ 3,
+
+    # # Check whether or not to double points
+    creatinine >= 1.5 & sofa_base_renal_dysnfx != "Yes" ~ 4,
     creatinine >= 1.5 ~ 2,
+
+    # Don't double these two
     creatinine >= 0.6 ~ 0,
     creatinine < 0.6 ~ 2
   )
@@ -265,9 +267,15 @@ calc_sys_global_phys_sev_0 <- function(
   )
 
   # 12. Glasgow Coma Score (use 15 - GCS for points)
-  # TODO: Use GCS code (or variation to account for T values)
-  # QUESTION: What are the *T values in these variables?
   gcs <- get_value_with_lookback(daily_gcs_8a_0, daily_gcs_8a_m1, daily_gcs_8a_m2)
+
+  # - Convert to character from factor
+  gcs <- as.character(gcs)
+  # - Treat 'not documented' as NA
+  gcs <- ifelse(gcs == 'not documented', NA, gcs)
+  # - Extract quantitative component of GCS
+  gcs <- as.numeric(sub('T', '', gcs))
+  # - Calculate points
   gcs_points <- dplyr::case_when(
     !is.na(gcs) ~ 15 - gcs
   )
@@ -281,55 +289,6 @@ calc_sys_global_phys_sev_0 <- function(
   )
 
   return(total_aps)
-}
-
-## -----------------------------------------------------------------------------
-## Active SARS-CoV-2 Infection (Systematic & Streamlined DAG)
-## -----------------------------------------------------------------------------
-
-
-#' Calculate the systematic DAG variable for active COVID-19 infection on Day 0
-#'
-#' `calc_sys_active_covid19_0` calculates the systematic DAG variable for
-#' active COVID-19 infection from the data.
-#'
-#' @param has_pos_covid_0 Numeric vector. Indicator (1) if patient had a positive
-#' COVID-19 test on or before enrollment, NA otherwise.
-#'
-#' @returns A vector with values:
-#' - 0 = No active COVID-19 (not positive on or before Day 0, or not tested)
-#' - 1 = Active COVID-19 (tested positive on or before Day 0)
-#' @export
-calc_sys_active_covid19_0 <- function(has_pos_covid_0) {
-  dplyr::case_when(
-    has_pos_covid_0 == 1 ~ 1,
-    is.na(has_pos_covid_0) ~ 0
-  )
-}
-
-
-## -----------------------------------------------------------------------------
-## Active Influenza Infection (Systematic & Streamlined DAG)
-## -----------------------------------------------------------------------------
-
-
-#' Calculate the systematic DAG variable for active influenza infection on Day 0
-#'
-#' `calc_sys_active_influenza_0` calculates the systematic DAG variable for
-#' active influenza infection from the data.
-#'
-#' @param has_pos_influenza_0 Numeric vector. Indicator (1) if patient had a positive
-#' influenza test on or before enrollment, NA otherwise.
-#'
-#' @returns A vector with values:
-#' - 0 = No active influenza (not positive on or before Day 0, or not tested)
-#' - 1 = Active influenza (tested positive on or before Day 0)
-#' @export
-calc_sys_active_influenza_0 <- function(has_pos_influenza_0) {
-  dplyr::case_when(
-    has_pos_influenza_0 == 1 ~ 1,
-    is.na(has_pos_influenza_0) ~ 0
-  )
 }
 
 
