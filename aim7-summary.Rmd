@@ -1,0 +1,358 @@
+---
+title: "APS Aim 7 Derived Variables Summary"
+output:
+  github_document:
+    toc: true
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+# Libraries
+library('ggplot2')
+library('dplyr')
+library('tidyr')
+library('knitr')
+library('gt')
+
+## Get support functions
+source('support_functions.R')
+
+## Load data from N=500 APS cohort
+## provides "data", "dictionary" and "codebook" in the working environment
+load(file = '../aps-data/20250731_data.RData')
+```
+
+```{r, echo = FALSE}
+# Source variable derivation code
+source("R/variables.R")
+```
+
+## (WIP) Hypotension Severity -- Systematic DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+
+## Hypotension Severity -- Streamlined DAG
+
+Currently calculated the same as Systematic DAG: Hypotension Severity (see above).
+
+## (WIP) Baseline Performance Status -- Systematic DAG
+
+### Variable 1: Frailty Status
+
+**Variable Definition:**
+
+Derived from `frailty_base`:
+
+- 0 = Not performed
+- 1 = Very Fit
+- 2 = Fit
+- 3 = Managing Well
+- 4 = Living with very mild frailty
+- 5 = Living with mild frailty
+- 6 = Living with moderate frailty
+- 7 = Living with severe frailty
+- 8 = Living with very severe frailty
+- 9 = Terminally ill
+
+**Summary:**
+
+```{r}
+data |>
+  filter(event_label == "Patient/Surrogate Interview") |>
+  left_join(
+    get_code_label_map('frailty_base', dictionary),
+    by ='frailty_base'
+    ) |>
+  mutate(sys_frailty_status_0 = calc_sys_frailty_status_0(
+    frailty_base_code = frailty_base_code,
+    frailty_perf = frailty_perf
+  )) |>
+  count(sys_frailty_status_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+
+### (WIP, BLOCKED) Variable 2: Comorbidity Burden
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Organ Failure Trajectory -- Systematic DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+
+
+## Delirium -- Systematic DAG
+
+**Variable Definition:**
+
+Three-level variable:
+
+- 0 = CAM done and not present (negative on all assessments)
+- 1 = CAM done and present (positive at least once)
+- 2 = CAM not done
+
+**Summary:**
+
+```{r}
+data_with_delirium <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(
+    sys_delirium_0 = calc_sys_delirium_0(
+      cam_0 = cam_0,
+      cam_m1 = cam_m1,
+      cam_m2 = cam_m2,
+
+      lowrass_orres_0 = lowrass_orres_0,
+      lowrass_orres_m1 = lowrass_orres_m1,
+      lowrass_orres_m2 = lowrass_orres_m2,
+
+      highestrass_orres_0 = highestrass_orres_0,
+      highestrass_orres_m1 = highestrass_orres_m1,
+      highestrass_orres_m2 = highestrass_orres_m2
+    )
+  )
+
+data_with_delirium |>
+  count(sys_delirium_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+After checking the branching logic, it appears there are no unknown or missing values for this variable.
+
+## Delirium -- Streamlined DAG
+
+Currently calculated the same as Systematic DAG: Delirium (see above).
+
+
+## Presence of Sepsis Syndrome -- Systematic DAG
+
+**Variable Definition:**
+
+Binary indicator variable:
+
+- 0 = Syndrome not present OR syndrome not present on or before Day 0
+- 1 = Syndrome present AND syndrome present on or before Day 0
+- 99 = Unknown
+
+**Summary:**
+
+```{r}
+data_with_sepsis <- data |>
+  filter(event_label == 'Syndrome Adjudication') |>
+  mutate(
+    sys_sepsis_0 = calc_sys_sepsis_0(
+      sepsis_present,
+      sepsis_clinical_judgement
+    )
+  )
+
+data_with_sepsis |>
+  count(sys_sepsis_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+### Unknown/Missing Values
+
+```{r}
+data_with_sepsis |>
+  filter(is.na(sys_sepsis_0)) |>
+  select(
+    record_id,
+    sepsis_present,
+    sepsis_clinical_judgement
+  ) |>
+  gt()
+```
+
+## Presence of ARDS Syndrome -- Systematic DAG
+
+**Variable Definition:**
+
+Binary indicator variable:
+
+- 0 = Syndrome not present OR syndrome not present on or before Day 0
+- 1 = Syndrome present AND syndrome present on or before Day 0
+- 99 = Unknown
+
+**Summary:**
+
+```{r}
+data_with_ards <- data |>
+  filter(event_label == 'Syndrome Adjudication') |>
+  mutate(
+    sys_ards_0 = calc_sys_ards_0(
+      ards_present,
+      ards_clinical_judgement
+    )
+  )
+
+data_with_ards |>
+  count(sys_ards_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+### Unknown/Missing Values
+
+After checking the branching logic, it appears there are no unknown or missing values for this variable.
+
+
+## Presence of ARDS Syndrome -- Streamlined DAG
+
+Currently calculated the same as Systematic DAG: Presence of ARDS Syndrome (see above).
+
+## (WIP) Presence of Pneumonia Syndrome -- Systematic DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+
+## Presence of Pneumonia Syndrome -- Streamlined DAG
+
+Currently calculated the same as Systematic DAG: Presence of Pneumonia Syndrome (see above).
+
+## (WIP) Septic Shock -- Systematic DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+
+## (WIP) Septic Shock -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+
+
+
+## (WIP) Gastrointestinal Bleeding -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Major Recent Surgery -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Dementia -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Acute Allergic Reaction -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Diffuse Alveolar Hemorrhage -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Acute Inflammatory Drug Toxicity -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Acute Cryptogenic Organizing Pneumonia -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Respiratory Rate -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion BUN Value -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Acidosis -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Bilateral Opacities -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Leukopenia -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Thrombocytopenia -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) SCAP Criterion Hypothermia -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Chronic Neuromuscular Disease -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) PSI Score -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
+
+## (WIP) Active Vasculitis -- Streamlined DAG
+
+**Variable Definition:**
+
+**Summary:**
