@@ -97,11 +97,49 @@ data |>
 
 
 
-## (WIP) Delirium -- Systematic DAG
+## Delirium -- Systematic DAG
 
 **Variable Definition:**
 
+Three-level variable:
+
+- 0 = CAM done and not present (negative on all assessments)
+- 1 = CAM done and present (positive at least once)
+- 2 = CAM not done
+
 **Summary:**
+
+```{r}
+data_with_delirium <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(
+    sys_delirium_0 = calc_sys_delirium_0(
+      cam_0 = cam_0,
+      cam_m1 = cam_m1,
+      cam_m2 = cam_m2,
+
+      lowrass_orres_0 = lowrass_orres_0,
+      lowrass_orres_m1 = lowrass_orres_m1,
+      lowrass_orres_m2 = lowrass_orres_m2,
+
+      highestrass_orres_0 = highestrass_orres_0,
+      highestrass_orres_m1 = highestrass_orres_m1,
+      highestrass_orres_m2 = highestrass_orres_m2
+    )
+  )
+
+data_with_delirium |>
+  count(sys_delirium_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+After checking the branching logic, it appears there are no unknown or missing values for this variable.
 
 ## Delirium -- Streamlined DAG
 
