@@ -1,0 +1,708 @@
+---
+title: "APS Aim 7 Derived Variables Summary"
+output:
+  github_document:
+    toc: true
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+# Libraries
+library('ggplot2')
+library('dplyr')
+library('tidyr')
+library('knitr')
+library('gt')
+
+## Get support functions
+source('support_functions.R')
+
+## Load data from N=500 APS cohort
+## provides "data", "dictionary" and "codebook" in the working environment
+load(file = '../aps-data/20250731_data.RData')
+```
+
+```{r, echo = FALSE}
+# Source variable derivation code
+source("R/global_phys_sev_0.R")
+source("R/queried-vars.R")
+```
+
+## Global Physiology Severity -- Systematic DAG
+
+**Variable Definition:**
+
+Calculated the same as the APS component of the APACHE II score (integer value from 0 to 48).
+
+### Required Variables
+
+```{r}
+data_day0_vars <- data |>
+  filter(event_label == 'Day 0') |>
+  select(
+    record_id,
+    vs_perf, # branching logic
+    hightemp_vsorres,
+    lowtemp_vsorres,
+    highhr_vsorres,
+    lowhr_vsorres,
+    highrr_vsorres,
+    lowrr_vsorres,
+    lowsysbp_vsorres,
+    lowdbp_vsorres,
+    sofa_unk, # branching logic
+    sofa_base_renal_dysnfx,
+    sofa_base_renal_chronic
+  )
+
+data_hospitalform_vars <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  select(
+    record_id,
+
+    ## - Day 0
+    dailysofa_perf_0, # branching logic
+    daily_resp_8a_0, # branching logic
+    daily_imv_mode_8a_0,
+    daily_imv_fio2_8a_0,
+    daily_standard_flow_8a_0,
+    daily_hfnc_fi02_8a_0,
+    daily_niv_fi02_8a_0,
+    daily_epap_8a_0,
+    daily_pao2_occur_0, # branching logic
+    daily_pa02_lowest_0,
+    daily_paco2_lowest_0,
+    daily_ph_lowest_0,
+    daily_k_nc_0, # branching logic
+    daily_k_8a_0,
+    daily_na_nc_0, # branching logic
+    daily_na_8a_0,
+    daily_hct_nc_0, # branching logic
+    daily_hct_8a_0,
+    daily_wbc_nc_0, # branching logic
+    daily_wbc_8a_0,
+    daily_cr_nc_0, # branching logic
+    daily_cr_8a_0,
+    daily_gcs_8a_0,
+
+    ## - Day -1
+    dailysofa_perf_m1, # branching logic
+    daily_resp_8a_m1, # branching logic
+    daily_imv_mode_8a_m1,
+    daily_imv_fio2_8a_m1,
+    daily_standard_flow_8a_m1,
+    daily_hfnc_fi02_8a_m1,
+    daily_niv_fi02_8a_m1,
+    daily_epap_8a_m1,
+    daily_pao2_occur_m1, # branching logic
+    daily_pa02_lowest_m1,
+    daily_paco2_lowest_m1,
+    daily_ph_lowest_m1,
+    daily_k_nc_m1, # branching logic
+    daily_k_8a_m1,
+    daily_na_nc_m1, # branching logic
+    daily_na_8a_m1,
+    daily_hct_nc_m1, # branching logic
+    daily_hct_8a_m1,
+    daily_wbc_nc_m1, # branching logic
+    daily_wbc_8a_m1,
+    daily_cr_nc_m1, # branching logic
+    daily_cr_8a_m1,
+    daily_gcs_8a_m1,
+
+    ## - Day -2
+    dailysofa_perf_m2, # branching logic
+    daily_resp_8a_m2, # branching logic
+    daily_imv_mode_8a_m2,
+    daily_imv_fio2_8a_m2,
+    daily_standard_flow_8a_m2,
+    daily_hfnc_fi02_8a_m2,
+    daily_niv_fi02_8a_m2,
+    daily_epap_8a_m2,
+    daily_pao2_occur_m2, # branching logic
+    daily_pa02_lowest_m2,
+    daily_paco2_lowest_m2,
+    daily_ph_lowest_m2,
+    daily_k_nc_m2, # branching logic
+    daily_k_8a_m2,
+    daily_na_nc_m2, # branching logic
+    daily_na_8a_m2,
+    daily_hct_nc_m2, # branching logic
+    daily_hct_8a_m2,
+    daily_wbc_nc_m2, # branching logic
+    daily_wbc_8a_m2,
+    daily_cr_nc_m2, # branching logic
+    daily_cr_8a_m2,
+    daily_gcs_8a_m2
+  ) |>
+  # Add code mappings for respiratory support variables
+  left_join(
+    get_code_label_map('daily_resp_8a_0', dictionary),
+    by = 'daily_resp_8a_0'
+  ) |>
+  left_join(
+    get_code_label_map('daily_resp_8a_m1', dictionary),
+    by = 'daily_resp_8a_m1'
+  ) |>
+  left_join(
+    get_code_label_map('daily_resp_8a_m2', dictionary),
+    by = 'daily_resp_8a_m2'
+  )
+
+data_aps_vars <- data_day0_vars |>
+  left_join(
+    data_hospitalform_vars,
+    by = 'record_id'
+  )
+
+data_aps_vars <- data_aps_vars |>
+  mutate(
+    # Calculate respiratory support type for day 0 (no lookback for now)
+    resp_support_type_0 = calc_resp_support_type_0(
+      daily_resp_8a_0_code = daily_resp_8a_0_code,
+      dailysofa_perf_0 = dailysofa_perf_0,
+      daily_standard_flow_8a_0 = daily_standard_flow_8a_0,
+      daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_0,
+      daily_niv_fi02_8a_0 = daily_niv_fi02_8a_0,
+      daily_imv_fio2_8a_0 = daily_imv_fio2_8a_0,
+      daily_epap_8a_0 = daily_epap_8a_0
+    )
+  )
+```
+
+
+
+### Component Summaries
+
+```{r}
+data_aps_component_vars <- data_aps_vars |>
+  mutate(
+    aps_temp_score = calc_aps_temp_score(
+      hightemp_vsorres = hightemp_vsorres,
+      lowtemp_vsorres = lowtemp_vsorres
+    )
+  ) |>
+  mutate(
+    aps_map_score = calc_aps_map_score(
+      lowsysbp_vsorres = lowsysbp_vsorres,
+      lowdbp_vsorres = lowdbp_vsorres
+    )
+  ) |>
+  mutate(
+    aps_hr_score = calc_aps_hr_score(
+      highhr_vsorres = highhr_vsorres,
+      lowhr_vsorres = lowhr_vsorres
+    )
+  ) |>
+  mutate(
+    aps_rr_score = calc_aps_rr_score(
+      highrr_vsorres = highrr_vsorres,
+      lowrr_vsorres = lowrr_vsorres
+    )
+  ) |>
+  mutate(
+    aps_oxy_score = calc_aps_oxy_score(
+      resp_support_type_0 = resp_support_type_0,
+
+      daily_resp_8a_0_code = daily_resp_8a_0_code,
+      daily_resp_8a_m1_code = daily_resp_8a_m1_code,
+      daily_resp_8a_m2_code = daily_resp_8a_m2_code,
+
+      daily_standard_flow_8a_0 = daily_standard_flow_8a_0,
+      daily_standard_flow_8a_m1 = daily_standard_flow_8a_m1,
+      daily_standard_flow_8a_m2 = daily_standard_flow_8a_m2,
+
+      daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_0,
+      daily_hfnc_fi02_8a_m1 = daily_hfnc_fi02_8a_m1,
+      daily_hfnc_fi02_8a_m2 = daily_hfnc_fi02_8a_m2,
+
+      daily_niv_fi02_8a_0 = daily_niv_fi02_8a_0,
+      daily_niv_fi02_8a_m1 = daily_niv_fi02_8a_m1,
+      daily_niv_fi02_8a_m2 = daily_niv_fi02_8a_m2,
+
+      daily_imv_fio2_8a_0 = daily_imv_fio2_8a_0,
+      daily_imv_fio2_8a_m1 = daily_imv_fio2_8a_m1,
+      daily_imv_fio2_8a_m2 = daily_imv_fio2_8a_m2,
+
+      daily_pa02_lowest_0 = daily_pa02_lowest_0,
+      daily_pa02_lowest_m1 = daily_pa02_lowest_m1,
+      daily_pa02_lowest_m2 = daily_pa02_lowest_m2,
+
+      daily_paco2_lowest_0 = daily_paco2_lowest_0,
+      daily_paco2_lowest_m1 = daily_paco2_lowest_m1,
+      daily_paco2_lowest_m2 = daily_paco2_lowest_m2
+    )
+  ) |>
+  mutate(
+    aps_ph_score = calc_aps_ph_score(
+      daily_ph_lowest_0 = daily_ph_lowest_0,
+      daily_ph_lowest_m1 = daily_ph_lowest_m1,
+      daily_ph_lowest_m2 = daily_ph_lowest_m2
+    )
+  ) |>
+  mutate(
+    aps_sodium_score = calc_aps_sodium_score(
+      daily_na_8a_0 = daily_na_8a_0,
+      daily_na_8a_m1 = daily_na_8a_m1,
+      daily_na_8a_m2 = daily_na_8a_m2
+    )
+  ) |>
+  mutate(
+    aps_potassium_score = calc_aps_potassium_score(
+      daily_k_8a_0 = daily_k_8a_0,
+      daily_k_8a_m1 = daily_k_8a_m1,
+      daily_k_8a_m2 = daily_k_8a_m2
+    )
+  ) |>
+  mutate(
+    aps_creatinine_score = calc_aps_creatinine_score(
+      daily_cr_8a_0 = daily_cr_8a_0,
+      daily_cr_8a_m1 = daily_cr_8a_m1,
+      daily_cr_8a_m2 = daily_cr_8a_m2,
+      sofa_base_renal_dysnfx = sofa_base_renal_dysnfx,
+      sofa_base_renal_chronic = sofa_base_renal_chronic
+    )
+  ) |>
+  mutate(
+    aps_hct_score = calc_aps_hct_score(
+      daily_hct_8a_0 = daily_hct_8a_0,
+      daily_hct_8a_m1 = daily_hct_8a_m1,
+      daily_hct_8a_m2 = daily_hct_8a_m2
+    )
+  ) |>
+  mutate(
+    aps_wbc_score = calc_aps_wbc_score(
+      daily_wbc_8a_0 = daily_wbc_8a_0,
+      daily_wbc_8a_m1 = daily_wbc_8a_m1,
+      daily_wbc_8a_m2 = daily_wbc_8a_m2
+    )
+  ) |>
+  mutate(
+    aps_gcs_score = calc_aps_gcs_score(
+      daily_gcs_8a_0 = daily_gcs_8a_0,
+      daily_gcs_8a_m1 = daily_gcs_8a_m1,
+      daily_gcs_8a_m2 = daily_gcs_8a_m2
+    )
+  )
+```
+
+#### 1. Temperature
+
+```{r}
+data_aps_component_vars |>
+  count(aps_temp_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 2. Mean Arterial Pressure (MAP)
+
+```{r}
+data_aps_component_vars |>
+  count(aps_map_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 3. Heart Rate
+
+```{r}
+data_aps_component_vars |>
+  count(aps_hr_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 4. Respiratory Rate
+
+```{r}
+data_aps_component_vars |>
+  count(aps_rr_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 5. Oxygenation (A-aDO2 or PaO2)
+
+```{r}
+data_aps_component_vars |>
+  count(aps_oxy_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 6. Arterial pH
+
+```{r}
+data_aps_component_vars |>
+  count(aps_ph_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 7. Serum Sodium
+
+```{r}
+data_aps_component_vars |>
+  count(aps_sodium_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 8. Serum Potassium
+
+```{r}
+data_aps_component_vars |>
+  count(aps_potassium_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 9. Serum Creatinine
+
+```{r}
+data_aps_component_vars |>
+  count(aps_creatinine_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 10. Hematocrit
+
+```{r}
+data_aps_component_vars |>
+  count(aps_hct_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 11. White Blood Cell Count
+
+```{r}
+data_aps_component_vars |>
+  count(aps_wbc_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### 12. Glasgow Coma Score
+
+```{r}
+data_aps_component_vars |>
+  count(aps_gcs_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Component Unknown/Missing Values
+
+#### 1. Temperature
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_temp_score)) |>
+  select(
+    record_id,
+    vs_perf,
+    hightemp_vsorres,
+    lowtemp_vsorres
+  ) |>
+  gt()
+```
+
+#### 2. Mean Arterial Pressure (MAP)
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_map_score)) |>
+  select(
+    record_id,
+    vs_perf,
+    lowsysbp_vsorres,
+    lowdbp_vsorres
+  ) |>
+  gt()
+```
+
+#### 3. Heart Rate
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_hr_score)) |>
+  select(
+    record_id,
+    vs_perf,
+    highhr_vsorres,
+    lowhr_vsorres
+  ) |>
+  gt()
+```
+
+#### 4. Respiratory Rate
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_rr_score)) |>
+  select(
+    record_id,
+    vs_perf,
+    highrr_vsorres,
+    lowrr_vsorres
+  ) |>
+  gt()
+```
+
+#### 5. Oxygenation (A-aDO2 or PaO2)
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_oxy_score)) |>
+  select(
+    record_id,
+    dailysofa_perf_0,
+    dailysofa_perf_m1,
+    dailysofa_perf_m2,
+    resp_support_type_0,
+    daily_resp_8a_0_code,
+    daily_resp_8a_m1_code,
+    daily_resp_8a_m2_code,
+    daily_pa02_lowest_0,
+    daily_pa02_lowest_m1,
+    daily_pa02_lowest_m2,
+    daily_paco2_lowest_0,
+    daily_paco2_lowest_m1,
+    daily_paco2_lowest_m2
+  ) |>
+  gt()
+```
+
+#### 6. Arterial pH
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_ph_score)) |>
+  select(
+    record_id,
+    dailysofa_perf_0,
+    dailysofa_perf_m1,
+    dailysofa_perf_m2,
+    daily_ph_lowest_0,
+    daily_ph_lowest_m1,
+    daily_ph_lowest_m2
+  ) |>
+  gt()
+```
+
+#### 7. Serum Sodium
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_sodium_score)) |>
+  select(
+    record_id,
+    daily_na_nc_0,
+    daily_na_nc_m1,
+    daily_na_nc_m2,
+    daily_na_8a_0,
+    daily_na_8a_m1,
+    daily_na_8a_m2
+  ) |>
+  gt()
+```
+
+#### 8. Serum Potassium
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_potassium_score)) |>
+  select(
+    record_id,
+    daily_k_nc_0,
+    daily_k_nc_m1,
+    daily_k_nc_m2,
+    daily_k_8a_0,
+    daily_k_8a_m1,
+    daily_k_8a_m2
+  ) |>
+  gt()
+```
+
+#### 9. Serum Creatinine
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_creatinine_score)) |>
+  select(
+    record_id,
+    sofa_unk,
+    sofa_base_renal_dysnfx,
+    sofa_base_renal_chronic,
+    daily_cr_nc_0,
+    daily_cr_nc_m1,
+    daily_cr_nc_m2,
+    daily_cr_8a_0,
+    daily_cr_8a_m1,
+    daily_cr_8a_m2
+  ) |>
+  gt()
+```
+
+#### 10. Hematocrit
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_hct_score)) |>
+  select(
+    record_id,
+    daily_hct_nc_0,
+    daily_hct_nc_m1,
+    daily_hct_nc_m2,
+    daily_hct_8a_0,
+    daily_hct_8a_m1,
+    daily_hct_8a_m2
+  ) |>
+  gt()
+```
+
+#### 11. White Blood Cell Count
+
+```{r}
+data_aps_component_vars |>
+  filter(is.na(aps_wbc_score)) |>
+  select(
+    record_id,
+    daily_wbc_nc_0,
+    daily_wbc_nc_m1,
+    daily_wbc_nc_m2,
+    daily_wbc_8a_0,
+    daily_wbc_8a_m1,
+    daily_wbc_8a_m2
+  ) |>
+  gt()
+```
+
+#### 12. Glasgow Coma Score
+
+No records missing GCS.
+
+
+
+### Full Variable Summary
+
+```{r}
+data_aps_var <- data_aps_component_vars |>
+  mutate(
+    aps_score = calc_aps_score(
+      aps_temp_score = aps_temp_score,
+      aps_map_score = aps_map_score,
+      aps_hr_score = aps_hr_score,
+      aps_rr_score = aps_rr_score,
+      aps_oxy_score = aps_oxy_score,
+      aps_ph_score = aps_ph_score,
+      aps_sodium_score = aps_sodium_score,
+      aps_potassium_score = aps_potassium_score,
+      aps_creatinine_score = aps_creatinine_score,
+      aps_hct_score = aps_hct_score,
+      aps_wbc_score = aps_wbc_score,
+      aps_gcs_score = aps_gcs_score
+    )
+  )
+
+data_aps_var |>
+  count(aps_score) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Full Variable Unknown/Missing Values
+
+```{r}
+data_aps_var |>
+  filter(
+    is.na(aps_score) & (
+      is.na(aps_temp_score) |
+      is.na(aps_map_score) |
+      is.na(aps_hr_score) |
+      is.na(aps_rr_score) |
+      is.na(aps_sodium_score) |
+      is.na(aps_potassium_score) |
+      is.na(aps_creatinine_score) |
+      is.na(aps_hct_score) |
+      is.na(aps_wbc_score) |
+      is.na(aps_gcs_score)
+    )
+  ) |>
+  select(
+    record_id,
+    aps_temp_score,
+    aps_map_score,
+    aps_hr_score,
+    aps_rr_score,
+    aps_sodium_score,
+    aps_potassium_score,
+    aps_creatinine_score,
+    aps_hct_score,
+    aps_wbc_score,
+    aps_gcs_score
+  ) |>
+  gt()
+```
+
+```{r}
+data_aps_var |>
+  filter(
+    is.na(aps_score) & (
+      is.na(aps_oxy_score) |
+      is.na(aps_ph_score)
+    )
+  ) |>
+  select(
+    record_id,
+    aps_oxy_score,
+    aps_ph_score
+  ) |>
+  gt()
+```
