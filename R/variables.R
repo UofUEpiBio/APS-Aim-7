@@ -1,5 +1,6 @@
 source("R/variable-functions/calc_sys_delirium_0.R")
 source("R/variable-functions/calc_sys_sepsis_0.R")
+source("R/variable-functions/calc_sys_ards_0.R")
 
 ## -----------------------------------------------------------------------------
 ## Baseline Performance Status (Systematic DAG)

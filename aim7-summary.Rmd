@@ -189,11 +189,39 @@ data_with_sepsis |>
   gt()
 ```
 
-## (WIP) Presence of ARDS Syndrome -- Systematic DAG
+## Presence of ARDS Syndrome -- Systematic DAG
 
 **Variable Definition:**
 
+Binary indicator variable:
+
+- 0 = Syndrome not present OR syndrome not present on or before Day 0
+- 1 = Syndrome present AND syndrome present on or before Day 0
+- 99 = Unknown
+
 **Summary:**
+
+```{r}
+data_with_ards <- data |>
+  filter(event_label == 'Syndrome Adjudication') |>
+  mutate(
+    sys_ards_0 = calc_sys_ards_0(
+      ards_present,
+      ards_clinical_judgement
+    )
+  )
+
+data_with_ards |>
+  count(sys_ards_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+### Unknown/Missing Values
+
+After checking the branching logic, it appears there are no unknown or missing values for this variable.
 
 
 ## Presence of ARDS Syndrome -- Streamlined DAG
