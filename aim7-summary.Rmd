@@ -176,7 +176,23 @@ data_with_sepsis |>
     fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
   )
 ```
+
 ### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because they were missing (NA) `sepsis_present` and have `sepsis_clinical_judgement == 'Unknown'`.
+
+```{r}
+data_with_sepsis |>
+  filter(sys_sepsis_0 == 99) |>
+  select(
+    record_id,
+    sepsis_present,
+    sepsis_clinical_judgement
+  ) |>
+  gt()
+```
+
+This record was missing (NA) `sepsis_present` but had `sepsis_clinical_judgement == 'Yes'`. According to the DAG formula, this is classified as NA. (see question in the function code).
 
 ```{r}
 data_with_sepsis |>
@@ -219,6 +235,7 @@ data_with_ards |>
     fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
   )
 ```
+
 ### Unknown/Missing Values
 
 After checking the branching logic, it appears there are no unknown or missing values for this variable.
@@ -273,6 +290,8 @@ data_with_pneumonia |>
 ```
 ### Unknown/Missing Values
 
+These records are missing `pna_date` and have `pna_clinical_judgement == "Unknown"` and are consequently assigned `99 (Unknown)`:
+
 ```{r}
 data_with_pneumonia |>
   filter(sys_pneumonia_0 == 99) |>
@@ -311,11 +330,56 @@ Currently calculated the same as Systematic DAG: Presence of Pneumonia Syndrome 
 
 **Summary:**
 
-## (WIP) Major Recent Surgery -- Streamlined DAG
+## Major Recent Surgery -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary indicator variable:
+
+- 0 = No surgery on Day -2, Day -1, AND Day 0
+- 1 = Surgery on Day -2, Day -1, OR Day 0
+- 99 = Unknown
+
 **Summary:**
+
+```{r}
+data_with_major_surgery <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(
+    str_major_surgery_0 = calc_str_major_surgery_0(
+      daily_surgery_m2,
+      daily_surgery_m1,
+      daily_surgery_0
+    )
+  )
+
+data_with_major_surgery |>
+  count(str_major_surgery_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+The following records have `daily_surgery_* == NA` with the corresponding `trx_* == 'Not Available'`. This satisfies the branching logic, but should these records be classified as `0 (No Surgery)` or queried?
+
+```{r}
+data_with_major_surgery |>
+  filter(is.na(str_major_surgery_0)) |>
+  select(
+    record_id,
+    daily_surgery_m2,
+    trx_m2,
+    daily_surgery_m1,
+    trx_m1,
+    daily_surgery_0,
+    trx_0
+  ) |>
+  gt()
+```
 
 ## (WIP) Dementia -- Streamlined DAG
 

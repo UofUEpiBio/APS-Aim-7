@@ -26,7 +26,7 @@ calc_sys_sepsis_0 <- function(
   ## Check if sepsis is present based on either documented presence or clinical judgement
   dplyr::case_when(
     sepsis_present == "No" | sepsis_clinical_judgement == "No" ~ 0,
-    # QUESITON: Should this be OR instead of AND?
+    # QUESTION: Should this be OR instead of AND?
     # - OR yields no NA (the only NA has NA for one and "Yes" for the other)
     # - If using OR, then which of this or the above condition should happen first?
     sepsis_present == "Yes" & sepsis_clinical_judgement == "Yes" ~ 1,

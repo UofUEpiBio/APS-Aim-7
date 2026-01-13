@@ -438,6 +438,8 @@ data_aps_component_vars |>
 
 #### 1. Temperature
 
+These records couldn't be scored because they are missing (NA) both `hightemp_vsorres` and `lowtemp_vsorres`. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored). The other has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `hightemp_vsorres` and `lowtemp_vsorres` technically satisfies the branching logic, but these should probably have values.
+
 ```{r}
 data_aps_component_vars |>
   filter(is.na(aps_temp_score)) |>
@@ -451,6 +453,8 @@ data_aps_component_vars |>
 ```
 
 #### 2. Mean Arterial Pressure (MAP)
+
+These records couldn't be scored because they are missing (NA) both `lowsysbp_vsorres` and `lowdbp_vsorres`. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored). Of the others, one has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `lowsysbp_vsorres` and `lowdbp_vsorres` technically satisfies the branching logic, but these should probably have values. This is the same record missing measurements for Temperature (above). The other has `vs_perf == 'Yes'`, so those missing values violate the branching logic.
 
 ```{r}
 data_aps_component_vars |>
@@ -466,6 +470,8 @@ data_aps_component_vars |>
 
 #### 3. Heart Rate
 
+These records couldn't be scored because they are missing (NA) both `highhr_vsorres` and `lowhr_vsorres`. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored). Of the others, one has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `highhr_vsorres` and `lowhr_vsorres` technically satisfies the branching logic, but these should probably have values. This is the same record missing measurements for Temperature (above).
+
 ```{r}
 data_aps_component_vars |>
   filter(is.na(aps_hr_score)) |>
@@ -479,6 +485,8 @@ data_aps_component_vars |>
 ```
 
 #### 4. Respiratory Rate
+
+These records couldn't be scored because they are missing (NA) both `highrr_vsorres` and `lowrr_vsorres`. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored). Of the others, one has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `highrr_vsorres` and `lowrr_vsorres` technically satisfies the branching logic, but these should probably have values. This is the same record missing measurements for Temperature (above).
 
 ```{r}
 data_aps_component_vars |>
@@ -535,6 +543,8 @@ data_aps_component_vars |>
 
 #### 7. Serum Sodium
 
+These records couldn't be scored because they are missing (NA) all pairs for `daily_na_nc_*`/`daily_na_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored), but the others should be queried.
+
 ```{r}
 data_aps_component_vars |>
   filter(is.na(aps_sodium_score)) |>
@@ -552,6 +562,8 @@ data_aps_component_vars |>
 
 #### 8. Serum Potassium
 
+These records couldn't be scored because they are missing (NA) all pairs for `daily_k_nc_*`/`daily_k_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored), but the others should be queried. These are the same records missing Serum Sodium (above).
+
 ```{r}
 data_aps_component_vars |>
   filter(is.na(aps_potassium_score)) |>
@@ -568,6 +580,10 @@ data_aps_component_vars |>
 ```
 
 #### 9. Serum Creatinine
+
+These records couldn't be scored because they are missing (NA) all pairs for `daily_cr_nc_*`/`daily_cr_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored), but the others should be queried. These are the same records missing Serum Sodium (above).
+
+These records are also missing values related to `sofa_base_renal_dysnfx`, but these appear to be valid. `13-0016` has `sofa_base_renal_dysnfx == 'No'`, so missing `sofa_unk` and `sofa_base_renal_chronic` satisfies the branching logic. And `63-0008` has `sofa_unk == '<b>Select here if pre-illness SOFA score information is unknown</b>'` (this data input should be a more readable value, but it is consistent throughout the dataset) so missing `sofa_base_renal_dysnfx` and `sofa_base_renal_chronic` satisfies the branching logic.
 
 ```{r}
 data_aps_component_vars |>
@@ -589,6 +605,10 @@ data_aps_component_vars |>
 
 #### 10. Hematocrit
 
+These records couldn't be scored. Three are missing (NA) all pairs for `daily_hct_nc_*`/`daily_hct_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored), but the others should be queried. These are the same records missing Serum Sodium (above).
+
+An additional record has `daily_hct_nc_* == 'Not Collected'` for all days. This satisfies the branching logic, but our formula doesn't know how to classify this record.
+
 ```{r}
 data_aps_component_vars |>
   filter(is.na(aps_hct_score)) |>
@@ -605,6 +625,8 @@ data_aps_component_vars |>
 ```
 
 #### 11. White Blood Cell Count
+
+These records couldn't be scored because they are missing (NA) all pairs for `daily_wbc_nc_*`/`daily_wbc_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored), but the others should be queried. These are the same records missing Serum Sodium (above).
 
 ```{r}
 data_aps_component_vars |>
@@ -658,6 +680,8 @@ data_aps_var |>
 ```
 
 ### Full Variable Unknown/Missing Values
+
+This better highlights the records that couldn't be classified under the Global Physiology Severity DAG. Only one record (`52-0023`, excluded from the dataset) is missing all components of the APS score. The others are missing several components, often with a given record missing several related components.
 
 ```{r}
 data_aps_var |>
