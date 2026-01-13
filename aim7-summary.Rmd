@@ -228,12 +228,62 @@ After checking the branching logic, it appears there are no unknown or missing v
 
 Currently calculated the same as Systematic DAG: Presence of ARDS Syndrome (see above).
 
-## (WIP) Presence of Pneumonia Syndrome -- Systematic DAG
+## Presence of Pneumonia Syndrome -- Systematic DAG
 
 **Variable Definition:**
 
+Binary indicator variable:
+
+- 0 = Syndrome not present OR syndrome not present on or before Day 0
+- 1 = Syndrome present AND syndrome present on or before Day 0
+- 99 = Unknown
+
 **Summary:**
 
+```{r}
+# Get enrollment times
+data_enrollment <- data |>
+  filter(event_label == 'Day 0') |>
+  select(record_id, enrollment_time)
+
+# Join with PNA data
+data_with_pneumonia <- data |>
+  filter(event_label == 'Syndrome Adjudication') |>
+  select(
+    record_id,
+    pna_clinical_judgement,
+    pna_date
+    ) |>
+  left_join(data_enrollment, by = 'record_id') |>
+  mutate(
+    sys_pneumonia_0 = calc_sys_pneumonia_0(
+      pna_clinical_judgement,
+      pna_date,
+      enrollment_time
+    )
+  )
+
+data_with_pneumonia |>
+  count(sys_pneumonia_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+### Unknown/Missing Values
+
+```{r}
+data_with_pneumonia |>
+  filter(sys_pneumonia_0 == 99) |>
+  select(
+    record_id,
+    pna_clinical_judgement,
+    pna_date,
+    enrollment_time
+  ) |>
+  gt()
+```
 
 ## Presence of Pneumonia Syndrome -- Streamlined DAG
 
