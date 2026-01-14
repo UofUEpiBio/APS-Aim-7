@@ -381,83 +381,812 @@ data_with_major_surgery |>
   gt()
 ```
 
-## (WIP) Dementia -- Streamlined DAG
+## Dementia -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable:
+
+- 0 = No dementia history
+- 1 = Dementia history
+- 99 = Unknown
+
 **Summary:**
 
-## (WIP) Acute Allergic Reaction -- Streamlined DAG
+```{r}
+data_with_dementia <- data |>
+  filter(event_label == 'Day 0') |>
+  mutate(
+    str_dementia_0 = calc_str_dementia_0(
+      m_neurologic_conditions___1,
+      m_neurologic
+    )
+  )
+
+data_with_dementia |>
+  count(str_dementia_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because `m_neurologic == "Unknown"`:
+
+```{r}
+data_with_dementia |>
+  filter(str_dementia_0 == 99) |>
+  select(
+    record_id,
+    m_neurologic_conditions___1,
+    m_neurologic
+  ) |>
+  gt()
+```
+
+One record was missing (NA) `m_neurologic`, but this is the same record missing from the N=500 dataset and does not need to be queried further.
+
+## (WIP - STARTED) Acute Allergic Reaction -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable:
+
+- 0 = No suspected anaphylaxis if `organ_dysnfx_cause` = 1, 3, OR 99 OR
+      `organ_dysnfx_inflam` is not related to allergic reaction or anaphylaxis
+- 1 = Suspected anaphylaxis if `organ_dysnfx_cause` = 2 AND
+      `organ_dysnfx_inflam` is related to allergic reaction or anaphylaxis
+
 **Summary:**
 
-## (WIP) Diffuse Alveolar Hemorrhage -- Streamlined DAG
+```{r}
+data_with_allergic <- data |>
+  filter(event_label == 'Syndrome Adjudication') |>
+  mutate(
+    str_acute_allergic_reaction_0 = calc_str_acute_allergic_reaction_0(
+      organ_dysfnx_cause,
+      organ_dysfnx_inflam_descr
+    )
+  )
+
+data_with_allergic |>
+  count(str_acute_allergic_reaction_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_allergic |>
+  filter(str_acute_allergic_reaction_0 == 99) |>
+  select(
+    record_id,
+    organ_dysfnx_cause,
+    organ_dysfnx_inflam_descr
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_allergic |>
+  filter(is.na(str_acute_allergic_reaction_0)) |>
+  select(
+    record_id,
+    organ_dysfnx_cause,
+    organ_dysfnx_inflam_descr
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) Diffuse Alveolar Hemorrhage -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable (likely not used in primary analysis):
+
+- 0 = No DAH if `organ_dysnfx_cause` = 1, 3, OR 99 OR
+      `organ_dysnfx_inflam` is not related to DAH
+- 1 = Suspected DAH if `organ_dysnfx_cause` = 2 AND
+      `organ_dysnfx_inflam` is related to DAH
+
 **Summary:**
 
-## (WIP) Acute Inflammatory Drug Toxicity -- Streamlined DAG
+```{r}
+data_with_dah <- data |>
+  filter(event_label == 'Syndrome Adjudication') |>
+  mutate(
+    str_dah_0 = calc_str_dah_0(
+      organ_dysfnx_cause,
+      organ_dysfnx_inflam_descr
+    )
+  )
+
+data_with_dah |>
+  count(str_dah_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_dah |>
+  filter(str_dah_0 == 99) |>
+  select(
+    record_id,
+    organ_dysfnx_cause,
+    organ_dysfnx_inflam_descr
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_dah |>
+  filter(is.na(str_dah_0)) |>
+  select(
+    record_id,
+    organ_dysfnx_cause,
+    organ_dysfnx_inflam_descr
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) Acute Inflammatory Drug Toxicity -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable (likely not used in primary analysis):
+
+- 0 = No acute inflammatory drug reaction if `organ_dysnfx_cause` = 1, 3, OR 99 OR
+      `organ_dysnfx_inflam` is not related to acute inflammatory drug reaction
+- 1 = Suspected acute inflammatory drug reaction if `organ_dysnfx_cause` = 2 AND
+      `organ_dysnfx_inflam` is related to acute inflammatory drug reaction
+
 **Summary:**
 
-## (WIP) Acute Cryptogenic Organizing Pneumonia -- Streamlined DAG
+```{r}
+data_with_drug_toxicity <- data |>
+  filter(event_label == 'Syndrome Adjudication') |>
+  mutate(
+    str_drug_toxicity_0 = calc_str_drug_toxicity_0(
+      organ_dysfnx_cause,
+      organ_dysfnx_inflam_descr
+    )
+  )
+
+data_with_drug_toxicity |>
+  count(str_drug_toxicity_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_drug_toxicity |>
+  filter(str_drug_toxicity_0 == 99) |>
+  select(
+    record_id,
+    organ_dysfnx_cause,
+    organ_dysfnx_inflam_descr
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_drug_toxicity |>
+  filter(is.na(str_drug_toxicity_0)) |>
+  select(
+    record_id,
+    organ_dysfnx_cause,
+    organ_dysfnx_inflam_descr
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) Acute Cryptogenic Organizing Pneumonia -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable (likely not used in primary analysis):
+
+- 0 = No acute COP if `organ_dysnfx_cause` = 1, 3, OR 99 OR
+      `organ_dysnfx_inflam` is not related to acute COP
+- 1 = Suspected acute COP if `organ_dysnfx_cause` = 2 AND
+      `organ_dysnfx_inflam` is related to acute COP
+
 **Summary:**
 
-## (WIP) SCAP Criterion Respiratory Rate -- Streamlined DAG
+```{r}
+data_with_cop <- data |>
+  filter(event_label == 'Syndrome Adjudication') |>
+  mutate(
+    str_cop_0 = calc_str_cop_0(
+      organ_dysfnx_cause,
+      organ_dysfnx_inflam_descr
+    )
+  )
+
+data_with_cop |>
+  count(str_cop_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_cop |>
+  filter(str_cop_0 == 99) |>
+  select(
+    record_id,
+    organ_dysfnx_cause,
+    organ_dysfnx_inflam_descr
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_cop |>
+  filter(is.na(str_cop_0)) |>
+  select(
+    record_id,
+    organ_dysfnx_cause,
+    organ_dysfnx_inflam_descr
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) SCAP Criterion Respiratory Rate -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable using Day 0 daily value. If that's not available, use last
+value carried forward from Day -1 or Day -2:
+
+- 0 = Respiratory rate ≤ 30
+- 1 = Respiratory rate > 30
+
 **Summary:**
 
-## (WIP) SCAP Criterion BUN Value -- Streamlined DAG
+```{r}
+data_with_scap_rr <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(
+    str_scap_rr_0 = calc_str_scap_rr_0(
+      daily_resp_rate_8a_0,
+      daily_resp_rate_8a_m1,
+      daily_resp_rate_8a_m2
+    )
+  )
+
+data_with_scap_rr |>
+  count(str_scap_rr_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_scap_rr |>
+  filter(str_scap_rr_0 == 99) |>
+  select(
+    record_id,
+    daily_resp_rate_8a_0,
+    daily_resp_rate_8a_m1,
+    daily_resp_rate_8a_m2
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_scap_rr |>
+  filter(is.na(str_scap_rr_0)) |>
+  select(
+    record_id,
+    daily_resp_rate_8a_0,
+    daily_resp_rate_8a_m1,
+    daily_resp_rate_8a_m2
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) SCAP Criterion BUN Value -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable using Day 0 daily value. If that's not available, use last
+value carried forward from Day -1 or Day -2:
+
+- 0 = BUN ≤ 30 mg/dL
+- 1 = BUN > 30 mg/dL
+
 **Summary:**
 
-## (WIP) SCAP Criterion Acidosis -- Streamlined DAG
+```{r}
+data_with_scap_bun <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(
+    str_scap_bun_0 = calc_str_scap_bun_0(
+      daily_bun_8a_0,
+      daily_bun_8a_m1,
+      daily_bun_8a_m2
+    )
+  )
+
+data_with_scap_bun |>
+  count(str_scap_bun_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_scap_bun |>
+  filter(str_scap_bun_0 == 99) |>
+  select(
+    record_id,
+    daily_bun_8a_0,
+    daily_bun_8a_m1,
+    daily_bun_8a_m2
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_scap_bun |>
+  filter(is.na(str_scap_bun_0)) |>
+  select(
+    record_id,
+    daily_bun_8a_0,
+    daily_bun_8a_m1,
+    daily_bun_8a_m2
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) SCAP Criterion Acidosis -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable using Day 0 daily lowest. If that's not available, use last
+value carried forward from Day -1 or Day -2:
+
+- 0 = pH ≥ 7.30
+- 1 = pH < 7.30
+
 **Summary:**
 
-## (WIP) SCAP Criterion Bilateral Opacities -- Streamlined DAG
+```{r}
+data_with_scap_acidosis <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(
+    str_scap_acidosis_0 = calc_str_scap_acidosis_0(
+      daily_ph_lowest_0,
+      daily_ph_lowest_m1,
+      daily_ph_lowest_m2
+    )
+  )
+
+data_with_scap_acidosis |>
+  count(str_scap_acidosis_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_scap_acidosis |>
+  filter(str_scap_acidosis_0 == 99) |>
+  select(
+    record_id,
+    daily_ph_lowest_0,
+    daily_ph_lowest_m1,
+    daily_ph_lowest_m2
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_scap_acidosis |>
+  filter(is.na(str_scap_acidosis_0)) |>
+  select(
+    record_id,
+    daily_ph_lowest_0,
+    daily_ph_lowest_m1,
+    daily_ph_lowest_m2
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) SCAP Criterion Bilateral Opacities -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable using imaging from the syndrome adjudication form:
+
+- 0 = No bilateral opacities if all `*_opacity` values are not "2"
+- 1 = Yes bilateral opacities if any one of listed `*_opacity` values are "2"
+
 **Summary:**
 
-## (WIP) SCAP Criterion Leukopenia -- Streamlined DAG
+```{r}
+data_with_scap_bilat_opac <- data |>
+  filter(event_label == 'Syndrome Adjudication') |>
+  mutate(
+    str_scap_bilateral_opacities_0 = calc_str_scap_bilateral_opacities_0(
+      cxr_dm2_available,
+      cxr_dm2_opacity,
+      ct_dm2_available,
+      ct_dm2_opacity,
+      cxr_dm1_available,
+      cxr_dm1_opacity,
+      ct_dm1_available,
+      ct_dm1_opacity,
+      cxr_d0_available,
+      cxr_d0_opacity,
+      ct_d0_available,
+      ct_d0_opacity
+    )
+  )
+
+data_with_scap_bilat_opac |>
+  count(str_scap_bilateral_opacities_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_scap_bilat_opac |>
+  filter(str_scap_bilateral_opacities_0 == 99) |>
+  select(
+    record_id,
+    cxr_dm2_available,
+    cxr_dm2_opacity,
+    ct_dm2_available,
+    ct_dm2_opacity,
+    cxr_dm1_available,
+    cxr_dm1_opacity,
+    ct_dm1_available,
+    ct_dm1_opacity,
+    cxr_d0_available,
+    cxr_d0_opacity,
+    ct_d0_available,
+    ct_d0_opacity
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_scap_bilat_opac |>
+  filter(is.na(str_scap_bilateral_opacities_0)) |>
+  select(
+    record_id,
+    cxr_dm2_available,
+    cxr_dm2_opacity,
+    ct_dm2_available,
+    ct_dm2_opacity,
+    cxr_dm1_available,
+    cxr_dm1_opacity,
+    ct_dm1_available,
+    ct_dm1_opacity,
+    cxr_d0_available,
+    cxr_d0_opacity,
+    ct_d0_available,
+    ct_d0_opacity
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) SCAP Criterion Leukopenia -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable using Day 0 value from daily assessment data. If that's not
+available, use last value carried forward from Day -1 or Day -2:
+
+- 0 = WBC ≥ 4
+- 1 = WBC < 4
+
 **Summary:**
 
-## (WIP) SCAP Criterion Thrombocytopenia -- Streamlined DAG
+```{r}
+data_with_scap_leukopenia <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(
+    str_scap_leukopenia_0 = calc_str_scap_leukopenia_0(
+      daily_wbc_8a_0,
+      daily_wbc_8a_m1,
+      daily_wbc_8a_m2
+    )
+  )
+
+data_with_scap_leukopenia |>
+  count(str_scap_leukopenia_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_scap_leukopenia |>
+  filter(str_scap_leukopenia_0 == 99) |>
+  select(
+    record_id,
+    daily_wbc_8a_0,
+    daily_wbc_8a_m1,
+    daily_wbc_8a_m2
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_scap_leukopenia |>
+  filter(is.na(str_scap_leukopenia_0)) |>
+  select(
+    record_id,
+    daily_wbc_8a_0,
+    daily_wbc_8a_m1,
+    daily_wbc_8a_m2
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) SCAP Criterion Thrombocytopenia -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable using Day 0 value from daily assessment data. If that's not
+available, use last value carried forward from Day -1 or Day -2:
+
+- 0 = Platelets ≥ 100
+- 1 = Platelets < 100
+
 **Summary:**
 
-## (WIP) SCAP Criterion Hypothermia -- Streamlined DAG
+```{r}
+data_with_scap_thrombocyt <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(
+    str_scap_thrombocytopenia_0 = calc_str_scap_thrombocytopenia_0(
+      daily_platelet_8a_0,
+      daily_platelet_8a_m1,
+      daily_platelet_8a_m2
+    )
+  )
+
+data_with_scap_thrombocyt |>
+  count(str_scap_thrombocytopenia_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_scap_thrombocyt |>
+  filter(str_scap_thrombocytopenia_0 == 99) |>
+  select(
+    record_id,
+    daily_platelet_8a_0,
+    daily_platelet_8a_m1,
+    daily_platelet_8a_m2
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_scap_thrombocyt |>
+  filter(is.na(str_scap_thrombocytopenia_0)) |>
+  select(
+    record_id,
+    daily_platelet_8a_0,
+    daily_platelet_8a_m1,
+    daily_platelet_8a_m2
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) SCAP Criterion Hypothermia -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable from the "Vital signs day 0" form. If that's not available,
+use last value carried forward from Day -1 or Day -2:
+
+- 0 = Temperature ≥ 35.0°C
+- 1 = Temperature < 35.0°C
+
 **Summary:**
 
-## (WIP) Chronic Neuromuscular Disease -- Streamlined DAG
+```{r}
+data_with_scap_hypothermia <- data |>
+  filter(event_label == 'Day 0') |>
+  mutate(
+    str_scap_hypothermia_0 = calc_str_scap_hypothermia_0(
+      lowtemp_vsorres,
+      lowtemp_vsorres_m1,
+      lowtemp_vsorres_m2
+    )
+  )
+
+data_with_scap_hypothermia |>
+  count(str_scap_hypothermia_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_scap_hypothermia |>
+  filter(str_scap_hypothermia_0 == 99) |>
+  select(
+    record_id,
+    lowtemp_vsorres,
+    lowtemp_vsorres_m1,
+    lowtemp_vsorres_m2
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_scap_hypothermia |>
+  filter(is.na(str_scap_hypothermia_0)) |>
+  select(
+    record_id,
+    lowtemp_vsorres,
+    lowtemp_vsorres_m1,
+    lowtemp_vsorres_m2
+  ) |>
+  gt()
+```
+
+## (WIP - STARTED) Chronic Neuromuscular Disease -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable:
+
+- 0 = No chronic neuromuscular disease history
+- 1 = Chronic neuromuscular disease history
+- 99 = Unknown
+
 **Summary:**
+
+```{r}
+data_with_neuromuscular <- data |>
+  filter(event_label == 'Day 0') |>
+  mutate(
+    str_neuromuscular_disease_0 = calc_str_neuromuscular_disease_0(
+      m_neurologic_conditions___6,
+      m_neurologic
+    )
+  )
+
+data_with_neuromuscular |>
+  count(str_neuromuscular_disease_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_neuromuscular |>
+  filter(str_neuromuscular_disease_0 == 99) |>
+  select(
+    record_id,
+    m_neurologic_conditions___6,
+    m_neurologic
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_neuromuscular |>
+  filter(is.na(str_neuromuscular_disease_0)) |>
+  select(
+    record_id,
+    m_neurologic_conditions___6,
+    m_neurologic
+  ) |>
+  gt()
+```
 
 ## (WIP) PSI Score -- Streamlined DAG
 
@@ -465,8 +1194,68 @@ data_with_major_surgery |>
 
 **Summary:**
 
-## (WIP) Active Vasculitis -- Streamlined DAG
+## (WIP - STARTED) Active Vasculitis -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary variable:
+
+- 0 = No vasculitis history if has no history of vasculitis OR (has no current
+      immunosuppression for nontransplant/non-cancer condition AND has no
+      current chronic steroids)
+- 1 = Vasculitis history if has history of vasculitis AND (has current
+      immunosuppression for nontransplant/non-cancer condition OR has current
+      chronic steroids)
+- 99 = Unknown
+
 **Summary:**
+
+```{r}
+data_with_vasculitis <- data |>
+  filter(event_label == 'Day 0') |>
+  mutate(
+    str_vasculitis_0 = calc_str_vasculitis_0(
+      m_rheum_conditions___8,
+      m_immunosup_conditions___4,
+      mhccster
+    )
+  )
+
+data_with_vasculitis |>
+  count(str_vasculitis_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because TODO
+
+```{r}
+data_with_vasculitis |>
+  filter(str_vasculitis_0 == 99) |>
+  select(
+    record_id,
+    m_rheum_conditions___8,
+    m_immunosup_conditions___4,
+    mhccster
+  ) |>
+  gt()
+```
+
+These records were missing (NA) because TODO
+
+```{r}
+data_with_vasculitis |>
+  filter(is.na(str_vasculitis_0)) |>
+  select(
+    record_id,
+    m_rheum_conditions___8,
+    m_immunosup_conditions___4,
+    mhccster
+  ) |>
+  gt()
+```
