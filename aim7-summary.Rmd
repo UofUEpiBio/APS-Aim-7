@@ -466,26 +466,27 @@ data_with_allergic |>
 
 After checking the branching logic, it appears there are no unknown or missing values for this variable.
 
-## (WIP - STARTED) Diffuse Alveolar Hemorrhage -- Streamlined DAG
+## Diffuse Alveolar Hemorrhage -- Streamlined DAG
 
 **Variable Definition:**
 
 Binary variable (likely not used in primary analysis):
 
-- 0 = No DAH if `organ_dysnfx_cause` = 1, 3, OR 99 OR
-      `organ_dysnfx_inflam` is not related to DAH
-- 1 = Suspected DAH if `organ_dysnfx_cause` = 2 AND
-      `organ_dysnfx_inflam` is related to DAH
+- 0 = No DAH if `organ_dysnfx_cause` = 1, 3, OR 99
+- 1 = Suspected DAH if `organ_dysnfx_cause` = 2
 
 **Summary:**
 
 ```{r}
 data_with_dah <- data |>
   filter(event_label == 'Syndrome Adjudication') |>
+  left_join(
+    get_code_label_map('organ_dysfnx_cause', dictionary),
+    by = 'organ_dysfnx_cause'
+  ) |>
   mutate(
     str_dah_0 = calc_str_dah_0(
-      organ_dysfnx_cause,
-      organ_dysfnx_inflam_descr
+      organ_dysfnx_cause_code
     )
   )
 
@@ -500,52 +501,29 @@ data_with_dah |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
+After checking the branching logic, it appears there are no unknown or missing values for this variable.
 
-```{r}
-data_with_dah |>
-  filter(str_dah_0 == 99) |>
-  select(
-    record_id,
-    organ_dysfnx_cause,
-    organ_dysfnx_inflam_descr
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
-
-```{r}
-data_with_dah |>
-  filter(is.na(str_dah_0)) |>
-  select(
-    record_id,
-    organ_dysfnx_cause,
-    organ_dysfnx_inflam_descr
-  ) |>
-  gt()
-```
-
-## (WIP - STARTED) Acute Inflammatory Drug Toxicity -- Streamlined DAG
+## Acute Inflammatory Drug Toxicity -- Streamlined DAG
 
 **Variable Definition:**
 
 Binary variable (likely not used in primary analysis):
 
-- 0 = No acute inflammatory drug reaction if `organ_dysnfx_cause` = 1, 3, OR 99 OR
-      `organ_dysnfx_inflam` is not related to acute inflammatory drug reaction
-- 1 = Suspected acute inflammatory drug reaction if `organ_dysnfx_cause` = 2 AND
-      `organ_dysnfx_inflam` is related to acute inflammatory drug reaction
+- 0 = No acute inflammatory drug reaction if `organ_dysnfx_cause` = 1, 3, OR 99
+- 1 = Suspected acute inflammatory drug reaction if `organ_dysnfx_cause` = 2
 
 **Summary:**
 
 ```{r}
 data_with_drug_toxicity <- data |>
   filter(event_label == 'Syndrome Adjudication') |>
+  left_join(
+    get_code_label_map('organ_dysfnx_cause', dictionary),
+    by = 'organ_dysfnx_cause'
+  ) |>
   mutate(
     str_drug_toxicity_0 = calc_str_drug_toxicity_0(
-      organ_dysfnx_cause,
-      organ_dysfnx_inflam_descr
+      organ_dysfnx_cause_code
     )
   )
 
@@ -560,52 +538,29 @@ data_with_drug_toxicity |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
+After checking the branching logic, it appears there are no unknown or missing values for this variable.
 
-```{r}
-data_with_drug_toxicity |>
-  filter(str_drug_toxicity_0 == 99) |>
-  select(
-    record_id,
-    organ_dysfnx_cause,
-    organ_dysfnx_inflam_descr
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
-
-```{r}
-data_with_drug_toxicity |>
-  filter(is.na(str_drug_toxicity_0)) |>
-  select(
-    record_id,
-    organ_dysfnx_cause,
-    organ_dysfnx_inflam_descr
-  ) |>
-  gt()
-```
-
-## (WIP - STARTED) Acute Cryptogenic Organizing Pneumonia -- Streamlined DAG
+## Acute Cryptogenic Organizing Pneumonia -- Streamlined DAG
 
 **Variable Definition:**
 
 Binary variable (likely not used in primary analysis):
 
-- 0 = No acute COP if `organ_dysnfx_cause` = 1, 3, OR 99 OR
-      `organ_dysnfx_inflam` is not related to acute COP
-- 1 = Suspected acute COP if `organ_dysnfx_cause` = 2 AND
-      `organ_dysnfx_inflam` is related to acute COP
+- 0 = No acute COP if `organ_dysnfx_cause` = 1, 3, OR 99
+- 1 = Suspected acute COP if `organ_dysnfx_cause` = 2
 
 **Summary:**
 
 ```{r}
 data_with_cop <- data |>
   filter(event_label == 'Syndrome Adjudication') |>
+  left_join(
+    get_code_label_map('organ_dysfnx_cause', dictionary),
+    by = 'organ_dysfnx_cause'
+  ) |>
   mutate(
     str_cop_0 = calc_str_cop_0(
-      organ_dysfnx_cause,
-      organ_dysfnx_inflam_descr
+      organ_dysfnx_cause_code
     )
   )
 
@@ -620,31 +575,7 @@ data_with_cop |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
-
-```{r}
-data_with_cop |>
-  filter(str_cop_0 == 99) |>
-  select(
-    record_id,
-    organ_dysfnx_cause,
-    organ_dysfnx_inflam_descr
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
-
-```{r}
-data_with_cop |>
-  filter(is.na(str_cop_0)) |>
-  select(
-    record_id,
-    organ_dysfnx_cause,
-    organ_dysfnx_inflam_descr
-  ) |>
-  gt()
-```
+After checking the branching logic, it appears there are no unknown or missing values for this variable.
 
 ## (WIP - STARTED) SCAP Criterion Respiratory Rate -- Streamlined DAG
 
