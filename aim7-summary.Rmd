@@ -429,26 +429,27 @@ data_with_dementia |>
 
 One record was missing (NA) `m_neurologic`, but this is the same record missing from the N=500 dataset and does not need to be queried further.
 
-## (WIP - STARTED) Acute Allergic Reaction -- Streamlined DAG
+## Acute Allergic Reaction -- Streamlined DAG
 
 **Variable Definition:**
 
 Binary variable:
 
-- 0 = No suspected anaphylaxis if `organ_dysnfx_cause` = 1, 3, OR 99 OR
-      `organ_dysnfx_inflam` is not related to allergic reaction or anaphylaxis
-- 1 = Suspected anaphylaxis if `organ_dysnfx_cause` = 2 AND
-      `organ_dysnfx_inflam` is related to allergic reaction or anaphylaxis
+- 0 = No suspected anaphylaxis if `organ_dysnfx_cause` = 1, 3, OR 99
+- 1 = Suspected anaphylaxis if `organ_dysnfx_cause` = 2
 
 **Summary:**
 
 ```{r}
 data_with_allergic <- data |>
   filter(event_label == 'Syndrome Adjudication') |>
+  left_join(
+    get_code_label_map('organ_dysfnx_cause', dictionary),
+    by = 'organ_dysfnx_cause'
+  ) |>
   mutate(
     str_acute_allergic_reaction_0 = calc_str_acute_allergic_reaction_0(
-      organ_dysfnx_cause,
-      organ_dysfnx_inflam_descr
+      organ_dysfnx_cause_code
     )
   )
 
@@ -463,31 +464,7 @@ data_with_allergic |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
-
-```{r}
-data_with_allergic |>
-  filter(str_acute_allergic_reaction_0 == 99) |>
-  select(
-    record_id,
-    organ_dysfnx_cause,
-    organ_dysfnx_inflam_descr
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
-
-```{r}
-data_with_allergic |>
-  filter(is.na(str_acute_allergic_reaction_0)) |>
-  select(
-    record_id,
-    organ_dysfnx_cause,
-    organ_dysfnx_inflam_descr
-  ) |>
-  gt()
-```
+After checking the branching logic, it appears there are no unknown or missing values for this variable.
 
 ## (WIP - STARTED) Diffuse Alveolar Hemorrhage -- Streamlined DAG
 
