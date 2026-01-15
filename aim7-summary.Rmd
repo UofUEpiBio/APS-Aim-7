@@ -577,7 +577,7 @@ data_with_cop |>
 
 After checking the branching logic, it appears there are no unknown or missing values for this variable.
 
-## (WIP - STARTED) SCAP Criterion Respiratory Rate -- Streamlined DAG
+## SCAP Criterion Respiratory Rate -- Streamlined DAG
 
 **Variable Definition:**
 
@@ -611,35 +611,30 @@ data_with_scap_rr |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
-
-```{r}
-data_with_scap_rr |>
-  filter(str_scap_rr_0 == 99) |>
-  select(
-    record_id,
-    daily_resp_rate_8a_0,
-    daily_resp_rate_8a_m1,
-    daily_resp_rate_8a_m2
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
+These records were missing (NA) because they were missing all three `daily_resp_rate_8a_*` variables. Some of these have valid branching logic, while others have invalid branching logic.
 
 ```{r}
 data_with_scap_rr |>
   filter(is.na(str_scap_rr_0)) |>
   select(
     record_id,
+
+    daily_resp_8a_0,
+    daily_imv_mode_8a_0,
     daily_resp_rate_8a_0,
+
+    daily_resp_8a_m1,
+    daily_imv_mode_8a_m1,
     daily_resp_rate_8a_m1,
+
+    daily_resp_8a_m2,
+    daily_imv_mode_8a_m2,
     daily_resp_rate_8a_m2
   ) |>
   gt()
 ```
 
-## (WIP - STARTED) SCAP Criterion BUN Value -- Streamlined DAG
+## SCAP Criterion BUN Value -- Streamlined DAG
 
 **Variable Definition:**
 
@@ -673,35 +668,27 @@ data_with_scap_bun |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
-
-```{r}
-data_with_scap_bun |>
-  filter(str_scap_bun_0 == 99) |>
-  select(
-    record_id,
-    daily_bun_8a_0,
-    daily_bun_8a_m1,
-    daily_bun_8a_m2
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
+These records were missing (NA). Most of these are due to valid branching logic (daily_bun was 'Not Collected'), but a few records were missing all `daily_bun_nc_*`/`daily_bun_8a_*` pairs, which violates the branching logic (should be mutually exclusive).
 
 ```{r}
 data_with_scap_bun |>
   filter(is.na(str_scap_bun_0)) |>
   select(
     record_id,
+
+    daily_bun_nc_0,
     daily_bun_8a_0,
+
+    daily_bun_nc_m1,
     daily_bun_8a_m1,
+
+    daily_bun_nc_m2,
     daily_bun_8a_m2
   ) |>
   gt()
 ```
 
-## (WIP - STARTED) SCAP Criterion Acidosis -- Streamlined DAG
+## SCAP Criterion Acidosis -- Streamlined DAG
 
 **Variable Definition:**
 
@@ -735,30 +722,25 @@ data_with_scap_acidosis |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
-
-```{r}
-data_with_scap_acidosis |>
-  filter(str_scap_acidosis_0 == 99) |>
-  select(
-    record_id,
-    daily_ph_lowest_0,
-    daily_ph_lowest_m1,
-    daily_ph_lowest_m2
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
+These records were missing (NA) because they were missing all three `daily_ph_lowest_*` variables. Some of these have valid branching logic, while others have invalid branching logic.
 
 ```{r}
 data_with_scap_acidosis |>
   filter(is.na(str_scap_acidosis_0)) |>
   select(
     record_id,
+
+    dailysofa_perf_0,
+    daily_pao2_occur_0,
     daily_ph_lowest_0,
+
+    dailysofa_perf_m1,
+    daily_pao2_occur_m1,
     daily_ph_lowest_m1,
-    daily_ph_lowest_m2
+
+    dailysofa_perf_m2,
+    daily_pao2_occur_m2,
+    daily_ph_lowest_m2,
   ) |>
   gt()
 ```

@@ -56,6 +56,10 @@ is_unknown <- function(x) {
   x == "Unknown"
 }
 
+# Helper function: Get value with lookback (Day 0 -> Day -1 -> Day -2)
+get_value_with_lookback <- function(val_0, val_m1, val_m2) {
+  dplyr::coalesce(val_0, val_m1, val_m2)
+}
 
 
 ## SOFA score functions

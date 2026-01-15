@@ -454,11 +454,6 @@ calc_aps_score <- function(
 ## Helper Functions
 ## -----------------------------------------------------------------------------
 
-# Helper function: Get value with lookback (Day 0 -> Day -1 -> Day -2)
-get_value_with_lookback <- function(val_0, val_m1, val_m2) {
-  dplyr::coalesce(val_0, val_m1, val_m2)
-}
-
 #' Calculate FiO2 from respiratory support type
 #'
 #' Helper function to calculate FiO2 based on respiratory support type.
