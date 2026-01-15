@@ -985,7 +985,7 @@ data_with_scap_hypothermia |>
   gt()
 ```
 
-## (WIP - STARTED) Chronic Neuromuscular Disease -- Streamlined DAG
+## Chronic Neuromuscular Disease -- Streamlined DAG
 
 **Variable Definition:**
 
@@ -1018,7 +1018,7 @@ data_with_neuromuscular |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
+These records were classified as `99 (Unknown)` because `m_neurologic == 'Unknown'`:
 
 ```{r}
 data_with_neuromuscular |>
@@ -1031,18 +1031,7 @@ data_with_neuromuscular |>
   gt()
 ```
 
-These records were missing (NA) because TODO
-
-```{r}
-data_with_neuromuscular |>
-  filter(is.na(str_neuromuscular_disease_0)) |>
-  select(
-    record_id,
-    m_neurologic_conditions___6,
-    m_neurologic
-  ) |>
-  gt()
-```
+The only missing (NA) record is the same one missing from the N=500 dataset and doesn't need to be queried further.
 
 ## (WIP) PSI Score -- Streamlined DAG
 
@@ -1050,18 +1039,14 @@ data_with_neuromuscular |>
 
 **Summary:**
 
-## (WIP - STARTED) Active Vasculitis -- Streamlined DAG
+## Active Vasculitis -- Streamlined DAG
 
 **Variable Definition:**
 
 Binary variable:
 
-- 0 = No vasculitis history if has no history of vasculitis OR (has no current
-      immunosuppression for nontransplant/non-cancer condition AND has no
-      current chronic steroids)
-- 1 = Vasculitis history if has history of vasculitis AND (has current
-      immunosuppression for nontransplant/non-cancer condition OR has current
-      chronic steroids)
+- 0 = `m_rheum_conditions___8 == 'Unchecked'` OR (`m_immunosup_conditions___4 == 'Unchecked'` AND `mhccster == 'No'`)
+- 1 = `m_rheum_conditions___8 == 'Checked'` AND (`m_immunosup_conditions___4 == 'Checked'` OR `mhccster == 'Yes'`)
 - 99 = Unknown
 
 **Summary:**
@@ -1071,7 +1056,9 @@ data_with_vasculitis <- data |>
   filter(event_label == 'Day 0') |>
   mutate(
     str_vasculitis_0 = calc_str_vasculitis_0(
+      mhrheumd,
       m_rheum_conditions___8,
+      m_immunosuppression,
       m_immunosup_conditions___4,
       mhccster
     )
@@ -1088,30 +1075,20 @@ data_with_vasculitis |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
+These records were classified as `99 (Unknown)` because `mhrheumd`, `m_immunosuppression`, and/or `mhccster` are "Unknown".
 
 ```{r}
 data_with_vasculitis |>
   filter(str_vasculitis_0 == 99) |>
   select(
     record_id,
+    mhrheumd,
     m_rheum_conditions___8,
+    m_immunosuppression,
     m_immunosup_conditions___4,
     mhccster
   ) |>
   gt()
 ```
 
-These records were missing (NA) because TODO
-
-```{r}
-data_with_vasculitis |>
-  filter(is.na(str_vasculitis_0)) |>
-  select(
-    record_id,
-    m_rheum_conditions___8,
-    m_immunosup_conditions___4,
-    mhccster
-  ) |>
-  gt()
-```
+The only missing (NA) record is the same one missing from the N=500 dataset and doesn't need to be queried further.
