@@ -745,34 +745,58 @@ data_with_scap_acidosis |>
   gt()
 ```
 
-## (WIP - STARTED) SCAP Criterion Bilateral Opacities -- Streamlined DAG
+## SCAP Criterion Bilateral Opacities -- Streamlined DAG
 
 **Variable Definition:**
 
-Binary variable using imaging from the syndrome adjudication form:
+Binary variable:
 
-- 0 = No bilateral opacities if all `*_opacity` values are not "2"
-- 1 = Yes bilateral opacities if any one of listed `*_opacity` values are "2"
+- 0 = (all) `*_opacity != 2`
+- 1 = (any) `*_opacity == 2`
 
 **Summary:**
 
 ```{r}
 data_with_scap_bilat_opac <- data |>
   filter(event_label == 'Syndrome Adjudication') |>
+  left_join(
+    get_code_label_map("cxr_dm2_opacity", dictionary),
+    by = "cxr_dm2_opacity"
+  ) |>
+  left_join(
+    get_code_label_map("ct_dm2_opacity", dictionary),
+    by = "ct_dm2_opacity"
+  ) |>
+  left_join(
+    get_code_label_map("cxr_dm1_opacity", dictionary),
+    by = "cxr_dm1_opacity"
+  ) |>
+  left_join(
+    get_code_label_map("ct_dm1_opacity", dictionary),
+    by = "ct_dm1_opacity"
+  ) |>
+  left_join(
+    get_code_label_map("cxr_d0_opacity", dictionary),
+    by = "cxr_d0_opacity"
+  ) |>
+  left_join(
+    get_code_label_map("ct_d0_opacity", dictionary),
+    by = "ct_d0_opacity"
+  ) |>
   mutate(
     str_scap_bilateral_opacities_0 = calc_str_scap_bilateral_opacities_0(
       cxr_dm2_available,
-      cxr_dm2_opacity,
+      cxr_dm2_opacity_code,
       ct_dm2_available,
-      ct_dm2_opacity,
+      ct_dm2_opacity_code,
       cxr_dm1_available,
-      cxr_dm1_opacity,
+      cxr_dm1_opacity_code,
       ct_dm1_available,
-      ct_dm1_opacity,
+      ct_dm1_opacity_code,
       cxr_d0_available,
-      cxr_d0_opacity,
+      cxr_d0_opacity_code,
       ct_d0_available,
-      ct_d0_opacity
+      ct_d0_opacity_code
     )
   )
 
@@ -787,30 +811,7 @@ data_with_scap_bilat_opac |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
-
-```{r}
-data_with_scap_bilat_opac |>
-  filter(str_scap_bilateral_opacities_0 == 99) |>
-  select(
-    record_id,
-    cxr_dm2_available,
-    cxr_dm2_opacity,
-    ct_dm2_available,
-    ct_dm2_opacity,
-    cxr_dm1_available,
-    cxr_dm1_opacity,
-    ct_dm1_available,
-    ct_dm1_opacity,
-    cxr_d0_available,
-    cxr_d0_opacity,
-    ct_d0_available,
-    ct_d0_opacity
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
+These records were missing (NA).
 
 ```{r}
 data_with_scap_bilat_opac |>
@@ -833,15 +834,15 @@ data_with_scap_bilat_opac |>
   gt()
 ```
 
-## (WIP - STARTED) SCAP Criterion Leukopenia -- Streamlined DAG
+## SCAP Criterion Leukopenia -- Streamlined DAG
 
 **Variable Definition:**
 
 Binary variable using Day 0 value from daily assessment data. If that's not
 available, use last value carried forward from Day -1 or Day -2:
 
-- 0 = WBC ≥ 4
-- 1 = WBC < 4
+- 0 = WBC < 4
+- 1 = WBC >= 4
 
 **Summary:**
 
@@ -867,43 +868,34 @@ data_with_scap_leukopenia |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
-
-```{r}
-data_with_scap_leukopenia |>
-  filter(str_scap_leukopenia_0 == 99) |>
-  select(
-    record_id,
-    daily_wbc_8a_0,
-    daily_wbc_8a_m1,
-    daily_wbc_8a_m2
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
+These records were missing (NA) because they are missing all `daily_wbc_nc_*`/`daily_wbc_8a_*` pairs. This is invalid branching logic, because each pair is supposed to be mutually exclusive.
 
 ```{r}
 data_with_scap_leukopenia |>
   filter(is.na(str_scap_leukopenia_0)) |>
   select(
     record_id,
+    daily_wbc_nc_0,
     daily_wbc_8a_0,
+
+    daily_wbc_nc_m1,
     daily_wbc_8a_m1,
+
+    daily_wbc_nc_m2,
     daily_wbc_8a_m2
   ) |>
   gt()
 ```
 
-## (WIP - STARTED) SCAP Criterion Thrombocytopenia -- Streamlined DAG
+## SCAP Criterion Thrombocytopenia -- Streamlined DAG
 
 **Variable Definition:**
 
 Binary variable using Day 0 value from daily assessment data. If that's not
 available, use last value carried forward from Day -1 or Day -2:
 
-- 0 = Platelets ≥ 100
-- 1 = Platelets < 100
+- 0 = Platelets < 100
+- 1 = Platelets >= 100
 
 **Summary:**
 
@@ -929,35 +921,26 @@ data_with_scap_thrombocyt |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
-
-```{r}
-data_with_scap_thrombocyt |>
-  filter(str_scap_thrombocytopenia_0 == 99) |>
-  select(
-    record_id,
-    daily_platelet_8a_0,
-    daily_platelet_8a_m1,
-    daily_platelet_8a_m2
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
+These records were missing (NA) because they are missing all `daily_platelet_nc_*`/`daily_platelet_8a_*` pairs. This is invalid branching logic, because each pair is supposed to be mutually exclusive.
 
 ```{r}
 data_with_scap_thrombocyt |>
   filter(is.na(str_scap_thrombocytopenia_0)) |>
   select(
     record_id,
+    daily_platelet_nc_0,
     daily_platelet_8a_0,
+
+    daily_platelet_nc_m1,
     daily_platelet_8a_m1,
+
+    daily_platelet_nc_m2,
     daily_platelet_8a_m2
   ) |>
   gt()
 ```
 
-## (WIP - STARTED) SCAP Criterion Hypothermia -- Streamlined DAG
+## SCAP Criterion Hypothermia -- Streamlined DAG
 
 **Variable Definition:**
 
@@ -974,9 +957,7 @@ data_with_scap_hypothermia <- data |>
   filter(event_label == 'Day 0') |>
   mutate(
     str_scap_hypothermia_0 = calc_str_scap_hypothermia_0(
-      lowtemp_vsorres,
-      lowtemp_vsorres_m1,
-      lowtemp_vsorres_m2
+      lowtemp_vsorres
     )
   )
 
@@ -991,30 +972,15 @@ data_with_scap_hypothermia |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because TODO
-
-```{r}
-data_with_scap_hypothermia |>
-  filter(str_scap_hypothermia_0 == 99) |>
-  select(
-    record_id,
-    lowtemp_vsorres,
-    lowtemp_vsorres_m1,
-    lowtemp_vsorres_m2
-  ) |>
-  gt()
-```
-
-These records were missing (NA) because TODO
+These records were missing (NA) `lowtemp_vsorres`. One record is the one missing from the N=500 dataset (`52-0023`) and doesn't need to be queried. The other has `vs_perf == 'No'` so the missing `lowtemp_vsorres` is valid branching logic, but shouldn't it be here?
 
 ```{r}
 data_with_scap_hypothermia |>
   filter(is.na(str_scap_hypothermia_0)) |>
   select(
     record_id,
-    lowtemp_vsorres,
-    lowtemp_vsorres_m1,
-    lowtemp_vsorres_m2
+    vs_perf,
+    lowtemp_vsorres
   ) |>
   gt()
 ```
