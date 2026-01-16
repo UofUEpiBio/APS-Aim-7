@@ -26,9 +26,6 @@ calc_sys_ards_0 <- function(
   ## Check if ARDS is present based on either documented presence or clinical judgement
   dplyr::case_when(
     ards_present == "No" | ards_clinical_judgement == "No" ~ 0,
-    # QUESITON: Should this be OR instead of AND?
-    # - OR yields no NA (the only NA has NA for one and "Yes" for the other)
-    # - If using OR, then which of this or the above condition should happen first?
     ards_present == "Yes" & ards_clinical_judgement == "Yes" ~ 1,
     ards_clinical_judgement == "Unknown" ~ 99
   )

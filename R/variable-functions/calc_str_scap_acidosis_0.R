@@ -12,7 +12,7 @@
 #' @param daily_ph_lowest_m2 Numeric vector. Lowest pH on Day -2.
 #'
 #' @returns A numeric vector with values:
-#' - 0 = pH ≥ 7.30
+#' - 0 = pH >= 7.30
 #' - 1 = pH < 7.30
 #' @export
 calc_str_scap_acidosis_0 <- function(
@@ -26,7 +26,8 @@ calc_str_scap_acidosis_0 <- function(
 
   ## Apply SCAP criterion
   dplyr::case_when(
-    ph >= 7.30 ~ 0,
-    ph < 7.30 ~ 1
+    ph < 7.30 ~ 1,
+    # ph >= 7.30 or missing
+    TRUE ~ 0
   )
 }

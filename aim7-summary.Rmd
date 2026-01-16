@@ -179,7 +179,7 @@ data_with_sepsis |>
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because they were missing (NA) `sepsis_present` and have `sepsis_clinical_judgement == 'Unknown'`.
+These records were classified as `99 (Unknown)` because they were missing (NA) `sepsis_present` and have `sepsis_clinical_judgement == 'Unknown'`. These should be queried.
 
 ```{r}
 data_with_sepsis |>
@@ -192,7 +192,7 @@ data_with_sepsis |>
   gt()
 ```
 
-This record was missing (NA) `sepsis_present` but had `sepsis_clinical_judgement == 'Yes'`. According to the DAG formula, this is classified as NA. (see question in the function code).
+This record was missing (NA) `sepsis_present` but had `sepsis_clinical_judgement == 'Yes'`. This should be queried.
 
 ```{r}
 data_with_sepsis |>
@@ -238,7 +238,7 @@ data_with_ards |>
 
 ### Unknown/Missing Values
 
-After checking the branching logic, it appears there are no unknown or missing values for this variable.
+There are no unknown or missing values for this variable.
 
 
 ## Presence of ARDS Syndrome -- Streamlined DAG
@@ -251,32 +251,18 @@ Currently calculated the same as Systematic DAG: Presence of ARDS Syndrome (see 
 
 Binary indicator variable:
 
-- 0 = Syndrome not present OR syndrome not present on or before Day 0
-- 1 = Syndrome present AND syndrome present on or before Day 0
+- 0 = Syndrome not present on or before Day 0
+- 1 = Syndrome present on or before Day 0
 - 99 = Unknown
 
 **Summary:**
 
 ```{r}
-# Get enrollment times
-data_enrollment <- data |>
-  filter(event_label == 'Day 0') |>
-  select(record_id, enrollment_time)
-
-# Join with PNA data
 data_with_pneumonia <- data |>
   filter(event_label == 'Syndrome Adjudication') |>
-  select(
-    record_id,
-    pna_clinical_judgement,
-    pna_date
-    ) |>
-  left_join(data_enrollment, by = 'record_id') |>
   mutate(
     sys_pneumonia_0 = calc_sys_pneumonia_0(
-      pna_clinical_judgement,
-      pna_date,
-      enrollment_time
+      pna_clinical_judgement
     )
   )
 
@@ -290,16 +276,14 @@ data_with_pneumonia |>
 ```
 ### Unknown/Missing Values
 
-These records are missing `pna_date` and have `pna_clinical_judgement == "Unknown"` and are consequently assigned `99 (Unknown)`:
+These records have `pna_clinical_judgement == 'Unknown'`:
 
 ```{r}
 data_with_pneumonia |>
   filter(sys_pneumonia_0 == 99) |>
   select(
     record_id,
-    pna_clinical_judgement,
-    pna_date,
-    enrollment_time
+    pna_clinical_judgement
   ) |>
   gt()
 ```
@@ -338,7 +322,8 @@ Binary indicator variable:
 
 - 0 = No surgery on Day -2, Day -1, AND Day 0
 - 1 = Surgery on Day -2, Day -1, OR Day 0
-- 99 = Unknown
+
+**Note:** The surgery description fields aren't necessarily part of this variable, but they should be in the dataset, since they are defined in the dictionary. We will need to follow up to find out how we can get access to those fields. They may have been removed as part of de-identification.
 
 **Summary:**
 
@@ -364,22 +349,7 @@ data_with_major_surgery |>
 
 ### Unknown/Missing Values
 
-The following records have `daily_surgery_* == NA` with the corresponding `trx_* == 'Not Available'`. This satisfies the branching logic, but should these records be classified as `0 (No Surgery)` or queried?
-
-```{r}
-data_with_major_surgery |>
-  filter(is.na(str_major_surgery_0)) |>
-  select(
-    record_id,
-    daily_surgery_m2,
-    trx_m2,
-    daily_surgery_m1,
-    trx_m1,
-    daily_surgery_0,
-    trx_0
-  ) |>
-  gt()
-```
+No missing values for Major Recent Surgery.
 
 ## Dementia -- Streamlined DAG
 
@@ -438,6 +408,8 @@ Binary variable:
 - 0 = No suspected anaphylaxis if `organ_dysnfx_cause` = 1, 3, OR 99
 - 1 = Suspected anaphylaxis if `organ_dysnfx_cause` = 2
 
+**NOTE:** The variables "Acute Allergic Reaction", "Diffuse Alveolar Hemorrhage", "Acute Inflammatory Drug Toxicity", and "Acute Cryptogenic Organizing Pneumonia" are currently identical. This is because they require additional free-text information paired with `organ_dysnfx_cause == 2` to determine whether a patient meets criteria. These should be quick information gathered from physicians, but the team will need to determine how to best proceed.
+
 **Summary:**
 
 ```{r}
@@ -474,6 +446,8 @@ Binary variable (likely not used in primary analysis):
 
 - 0 = No DAH if `organ_dysnfx_cause` = 1, 3, OR 99
 - 1 = Suspected DAH if `organ_dysnfx_cause` = 2
+
+**NOTE:** The variables "Acute Allergic Reaction", "Diffuse Alveolar Hemorrhage", "Acute Inflammatory Drug Toxicity", and "Acute Cryptogenic Organizing Pneumonia" are currently identical. This is because they require additional free-text information paired with `organ_dysnfx_cause == 2` to determine whether a patient meets criteria. These should be quick information gathered from physicians, but the team will need to determine how to best proceed.
 
 **Summary:**
 
@@ -512,6 +486,8 @@ Binary variable (likely not used in primary analysis):
 - 0 = No acute inflammatory drug reaction if `organ_dysnfx_cause` = 1, 3, OR 99
 - 1 = Suspected acute inflammatory drug reaction if `organ_dysnfx_cause` = 2
 
+**NOTE:** The variables "Acute Allergic Reaction", "Diffuse Alveolar Hemorrhage", "Acute Inflammatory Drug Toxicity", and "Acute Cryptogenic Organizing Pneumonia" are currently identical. This is because they require additional free-text information paired with `organ_dysnfx_cause == 2` to determine whether a patient meets criteria. These should be quick information gathered from physicians, but the team will need to determine how to best proceed.
+
 **Summary:**
 
 ```{r}
@@ -548,6 +524,8 @@ Binary variable (likely not used in primary analysis):
 
 - 0 = No acute COP if `organ_dysnfx_cause` = 1, 3, OR 99
 - 1 = Suspected acute COP if `organ_dysnfx_cause` = 2
+
+**NOTE:** The variables "Acute Allergic Reaction", "Diffuse Alveolar Hemorrhage", "Acute Inflammatory Drug Toxicity", and "Acute Cryptogenic Organizing Pneumonia" are currently identical. This is because they require additional free-text information paired with `organ_dysnfx_cause == 2` to determine whether a patient meets criteria. These should be quick information gathered from physicians, but the team will need to determine how to best proceed.
 
 **Summary:**
 
@@ -641,7 +619,7 @@ data_with_scap_rr |>
 Binary variable using Day 0 daily value. If that's not available, use last
 value carried forward from Day -1 or Day -2:
 
-- 0 = BUN ≤ 30 mg/dL
+- 0 = BUN <= 30 mg/dL
 - 1 = BUN > 30 mg/dL
 
 **Summary:**
@@ -668,7 +646,7 @@ data_with_scap_bun |>
 
 ### Unknown/Missing Values
 
-These records were missing (NA). Most of these are due to valid branching logic (daily_bun was 'Not Collected'), but a few records were missing all `daily_bun_nc_*`/`daily_bun_8a_*` pairs, which violates the branching logic (should be mutually exclusive).
+These records were missing (NA). Most of these are due to valid branching logic (daily_bun was 'Not Collected'), but a few records were missing all `daily_bun_nc_*`/`daily_bun_8a_*` pairs, which violates the branching logic (should be mutually exclusive). These should be queried.
 
 ```{r}
 data_with_scap_bun |>
@@ -722,28 +700,7 @@ data_with_scap_acidosis |>
 
 ### Unknown/Missing Values
 
-These records were missing (NA) because they were missing all three `daily_ph_lowest_*` variables. Some of these have valid branching logic, while others have invalid branching logic.
-
-```{r}
-data_with_scap_acidosis |>
-  filter(is.na(str_scap_acidosis_0)) |>
-  select(
-    record_id,
-
-    dailysofa_perf_0,
-    daily_pao2_occur_0,
-    daily_ph_lowest_0,
-
-    dailysofa_perf_m1,
-    daily_pao2_occur_m1,
-    daily_ph_lowest_m1,
-
-    dailysofa_perf_m2,
-    daily_pao2_occur_m2,
-    daily_ph_lowest_m2,
-  ) |>
-  gt()
-```
+After checking the branching logic, it appears there are no unknown or missing values for this variable. That is, in part, because we treat missing `daily_ph_lowest_*` value as `0 (no Acidosis)`.
 
 ## SCAP Criterion Bilateral Opacities -- Streamlined DAG
 
@@ -841,8 +798,8 @@ data_with_scap_bilat_opac |>
 Binary variable using Day 0 value from daily assessment data. If that's not
 available, use last value carried forward from Day -1 or Day -2:
 
-- 0 = WBC < 4
-- 1 = WBC >= 4
+- 0 = WBC >= 4
+- 1 = WBC < 4
 
 **Summary:**
 
@@ -894,8 +851,8 @@ data_with_scap_leukopenia |>
 Binary variable using Day 0 value from daily assessment data. If that's not
 available, use last value carried forward from Day -1 or Day -2:
 
-- 0 = Platelets < 100
-- 1 = Platelets >= 100
+- 0 = Platelets >= 100
+- 1 = Platelets < 100
 
 **Summary:**
 
@@ -972,7 +929,7 @@ data_with_scap_hypothermia |>
 
 ### Unknown/Missing Values
 
-These records were missing (NA) `lowtemp_vsorres`. One record is the one missing from the N=500 dataset (`52-0023`) and doesn't need to be queried. The other has `vs_perf == 'No'` so the missing `lowtemp_vsorres` is valid branching logic, but shouldn't it be here?
+These records were missing (NA) `lowtemp_vsorres`. One record is the one missing from the N=500 dataset (`52-0023`) and doesn't need to be queried. The other has `vs_perf == 'No'` so the missing `lowtemp_vsorres` is valid branching logic, but since all patients should have their Day 0 vital signs, this should be queried.
 
 ```{r}
 data_with_scap_hypothermia |>

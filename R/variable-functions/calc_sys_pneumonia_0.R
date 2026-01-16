@@ -10,32 +10,20 @@
 #'
 #' @param pna_clinical_judgement Character vector. The `pna_clinical_judgement`
 #' column from the data. Possible values: "Yes", "No", "Unknown", or NA.
-#' @param pna_date Character vector. The `pna_date` column from the data.
-#' Time stamp or NA.
-#' @param enrollment_time Date/POSIXct vector. The enrollment time (Day 0).
 #'
 #' @returns A numeric vector with values:
-#' - 0 = Pneumonia syndrome not present or not present on/before Day 0
-#' - 1 = Pneumonia syndrome present on or before Day 0
+#' - 0 = Pneumonia syndrome not present on/before Day 0
+#' - 1 = Pneumonia syndrome present on/before Day 0
 #' - 99 = Unknown
 #' @export
 calc_sys_pneumonia_0 <- function(
-  pna_clinical_judgement,
-  pna_date,
-  enrollment_time
+  pna_clinical_judgement
   ) {
 
-  ## Check if pneumonia date is on or before Day 0
-  date_before_day0 <- !is.na(pna_date) & (pna_date <= enrollment_time)
-
   ## Determine pneumonia presence
-  ## QUESTION: Any reason we don't just use pna_clinical_judgement,
-  ## - since it explicitly captures on/before Day 0?
   dplyr::case_when(
-    pna_clinical_judgement == "No" | (pna_clinical_judgement == "Yes" & !date_before_day0) ~ 0,
-    #  QUESTION: Should this be OR instead of AND?
-    # - there are only 27 pna_date values and OR causes no change
-    pna_clinical_judgement == "Yes" & date_before_day0 ~ 1,
+    pna_clinical_judgement == "No" ~ 0,
+    pna_clinical_judgement == "Yes" ~ 1,
     pna_clinical_judgement == "Unknown" ~ 99
   )
 }

@@ -12,7 +12,7 @@
 #' @param daily_bun_8a_m2 Numeric vector. BUN on Day -2.
 #'
 #' @returns A numeric vector with values:
-#' - 0 = BUN ≤ 30 mg/dL
+#' - 0 = BUN <= 30 mg/dL
 #' - 1 = BUN > 30 mg/dL
 #' @export
 calc_str_scap_bun_0 <- function(

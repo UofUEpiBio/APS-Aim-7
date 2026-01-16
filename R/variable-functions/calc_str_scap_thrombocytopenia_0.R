@@ -12,8 +12,8 @@
 #' @param daily_platelet_8a_m2 Numeric vector. Platelet count on Day -2.
 #'
 #' @returns A numeric vector with values:
-#' - 0 = Platelets < 100
-#' - 1 = Platelets >= 100
+#' - 0 = Platelets >= 100
+#' - 1 = Platelets < 100
 #' @export
 calc_str_scap_thrombocytopenia_0 <- function(
   daily_platelet_8a_0,
@@ -25,9 +25,8 @@ calc_str_scap_thrombocytopenia_0 <- function(
   platelets <- get_value_with_lookback(daily_platelet_8a_0, daily_platelet_8a_m1, daily_platelet_8a_m2)
 
   ## Apply SCAP criterion
-  # QUESTION: Should these be reversed?
   dplyr::case_when(
-    platelets < 100 ~ 0,
-    platelets >= 100 ~ 1
+    platelets >= 100 ~ 0,
+    platelets < 100 ~ 1
   )
 }

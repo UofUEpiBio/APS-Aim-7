@@ -12,12 +12,10 @@
 #' @param lowtemp_vsorres_m2 Numeric vector. Lowest temperature on Day -2.
 #'
 #' @returns A numeric vector with values:
-#' # QUESTION: Verify this is 1 for temp < 35.0 (in DAG sheet it is temp = 35.0)
 #' - 0 = Temperature ≥ 35.0°C
 #' - 1 = Temperature < 35.0°C
 #' @export
 calc_str_scap_hypothermia_0 <- function(
-  # QUESTION: DAG sheet says do lookback, but there is no lookback for this value. what to do?
   lowtemp_vsorres
   ) {
 
