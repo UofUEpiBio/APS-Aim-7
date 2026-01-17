@@ -53,25 +53,29 @@ calc_str_scap_bilateral_opacities_0 <- function(
     ct_d0_opacity_code == "2"
   )
 
-  # QUESTION: How to handle missing imaging data?
-  # - Here I assume that all will have valid entries, but the vast majority are NA
-  # - for at least one of these fields
-  # - Should we just assign 0 if the first condition isn't met?
+  # Two methods were used in assembling these variables:
+  # Method 1 - cxr/ct_available indicates if imaging was done, with the result stored in cxr/ct_opacity (if present)
+  # Method 2 - cxr_opacity set to "00" or "0" indicates nothing was found for BOTH cxr and ct
+  # Thus we check both options for each day and if any day has invalid data, it should be queried
   has_no_opacity <- (
-    (cxr_dm2_available == "No" |
-    (cxr_dm2_available == "Yes" & cxr_dm2_opacity_code %in% c("00", "0", "1", "99"))) &
-    (ct_dm2_available == "No" |
-    (ct_dm2_available == "Yes" & ct_dm2_opacity_code %in% c("00", "0", "1", "99"))) &
 
-    (cxr_dm1_available == "No" |
-    (cxr_dm1_available == "Yes" & cxr_dm1_opacity_code %in% c("00", "0", "1", "99"))) &
-    (ct_dm1_available == "No" |
-    (ct_dm1_available == "Yes" & ct_dm1_opacity_code %in% c("00", "0", "1", "99"))) &
+    # Day -2
+    (
+      (cxr_dm2_opacity_code %in% c("00", "0", "1", "99")) |
+      (cxr_dm2_available %in% c("No", "Yes") & ct_dm2_available %in% c("No", "Yes"))
+    ) &
 
-    (cxr_d0_available == "No" |
-    (cxr_d0_available == "Yes" & cxr_d0_opacity_code %in% c("00", "0", "1", "99"))) &
-    (ct_d0_available == "No" |
-    (ct_d0_available == "Yes" & ct_d0_opacity_code %in% c("00", "0", "1", "99")))
+    # Day -1
+    (
+      (cxr_dm1_opacity_code %in% c("00", "0", "1", "99")) |
+      (cxr_dm1_available %in% c("No", "Yes") & ct_dm1_available %in% c("No", "Yes"))
+    ) &
+
+    # Day 0
+    (
+      (cxr_d0_opacity_code %in% c("00", "0", "1", "99")) |
+      (cxr_d0_available %in% c("No", "Yes") & ct_d0_available %in% c("No", "Yes"))
+    )
   )
 
   dplyr::case_when(

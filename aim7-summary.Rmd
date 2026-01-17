@@ -560,21 +560,87 @@ After checking the branching logic, it appears there are no unknown or missing v
 **Variable Definition:**
 
 Binary variable using Day 0 daily value. If that's not available, use last
-value carried forward from Day -1 or Day -2:
+value carried forward from Day -1 or Day -2.
 
 - 0 = Respiratory rate ≤ 30
 - 1 = Respiratory rate > 30
 
+Respiratory rate is based on the respiratory support type. Check the support type for Day 0 and look for the associated respiratory rate variable. If missing, repeat for Day -1 then again for Day -2. If still missing after that, treat as missing (NA). For ECMO without IMV (2), No resp support at all (7), Unknown (99) use `highrr_vsorres` (for all days, even though only measured on Day 0).
+
 **Summary:**
 
 ```{r}
+data_with_highrr_vsorres <- data |>
+  filter(event_label == 'Day 0') |>
+  select(
+    record_id,
+    highrr_vsorres
+  )
+
 data_with_scap_rr <- data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
+  left_join(
+    get_code_label_map("daily_resp_8a_0", dictionary),
+    by = "daily_resp_8a_0"
+  ) |>
+  left_join(
+    get_code_label_map("daily_resp_8a_m1", dictionary),
+    by = "daily_resp_8a_m1"
+  ) |>
+  left_join(
+    get_code_label_map("daily_resp_8a_m2", dictionary),
+    by = "daily_resp_8a_m2"
+  ) |>
+  select(
+    record_id,
+
+    daily_resp_8a_0_code,
+    daily_resp_8a_m1_code,
+    daily_resp_8a_m2_code,
+
+    daily_hfnc_rr_8a_0,
+    daily_hfnc_rr_8a_m1,
+    daily_hfnc_rr_8a_m2,
+
+    daily_niv_rr_8a_0,
+    daily_niv_rr_8a_m1,
+    daily_niv_rr_8a_m2,
+
+    daily_standard_rr_8a_0,
+    daily_standard_rr_8a_m1,
+    daily_standard_rr_8a_m2,
+
+    daily_resp_rate_8a_0,
+    daily_resp_rate_8a_m1,
+    daily_resp_rate_8a_m2
+  ) |>
+  left_join(
+    data_with_highrr_vsorres,
+    by = "record_id"
+  ) |>
   mutate(
     str_scap_rr_0 = calc_str_scap_rr_0(
+      daily_resp_8a_0_code,
+      daily_resp_8a_m1_code,
+      daily_resp_8a_m2_code,
+
+      daily_hfnc_rr_8a_0,
+      daily_hfnc_rr_8a_m1,
+      daily_hfnc_rr_8a_m2,
+
+      daily_niv_rr_8a_0,
+      daily_niv_rr_8a_m1,
+      daily_niv_rr_8a_m2,
+
+      daily_standard_rr_8a_0,
+      daily_standard_rr_8a_m1,
+      daily_standard_rr_8a_m2,
+
       daily_resp_rate_8a_0,
       daily_resp_rate_8a_m1,
-      daily_resp_rate_8a_m2
+      daily_resp_rate_8a_m2,
+
+      highrr_vsorres
     )
   )
 
@@ -589,25 +655,108 @@ data_with_scap_rr |>
 
 ### Unknown/Missing Values
 
-These records were missing (NA) because they were missing all three `daily_resp_rate_8a_*` variables. Some of these have valid branching logic, while others have invalid branching logic.
+There are 3 missing (NA) records for this variable:
 
 ```{r}
 data_with_scap_rr |>
   filter(is.na(str_scap_rr_0)) |>
+  select(record_id) |>
+  gt()
+```
+
+These reasons for missingness are similar for the records `45-0011` and `45-0015`. Both records have missing values that should be queried.
+
+- **Day 0:** Both missing a measurement for `daily_resp_rate_8a_0` in violation of the branching logic. Both have a `daily_resp_8a_0` (respiratory support type) of `3 (IMV without ECMO)`. According to the branching logic, this means they should both have a value for `daily_imv_mode_8a_0`. Record `45-0011` has a value, while `45-0015` does not. Record `45-0011` has `daily_imv_mode_8a_0 == 3 (PRVC/APV)`. According to the branching logic, this record should then have a `daily_resp_rate_8a_0` measurement, which it does not.
+- **Day -1:** Record `45-0015` has `daily_resp_8a_0 == 3 (IMV without ECMO)`, but with the same problems as Day 0. However, record `45-0011` has `daily_resp_8a_0 == 6 (Standard flow)`. According to the branching logic, this record should then have a value for `daily_resp_8a_m1`, but it is missing.
+- **Day -2:** Both records are missing `daily_resp_8a_m2` and everything that follows.
+
+
+```{r}
+data |>
+  filter(record_id %in% c('45-0011', '45-0015')) |>
+  left_join(
+    get_code_label_map("daily_resp_8a_0", dictionary),
+    by = "daily_resp_8a_0"
+  ) |>
+  left_join(
+    get_code_label_map("daily_resp_8a_m1", dictionary),
+    by = "daily_resp_8a_m1"
+  ) |>
+  left_join(
+    get_code_label_map("daily_resp_8a_m2", dictionary),
+    by = "daily_resp_8a_m2"
+  ) |>
+  filter(event_label %in% c("Daily In-Hospital Forms")) |>
   select(
     record_id,
 
+    # Day 0
+    daily_resp_8a_0_code,
     daily_resp_8a_0,
     daily_imv_mode_8a_0,
     daily_resp_rate_8a_0,
 
+    # Day -1
+    daily_resp_8a_m1_code,
     daily_resp_8a_m1,
-    daily_imv_mode_8a_m1,
     daily_resp_rate_8a_m1,
+    daily_standard_rr_8a_m1,
 
-    daily_resp_8a_m2,
-    daily_imv_mode_8a_m2,
-    daily_resp_rate_8a_m2
+    # Day -2
+    daily_resp_8a_m2_code,
+    daily_resp_8a_m2
+  ) |>
+  gt()
+```
+
+Record `63-0008` is different, in that it has `dailysofa_perf_* == 'Not Available'` for all three days. This technically satisfies the branching logic for having a missing `daily_resp_8a_0`. We either need to query this or adapt the variable definition to account for this. **Note:** If we choose to assign `dailysofa_perf_* == 'Not Available'` to `highrr_vsorres` (treating it like "no respiratory support"), then both of the other missing records (described above) will also be classified that way as they both have `dailysofa_perf_m2 == 'Not Available'`.
+
+```{r}
+data |>
+  filter(record_id == '63-0008') |>
+  filter(event_label %in% c("Daily In-Hospital Forms")) |>
+  select(
+    record_id,
+
+    dailysofa_perf_0,
+    daily_resp_8a_0,
+    dailysofa_perf_m1,
+    daily_resp_8a_m1,
+    dailysofa_perf_m2,
+    daily_resp_8a_m2
+  ) |>
+  gt()
+```
+
+
+```{r}
+data_with_scap_rr |>
+  filter(is.na(str_scap_rr_0)) |>
+  filter(record_id == '63-0008') |>
+  select(
+    record_id,
+
+    highrr_vsorres,
+
+    daily_resp_8a_0_code,
+    # daily_resp_8a_m1_code,
+    # daily_resp_8a_m2_code,
+
+    daily_hfnc_rr_8a_0,
+    # daily_hfnc_rr_8a_m1,
+    # daily_hfnc_rr_8a_m2,
+
+    daily_niv_rr_8a_0,
+    # daily_niv_rr_8a_m1,
+    # daily_niv_rr_8a_m2,
+
+    daily_standard_rr_8a_0,
+    # daily_standard_rr_8a_m1,
+    # daily_standard_rr_8a_m2,
+
+    daily_resp_rate_8a_0,
+    # daily_resp_rate_8a_m1,
+    # daily_resp_rate_8a_m2
   ) |>
   gt()
 ```
@@ -768,7 +917,7 @@ data_with_scap_bilat_opac |>
 
 ### Unknown/Missing Values
 
-These records were missing (NA).
+These records were missing (NA) imaging data for one or more days and should be queried.
 
 ```{r}
 data_with_scap_bilat_opac |>
