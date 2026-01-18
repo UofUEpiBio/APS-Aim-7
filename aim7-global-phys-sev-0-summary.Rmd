@@ -161,7 +161,7 @@ data_aps_vars <- data_day0_vars |>
 
 data_aps_vars <- data_aps_vars |>
   mutate(
-    # Calculate respiratory support type for day 0 (no lookback for now)
+    # Calculate respiratory support type for day 0
     resp_support_type_0 = calc_resp_support_type_0(
       daily_resp_8a_0_code = daily_resp_8a_0_code,
       dailysofa_perf_0 = dailysofa_perf_0,
@@ -170,6 +170,26 @@ data_aps_vars <- data_aps_vars |>
       daily_niv_fi02_8a_0 = daily_niv_fi02_8a_0,
       daily_imv_fio2_8a_0 = daily_imv_fio2_8a_0,
       daily_epap_8a_0 = daily_epap_8a_0
+    ),
+    # Calculate respiratory support type for day -1
+    resp_support_type_m1 = calc_resp_support_type_0(
+      daily_resp_8a_0_code = daily_resp_8a_m1_code,
+      dailysofa_perf_0 = dailysofa_perf_m1,
+      daily_standard_flow_8a_0 = daily_standard_flow_8a_m1,
+      daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_m1,
+      daily_niv_fi02_8a_0 = daily_niv_fi02_8a_m1,
+      daily_imv_fio2_8a_0 = daily_imv_fio2_8a_m1,
+      daily_epap_8a_0 = daily_epap_8a_m1
+    ),
+    # Calculate respiratory support type for day -2
+    resp_support_type_m2 = calc_resp_support_type_0(
+      daily_resp_8a_0_code = daily_resp_8a_m2_code,
+      dailysofa_perf_0 = dailysofa_perf_m2,
+      daily_standard_flow_8a_0 = daily_standard_flow_8a_m2,
+      daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_m2,
+      daily_niv_fi02_8a_0 = daily_niv_fi02_8a_m2,
+      daily_imv_fio2_8a_0 = daily_imv_fio2_8a_m2,
+      daily_epap_8a_0 = daily_epap_8a_m2
     )
   )
 ```
@@ -207,6 +227,8 @@ data_aps_component_vars <- data_aps_vars |>
   mutate(
     aps_oxy_score = calc_aps_oxy_score(
       resp_support_type_0 = resp_support_type_0,
+      resp_support_type_m1 = resp_support_type_m1,
+      resp_support_type_m2 = resp_support_type_m2,
 
       daily_resp_8a_0_code = daily_resp_8a_0_code,
       daily_resp_8a_m1_code = daily_resp_8a_m1_code,
@@ -502,44 +524,11 @@ data_aps_component_vars |>
 
 #### 5. Oxygenation (A-aDO2 or PaO2)
 
-```{r}
-data_aps_component_vars |>
-  filter(is.na(aps_oxy_score)) |>
-  select(
-    record_id,
-    dailysofa_perf_0,
-    dailysofa_perf_m1,
-    dailysofa_perf_m2,
-    resp_support_type_0,
-    daily_resp_8a_0_code,
-    daily_resp_8a_m1_code,
-    daily_resp_8a_m2_code,
-    daily_pa02_lowest_0,
-    daily_pa02_lowest_m1,
-    daily_pa02_lowest_m2,
-    daily_paco2_lowest_0,
-    daily_paco2_lowest_m1,
-    daily_paco2_lowest_m2
-  ) |>
-  gt()
-```
+No records are missing this component, since all missing measurements are imputed as normal (0 points). This is because the measurements for this component are commonly missing (and shouldn't be queried).
 
 #### 6. Arterial pH
 
-```{r}
-data_aps_component_vars |>
-  filter(is.na(aps_ph_score)) |>
-  select(
-    record_id,
-    dailysofa_perf_0,
-    dailysofa_perf_m1,
-    dailysofa_perf_m2,
-    daily_ph_lowest_0,
-    daily_ph_lowest_m1,
-    daily_ph_lowest_m2
-  ) |>
-  gt()
-```
+No records are missing this component, since all missing measurements are imputed as normal (0 points). This is because the measurements for this component are commonly missing (and shouldn't be queried).
 
 #### 7. Serum Sodium
 
@@ -681,23 +670,25 @@ data_aps_var |>
 
 ### Full Variable Unknown/Missing Values
 
-This better highlights the records that couldn't be classified under the Global Physiology Severity DAG. Only one record (`52-0023`, excluded from the dataset) is missing all components of the APS score. The others are missing several components, often with a given record missing several related components.
+In the final calculation of the full variable, we impute normal (0 points) for any missing component score. This is consistent with how the APS score is calculated for APACHE II. However, since we still want the capability of flagging records that are missing a component score due to missing data that must be queried, we impute normal for all components during the final calculation step.
+
+Below, we highlight the records that were otherwise missing their component score. Three component scores have no associated missing records: Oxygenation, Arterial pH, and GCS. Only one record (`52-0023`, excluded from the dataset) is missing all other components of the APS score. (this is the one record that is set to value of `0` in the Global Physiology Severity DAG). The others are missing several components, often with a given record missing several related components. All of these records should be queried for the missing data (e.g., `vs_perf == 0`, `nc/8a` mutual exclusivity, key labs labeled as 'Not Collected', etc.).
 
 ```{r}
 data_aps_var |>
   filter(
-    is.na(aps_score) & (
-      is.na(aps_temp_score) |
-      is.na(aps_map_score) |
-      is.na(aps_hr_score) |
-      is.na(aps_rr_score) |
-      is.na(aps_sodium_score) |
-      is.na(aps_potassium_score) |
-      is.na(aps_creatinine_score) |
-      is.na(aps_hct_score) |
-      is.na(aps_wbc_score) |
-      is.na(aps_gcs_score)
-    )
+    is.na(aps_temp_score) |
+    is.na(aps_map_score) |
+    is.na(aps_hr_score) |
+    is.na(aps_rr_score) |
+    is.na(aps_oxy_score) |
+    is.na(aps_ph_score) |
+    is.na(aps_sodium_score) |
+    is.na(aps_potassium_score) |
+    is.na(aps_creatinine_score) |
+    is.na(aps_hct_score) |
+    is.na(aps_wbc_score) |
+    is.na(aps_gcs_score)
   ) |>
   select(
     record_id,
@@ -705,28 +696,14 @@ data_aps_var |>
     aps_map_score,
     aps_hr_score,
     aps_rr_score,
+    aps_oxy_score,
+    aps_ph_score,
     aps_sodium_score,
     aps_potassium_score,
     aps_creatinine_score,
     aps_hct_score,
     aps_wbc_score,
     aps_gcs_score
-  ) |>
-  gt()
-```
-
-```{r}
-data_aps_var |>
-  filter(
-    is.na(aps_score) & (
-      is.na(aps_oxy_score) |
-      is.na(aps_ph_score)
-    )
-  ) |>
-  select(
-    record_id,
-    aps_oxy_score,
-    aps_ph_score
   ) |>
   gt()
 ```

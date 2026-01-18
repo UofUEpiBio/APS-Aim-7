@@ -109,6 +109,8 @@ calc_aps_rr_score <- function(
 # Uses A-aDO2 if FiO2 >= 0.5, else uses PaO2
 calc_aps_oxy_score <- function(
   resp_support_type_0,
+  resp_support_type_m1,
+  resp_support_type_m2,
 
   daily_resp_8a_0_code,
   daily_resp_8a_m1_code,
@@ -141,19 +143,41 @@ calc_aps_oxy_score <- function(
   # 5. Oxygenation: A-aDO2 if FiO2 >= 0.5, else PaO2
 
   # Determine FiO2 based on respiratory support type (using helper function)
-  # - Note: resp_support_type_0 should be calculated by caller using calc_resp_support_type_0()
   # - If FiO2 is still missing after this, it will be treated as < 0.5 for APS calculation purposes
-  fio2 <- calc_fio2_from_resp_support(
+
+  ## Get FiO2 for each day
+  fio2_0 <- calc_fio2_from_resp_support(
     resp_support_type_0,
-    get_value_with_lookback(daily_standard_flow_8a_0, daily_standard_flow_8a_m1, daily_standard_flow_8a_m2),
-    get_value_with_lookback(daily_hfnc_fi02_8a_0, daily_hfnc_fi02_8a_m1, daily_hfnc_fi02_8a_m2),
-    get_value_with_lookback(daily_niv_fi02_8a_0, daily_niv_fi02_8a_m1, daily_niv_fi02_8a_m2),
-    get_value_with_lookback(daily_imv_fio2_8a_0, daily_imv_fio2_8a_m1, daily_imv_fio2_8a_m2)
+    daily_standard_flow_8a_0,
+    daily_hfnc_fi02_8a_0,
+    daily_niv_fi02_8a_0,
+    daily_imv_fio2_8a_0
   )
 
+  fio2_m1 <- calc_fio2_from_resp_support(
+    resp_support_type_m1,
+    daily_standard_flow_8a_m1,
+    daily_hfnc_fi02_8a_m1,
+    daily_niv_fi02_8a_m1,
+    daily_imv_fio2_8a_m1
+  )
+
+  fio2_m2 <- calc_fio2_from_resp_support(
+    resp_support_type_m2,
+    daily_standard_flow_8a_m2,
+    daily_hfnc_fi02_8a_m2,
+    daily_niv_fi02_8a_m2,
+    daily_imv_fio2_8a_m2
+  )
+
+  ## Get final FiO2 with lookback (Day 0 -> Day -1 -> Day -2)
+  fio2 <- get_value_with_lookback(fio2_0, fio2_m1, fio2_m2)
+
   # Check if patient is on ECMO
-  resp_code_0 <- get_value_with_lookback(daily_resp_8a_0_code, daily_resp_8a_m1_code, daily_resp_8a_m2_code)
-  is_ecmo <- !is.na(resp_code_0) & resp_code_0 %in% c(1, 2)
+  # QUESTION: We're essentially checking if patient was ever on ECMO in the lookback period, which
+  # might override more recent data. I don't think there is a better way to approach this. Will it be okay?
+  resp_code <- get_value_with_lookback(daily_resp_8a_0_code, daily_resp_8a_m1_code, daily_resp_8a_m2_code)
+  is_ecmo <- !is.na(resp_code) & resp_code %in% c(1, 2)
 
   # Get PaO2 and PaCO2 with lookback
   pao2 <- get_value_with_lookback(daily_pa02_lowest_0, daily_pa02_lowest_m1, daily_pa02_lowest_m2)
@@ -177,7 +201,9 @@ calc_aps_oxy_score <- function(
     !is.na(pao2) & pao2 > 70 ~ 0,
     !is.na(pao2) & pao2 >= 61 ~ 1,
     !is.na(pao2) & pao2 >= 55 ~ 3,
-    !is.na(pao2) & pao2 < 55 ~ 4
+    !is.na(pao2) & pao2 < 55 ~ 4,
+    # Impute normal (0 points) if measurement is missing
+    TRUE ~ 0
   )
 
   return(oxy_points)
@@ -203,7 +229,9 @@ calc_aps_ph_score <- function(
     ph >= 7.33 ~ 0,
     ph >= 7.25 ~ 2,
     ph >= 7.15 ~ 3,
-    ph < 7.15 ~ 4
+    ph < 7.15 ~ 4,
+    # Impute normal (0 points) if measurement is missing
+    TRUE ~ 0
   )
 
   return(ph_points)
@@ -427,21 +455,23 @@ calc_aps_score <- function(
   aps_wbc_score,
   aps_gcs_score
 ) {
-  # Sum all component scores (NA values will propagate)
+  # Impute normal (0 points) for any component with NA value
+  # This allows extraction of records missing components (from earlier steps) for quality improvement
+  # while still calculating a complete APS score properly
   total_aps <- rowSums(
     cbind(
-      aps_temp_score,
-      aps_map_score,
-      aps_hr_score,
-      aps_rr_score,
-      aps_oxy_score,
-      aps_ph_score,
-      aps_sodium_score,
-      aps_potassium_score,
-      aps_creatinine_score,
-      aps_hct_score,
-      aps_wbc_score,
-      aps_gcs_score
+      dplyr::coalesce(aps_temp_score, 0),
+      dplyr::coalesce(aps_map_score, 0),
+      dplyr::coalesce(aps_hr_score, 0),
+      dplyr::coalesce(aps_rr_score, 0),
+      dplyr::coalesce(aps_oxy_score, 0),
+      dplyr::coalesce(aps_ph_score, 0),
+      dplyr::coalesce(aps_sodium_score, 0),
+      dplyr::coalesce(aps_potassium_score, 0),
+      dplyr::coalesce(aps_creatinine_score, 0),
+      dplyr::coalesce(aps_hct_score, 0),
+      dplyr::coalesce(aps_wbc_score, 0),
+      dplyr::coalesce(aps_gcs_score, 0)
     ),
     na.rm = FALSE
   )
