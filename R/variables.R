@@ -17,6 +17,7 @@ source("R/variable-functions/calc_str_scap_thrombocytopenia_0.R")
 source("R/variable-functions/calc_str_scap_hypothermia_0.R")
 source("R/variable-functions/calc_str_neuromuscular_disease_0.R")
 source("R/variable-functions/calc_str_vasculitis_0.R")
+source("R/variable-functions/calc_str_gi_bleeding_0.R")
 
 ## -----------------------------------------------------------------------------
 ## Baseline Performance Status (Systematic DAG)

@@ -308,11 +308,76 @@ Currently calculated the same as Systematic DAG: Presence of Pneumonia Syndrome 
 
 
 
-## (WIP) Gastrointestinal Bleeding -- Streamlined DAG
+## Gastrointestinal Bleeding -- Streamlined DAG
 
 **Variable Definition:**
 
+Continuous variable summing total number of packed red blood cell units
+transfused on study days -2 to 0.
+
 **Summary:**
+
+```{r}
+data_with_gi_bleeding <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(
+    str_gi_bleeding_0 = calc_str_gi_bleeding_0(
+      blood_prbc_units_m2 = blood_prbc_units_m2,
+      blood_prbc_units_m1 = blood_prbc_units_m1,
+      blood_prbc_units_0 = blood_prbc_units_0,
+      daily_blood_product_m2 = daily_blood_product_m2,
+      daily_blood_product_m1 = daily_blood_product_m1,
+      daily_blood_product_0 = daily_blood_product_0,
+      blood_product_spec_m2___1 = blood_product_spec_m2___1,
+      blood_product_spec_m1___1 = blood_product_spec_m1___1,
+      blood_product_spec_0___1 = blood_product_spec_0___1
+    )
+  )
+
+data_with_gi_bleeding |>
+  select(str_gi_bleeding_0) |>
+  filter(!is.na(str_gi_bleeding_0) & str_gi_bleeding_0 > -1) |>
+  ggplot(aes(str_gi_bleeding_0)) +
+    geom_histogram(bins = 40)
+```
+
+
+
+### Unknown/Missing Values
+
+This many records are missing (NA):
+
+```{r}
+data_with_gi_bleeding |>
+  filter(is.na(str_gi_bleeding_0)) |>
+  count()
+```
+
+This is because of an invalid branching logic on one of the three days (typically Day -2), which causes the whole count to be NA.
+
+```{r}
+data_with_gi_bleeding |>
+  filter(is.na(str_gi_bleeding_0)) |>
+  select(
+    record_id,
+
+    trx_0,
+    daily_blood_product_0,
+    blood_product_spec_0___1,
+    blood_prbc_units_0,
+
+    trx_m1,
+    daily_blood_product_m1,
+    blood_product_spec_m1___1,
+    blood_prbc_units_m1,
+
+    trx_m2,
+    daily_blood_product_m2,
+    blood_product_spec_m2___1,
+    blood_prbc_units_m2
+  ) |>
+  gt()
+```
 
 ## Major Recent Surgery -- Streamlined DAG
 
