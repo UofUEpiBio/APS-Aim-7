@@ -89,12 +89,158 @@ data |>
 
 **Summary:**
 
-## (WIP) Organ Failure Trajectory -- Systematic DAG
+## (WIP - STARTED) Organ Failure Trajectory -- Systematic DAG
 
 **Variable Definition:**
 
+Two variables:
+
+1. Total Day 0 SOFA score (`sofa_total_day_0`)
+   - Use `NA` if value is missing
+
+2. Total Day -1 SOFA score (`sofa_total_day_m1`)
+   - Use `NA` if value is missing
+   - Use `99` if value is not applicable (i.e., not in hospital on day -1)
+
 **Summary:**
 
+```{r}
+data_with_organ_failure <- data |>
+  filter(event_label == 'PLACEHOLDER') |>
+  mutate(
+    sofa_total_day_0 = calc_sys_organ_failure_trajectory(
+      day = 0,
+      daily_pa02_lowest = daily_pa02_lowest_0,
+      daily_resp_lowest_pao2 = daily_resp_lowest_pao2_0,
+      daily_fio2_lowest_pao2 = daily_fio2_lowest_pao2_0,
+      daily_o2_lowest_pao2 = daily_o2_lowest_pao2_0,
+      daily_spo2_lowest = daily_spo2_lowest_0,
+      daily_resp_lowest = daily_resp_lowest_0,
+      daily_fio2_lowest = daily_fio2_lowest_0,
+      daily_o2_lowest = daily_o2_lowest_0,
+      daily_platelet_8a = daily_platelet_8a_0,
+      daily_tbili_8a = daily_tbili_8a_0,
+      daily_sbp_8a = daily_sbp_8a_0,
+      daily_dbp_8a = daily_dbp_8a_0,
+      daily_dopa_dos_8a_mcg = daily_dopa_dos_8a_0_mcg,
+      daily_dopa_dos_8a_mcgkg = daily_dopa_dos_8a_0_mcgkg,
+      daily_dobuta_8a_mcg = daily_dobuta_8a_0_mcg,
+      daily_dobuta_8a_mcgkg = daily_dobuta_8a_0_mcgkg,
+      daily_epi_dose_8a_mcg = daily_epi_dose_8a_0_mcg,
+      daily_epi_dose_8a_mcgkg = daily_epi_dose_8a_0_mcgkg,
+      daily_ne_dose_8a_mcg = daily_ne_dose_8a_0_mcg,
+      daily_ne_dose_8a_mcgkg = daily_ne_dose_8a_0_mcgkg,
+      m_weight_kg = m_weight_kg,
+      daily_gcs_8a = daily_gcs_8a_0,
+      daily_cr_8a = daily_cr_8a_0
+    ),
+    sofa_total_day_m1 = calc_sys_organ_failure_trajectory(
+      day = -1,
+      daily_pa02_lowest = daily_pa02_lowest_m1,
+      daily_resp_lowest_pao2 = daily_resp_lowest_pao2_m1,
+      daily_fio2_lowest_pao2 = daily_fio2_lowest_pao2_m1,
+      daily_o2_lowest_pao2 = daily_o2_lowest_pao2_m1,
+      daily_spo2_lowest = daily_spo2_lowest_m1,
+      daily_resp_lowest = daily_resp_lowest_m1,
+      daily_fio2_lowest = daily_fio2_lowest_m1,
+      daily_o2_lowest = daily_o2_lowest_m1,
+      daily_platelet_8a = daily_platelet_8a_m1,
+      daily_tbili_8a = daily_tbili_8a_m1,
+      daily_sbp_8a = daily_sbp_8a_m1,
+      daily_dbp_8a = daily_dbp_8a_m1,
+      daily_dopa_dos_8a_mcg = daily_dopa_dos_8a_m1_mcg,
+      daily_dopa_dos_8a_mcgkg = daily_dopa_dos_8a_m1_mcgkg,
+      daily_dobuta_8a_mcg = daily_dobuta_8a_m1_mcg,
+      daily_dobuta_8a_mcgkg = daily_dobuta_8a_m1_mcgkg,
+      daily_epi_dose_8a_mcg = daily_epi_dose_8a_m1_mcg,
+      daily_epi_dose_8a_mcgkg = daily_epi_dose_8a_m1_mcgkg,
+      daily_ne_dose_8a_mcg = daily_ne_dose_8a_m1_mcg,
+      daily_ne_dose_8a_mcgkg = daily_ne_dose_8a_m1_mcgkg,
+      m_weight_kg = m_weight_kg,
+      daily_gcs_8a = daily_gcs_8a_m1,
+      daily_cr_8a = daily_cr_8a_m1
+    )
+  )
+
+data_with_organ_failure |>
+  count(sofa_total_day_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+
+data_with_organ_failure |>
+  count(sofa_total_day_m1) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+Day 0: These records have missing SOFA scores because TODO
+
+```{r}
+data_with_organ_failure |>
+  filter(is.na(sofa_total_day_0)) |>
+  select(
+    record_id,
+    daily_pa02_lowest_0,
+    daily_resp_lowest_pao2_0,
+    daily_fio2_lowest_pao2_0,
+    daily_o2_lowest_pao2_0,
+    daily_spo2_lowest_0,
+    daily_resp_lowest_0,
+    daily_fio2_lowest_0,
+    daily_o2_lowest_0,
+    daily_platelet_8a_0,
+    daily_tbili_8a_0,
+    daily_sbp_8a_0,
+    daily_dbp_8a_0,
+    daily_gcs_8a_0,
+    daily_cr_8a_0
+  ) |>
+  gt()
+```
+
+Day -1: These records have `sofa_total_day_m1 == 99` because patient was not in hospital on Day -1
+
+```{r}
+data_with_organ_failure |>
+  filter(sofa_total_day_m1 == 99) |>
+  select(
+    record_id
+  ) |>
+  gt()
+```
+
+Day -1: These records have missing SOFA scores because TODO
+
+```{r}
+data_with_organ_failure |>
+  filter(is.na(sofa_total_day_m1)) |>
+  select(
+    record_id,
+    daily_pa02_lowest_m1,
+    daily_resp_lowest_pao2_m1,
+    daily_fio2_lowest_pao2_m1,
+    daily_o2_lowest_pao2_m1,
+    daily_spo2_lowest_m1,
+    daily_resp_lowest_m1,
+    daily_fio2_lowest_m1,
+    daily_o2_lowest_m1,
+    daily_platelet_8a_m1,
+    daily_tbili_8a_m1,
+    daily_sbp_8a_m1,
+    daily_dbp_8a_m1,
+    daily_gcs_8a_m1,
+    daily_cr_8a_m1
+  ) |>
+  gt()
+```
 
 
 ## Delirium -- Systematic DAG
@@ -292,23 +438,202 @@ data_with_pneumonia |>
 
 Currently calculated the same as Systematic DAG: Presence of Pneumonia Syndrome (see above).
 
-## (WIP) Septic Shock -- Systematic DAG
+## Septic Shock Variables (Systematic and Streamlined)
+```{r}
+# Get weight data
+data_with_weight <- data |>
+  filter(event_label == 'Day 0') |>
+  select(
+    record_id,
+    m_weight_kg
+  )
+
+# Get vasopressor data
+data_with_vasopressors <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  select(
+    record_id,
+    daily_vasopressors_0___0,
+    daily_sbp_8a_0,
+    daily_dbp_8a_0,
+    daily_ne_dose_8a_0_mcg,
+    daily_ne_dose_8a_0_mcgkg,
+    daily_epi_dose_8a_0_mcg,
+    daily_epi_dose_8a_0_mcgkg,
+    daily_phen_dose_8a_0_mcg,
+    daily_phen_dos_8a_0_mcgkg,
+    daily_vaso_dose_8a_0,
+    daily_dopa_dose_8a_0_mcg,
+    daily_dopa_dos_8a_0_mcgkg,
+    daily_dobuta_8a_0_mcg,
+    daily_dobuta_8a_0_mcgkg,
+    daily_ang2_8a_0_mcg,
+    daily_ang2_8a_0_mcgkg,
+    daily_milr_8a_0_mcg,
+    daily_milr_8a_0_mcgkg
+  )
+
+# Get sepsis data
+data_with_sepsis <- data |>
+  filter(event_label == 'Syndrome Adjudication') |>
+  select(
+    record_id,
+    sepsis_present,
+    sepsis_clinical_judgement
+  )
+```
+## (NEW) Septic Shock -- Systematic DAG
 
 **Variable Definition:**
 
+Binary indicator variable:
+
+- 0 = Septic shock not present on/before Day 0
+- 1 = Septic shock present on/before Day 0 AND on vasopressor at 8am on Day 0 AND vasopressor dose > 0.5 norepinephrine equivalents
+- 99 = Unknown
+
 **Summary:**
 
+```{r}
+data_with_sys_septic_shock <- data_with_weight |>
+  left_join(data_with_vasopressors, by = 'record_id') |>
+  left_join(data_with_sepsis, by = 'record_id') |>
+  mutate(
+    sys_septic_shock_0 = calc_sys_septic_shock_0(
+      sepsis_present = sepsis_present,
+      sepsis_clinical_judgement = sepsis_clinical_judgement,
 
-## (WIP) Septic Shock -- Streamlined DAG
+      daily_vasopressors_0___0 = daily_vasopressors_0___0,
+      daily_sbp_8a_0 = daily_sbp_8a_0,
+      daily_dbp_8a_0 = daily_dbp_8a_0,
+      daily_ne_dose_8a_0_mcg = daily_ne_dose_8a_0_mcg,
+      daily_ne_dose_8a_0_mcgkg = daily_ne_dose_8a_0_mcgkg,
+      daily_epi_dose_8a_0_mcg = daily_epi_dose_8a_0_mcg,
+      daily_epi_dose_8a_0_mcgkg = daily_epi_dose_8a_0_mcgkg,
+      daily_phen_dose_8a_0_mcg = daily_phen_dose_8a_0_mcg,
+      daily_phen_dos_8a_0_mcgkg = daily_phen_dos_8a_0_mcgkg,
+      daily_vaso_dose_8a_0 = daily_vaso_dose_8a_0,
+      daily_dopa_dose_8a_0_mcg = daily_dopa_dose_8a_0_mcg,
+      daily_dopa_dos_8a_0_mcgkg = daily_dopa_dos_8a_0_mcgkg,
+      daily_dobuta_8a_0_mcg = daily_dobuta_8a_0_mcg,
+      daily_dobuta_8a_0_mcgkg = daily_dobuta_8a_0_mcgkg,
+      daily_ang2_8a_0_mcg = daily_ang2_8a_0_mcg,
+      daily_ang2_8a_0_mcgkg = daily_ang2_8a_0_mcgkg,
+      daily_milr_8a_0_mcg = daily_milr_8a_0_mcg,
+      daily_milr_8a_0_mcgkg = daily_milr_8a_0_mcgkg,
+
+      m_weight_kg = m_weight_kg
+    )
+  )
+
+data_with_sys_septic_shock |>
+  count(sys_septic_shock_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because they have `sepsis_clinical_judgement == 'Unknown'` and are missing `sepsis_present`. They are all also recorded as Unknown in "Presence of Sepsis Syndrome Systematic DAG" (above). These should be queried.
+
+```{r}
+data_with_sys_septic_shock |>
+  filter(sys_septic_shock_0 == 99) |>
+  select(
+    record_id,
+    sepsis_present,
+    sepsis_clinical_judgement,
+    daily_vasopressors_0___0,
+    daily_sbp_8a_0,
+    daily_dbp_8a_0,
+    daily_ne_dose_8a_0_mcg,
+    daily_ne_dose_8a_0_mcgkg,
+    daily_epi_dose_8a_0_mcg,
+    daily_epi_dose_8a_0_mcgkg,
+    daily_phen_dose_8a_0_mcg,
+    daily_phen_dos_8a_0_mcgkg,
+    daily_vaso_dose_8a_0,
+    daily_dopa_dose_8a_0_mcg,
+    daily_dopa_dos_8a_0_mcgkg,
+    daily_dobuta_8a_0_mcg,
+    daily_dobuta_8a_0_mcgkg,
+    daily_ang2_8a_0_mcg,
+    daily_ang2_8a_0_mcgkg,
+    daily_milr_8a_0_mcg,
+    daily_milr_8a_0_mcgkg,
+    m_weight_kg
+  ) |>
+  gt()
+```
+
+No missing records for this variable.
+
+## (NEW) Septic Shock -- Streamlined DAG
 
 **Variable Definition:**
 
+Binary indicator variable:
+
+- 0 = Septic shock not present on/before Day 0
+- 1 = Septic shock present on/before Day 0 AND on vasopressor at 8am on Day 0
+- 99 = Unknown
+
 **Summary:**
 
+```{r}
+data_with_str_septic_shock <- data_with_vasopressors |>
+  left_join(data_with_sepsis, by = 'record_id') |>
+  mutate(
+    str_septic_shock_0 = calc_str_septic_shock_0(
+      sepsis_present = sepsis_present,
+      sepsis_clinical_judgement = sepsis_clinical_judgement,
+      daily_vasopressors_0___0 = daily_vasopressors_0___0
+    )
+  )
 
+data_with_str_septic_shock |>
+  count(str_septic_shock_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
 
+### Unknown/Missing Values
 
-## Gastrointestinal Bleeding -- Streamlined DAG
+These records were classified as `99 (Unknown)` because they have `sepsis_clinical_judgement == 'Unknown'` and are missing `sepsis_present`. They are all also recorded as Unknown in "Presence of Sepsis Syndrome Systematic DAG" (above). These should be queried.
+
+```{r}
+data_with_str_septic_shock |>
+  filter(str_septic_shock_0 == 99) |>
+  select(
+    record_id,
+    sepsis_present,
+    sepsis_clinical_judgement,
+    daily_vasopressors_0___0
+  ) |>
+  gt()
+```
+
+These record were missing (NA) because they are missing `sepsis_present` and `sepsis_clinical_judgement` and `daily_vasopressors_0___0` is unchecked (indicated patient is not on vasopressors).
+
+```{r}
+data_with_str_septic_shock |>
+  filter(is.na(str_septic_shock_0)) |>
+  select(
+    record_id,
+    sepsis_present,
+    sepsis_clinical_judgement,
+    daily_vasopressors_0___0
+  ) |>
+  gt()
+```
+
+## (NEW) Gastrointestinal Bleeding -- Streamlined DAG
 
 **Variable Definition:**
 
@@ -1204,11 +1529,105 @@ data_with_neuromuscular |>
 
 The only missing (NA) record is the same one missing from the N=500 dataset and doesn't need to be queried further.
 
-## (WIP) PSI Score -- Streamlined DAG
+## (WIP - STARTED) PSI Score -- Streamlined DAG
 
 **Variable Definition:**
 
+PSI score calculated per formula in the original reference
+(https://pubmed.ncbi.nl.nih.gov/8995086/)
+
+Inputs to PSI score:
+
+- Age (age in years = points)
+- Female sex (–10 points)
+- Nursing home resident (+10 points)
+- Congestive heart failure (+10 points)
+- Cerebrovascular disease (+10 points)
+- Neoplastic disease (+30 points)
+- Renal disease (+10 points)
+- Liver disease (+20 points)
+- Altered mental status (+20 points)
+- Pulse ≥ 125/min (+10 points)
+- Respiratory rate ≥ 30/min (+20 points)
+- Systolic blood pressure < 90 mm Hg (+20 points)
+- Temperature < 35°C or ≥ 40°C (+15 points)
+- Blood urea nitrogen ≥ 30 mg/dl (+20 points)
+- Glucose ≥ 250 mg/dl (+10 points)
+- Hematocrit < 30% (+10 points)
+- Sodium < 130 mmol/liter (+20 points)
+- PaO2 < 60 mm Hg (+10 points)
+- Arterial pH < 7.35 (+30 points)
+- Pleural effusion (+10 points)
+
 **Summary:**
+
+```{r}
+data_with_psi <- data |>
+  filter(event_label == 'PLACEHOLDER') |>
+  mutate(
+    str_psi_score_0 = calc_str_psi_score_0(
+      age = age,
+      sex = sex,
+      prssrc = prssrc,
+      m_cv_conditions = m_cv_conditions,
+      m_neurologic_conditions = m_neurologic_conditions,
+      m_cancer = m_cancer,
+      m_kid_liver_conditions = m_kid_liver_conditions,
+      cam_0 = cam_0,
+      highhr_vsorres = highhr_vsorres,
+      daily_resp_rate_8a_0 = daily_resp_rate_8a_0,
+      lowsbp_vsorres = lowsbp_vsorres,
+      lowtpr_vsorres = lowtpr_vsorres,
+      daily_bun_8a_0 = daily_bun_8a_0,
+      daily_glucose_8a_0 = daily_glucose_8a_0,
+      daily_hct_8a_0 = daily_hct_8a_0,
+      daily_sodium_8a_0 = daily_sodium_8a_0,
+      daily_po2_8a_0 = daily_po2_8a_0,
+      daily_ph_8a_0 = daily_ph_8a_0,
+      daily_pleural_0 = daily_pleural_0
+    )
+  )
+
+data_with_psi |>
+  select(str_psi_score_0) |>
+  filter(!is.na(str_psi_score_0) & str_psi_score_0 > -1) |>
+  ggplot(aes(str_psi_score_0)) +
+    geom_histogram(bins = 40)
+```
+
+### Unknown/Missing Values
+
+These records have missing PSI scores because TODO
+
+```{r}
+data_with_psi |>
+  filter(is.na(str_psi_score_0)) |>
+  select(
+    record_id,
+    age,
+    sex,
+    prssrc,
+    m_cv_conditions,
+    m_neurologic_conditions,
+    m_cancer,
+    m_kid_liver_conditions,
+    cam_0,
+    highhr_vsorres,
+    daily_resp_rate_8a_0,
+    lowsbp_vsorres,
+    lowtpr_vsorres,
+    daily_bun_8a_0,
+    daily_glucose_8a_0,
+    daily_hct_8a_0,
+    daily_sodium_8a_0,
+    daily_po2_8a_0,
+    daily_ph_8a_0,
+    daily_pleural_0
+  ) |>
+  gt()
+```
+
+
 
 ## Active Vasculitis -- Streamlined DAG
 

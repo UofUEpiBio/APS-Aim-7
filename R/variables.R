@@ -2,6 +2,8 @@ source("R/variable-functions/calc_sys_delirium_0.R")
 source("R/variable-functions/calc_sys_sepsis_0.R")
 source("R/variable-functions/calc_sys_ards_0.R")
 source("R/variable-functions/calc_sys_pneumonia_0.R")
+source("R/variable-functions/calc_sys_septic_shock_0.R")
+source("R/variable-functions/calc_sys_organ_failure_trajectory.R")
 source("R/variable-functions/calc_str_major_surgery_0.R")
 source("R/variable-functions/calc_str_dementia_0.R")
 source("R/variable-functions/calc_str_acute_allergic_reaction_0.R")
@@ -17,7 +19,13 @@ source("R/variable-functions/calc_str_scap_thrombocytopenia_0.R")
 source("R/variable-functions/calc_str_scap_hypothermia_0.R")
 source("R/variable-functions/calc_str_neuromuscular_disease_0.R")
 source("R/variable-functions/calc_str_vasculitis_0.R")
+source("R/variable-functions/calc_str_septic_shock_0.R")
 source("R/variable-functions/calc_str_gi_bleeding_0.R")
+source("R/variable-functions/calc_str_psi_score_0.R")
+
+# TODO: use support-functions.R SOFA calculation functions (all 6 components present)
+# 6 systems components of SOFA score, each 0-4.
+# Total SOFA score is sum of 6 sub scores (0-24)
 
 ## -----------------------------------------------------------------------------
 ## Baseline Performance Status (Systematic DAG)
