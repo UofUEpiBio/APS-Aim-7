@@ -23,10 +23,6 @@ source("R/variable-functions/calc_str_septic_shock_0.R")
 source("R/variable-functions/calc_str_gi_bleeding_0.R")
 source("R/variable-functions/calc_str_psi_score_0.R")
 
-# TODO: use support-functions.R SOFA calculation functions (all 6 components present)
-# 6 systems components of SOFA score, each 0-4.
-# Total SOFA score is sum of 6 sub scores (0-24)
-
 ## -----------------------------------------------------------------------------
 ## Baseline Performance Status (Systematic DAG)
 ## -----------------------------------------------------------------------------

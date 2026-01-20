@@ -89,89 +89,56 @@ data |>
 
 **Summary:**
 
-## (WIP - STARTED) Organ Failure Trajectory -- Systematic DAG
+## Organ Failure Trajectory -- Systematic DAG
+
+### Variable 1: Total Day 0 SOFA Score
 
 **Variable Definition:**
 
-Two variables:
-
-1. Total Day 0 SOFA score (`sofa_total_day_0`)
-   - Use `NA` if value is missing
-
-2. Total Day -1 SOFA score (`sofa_total_day_m1`)
-   - Use `NA` if value is missing
-   - Use `99` if value is not applicable (i.e., not in hospital on day -1)
+Total Day 0 SOFA score (sum of 6 component SOFA scores). Value between 0-24.
 
 **Summary:**
 
 ```{r}
-data_with_organ_failure <- data |>
-  filter(event_label == 'PLACEHOLDER') |>
+data_with_sofa_day_0 <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  # Remove the weight variable and merge it back in from the "Day 0" event
+  # where weight is collected
+  select(-m_weight_kg) |>
+  left_join(data |>
+    filter(event_label == 'Day 0') |>
+    select(record_id, m_weight_kg),
+    by='record_id') |>
   mutate(
-    sofa_total_day_0 = calc_sys_organ_failure_trajectory(
-      day = 0,
-      daily_pa02_lowest = daily_pa02_lowest_0,
-      daily_resp_lowest_pao2 = daily_resp_lowest_pao2_0,
-      daily_fio2_lowest_pao2 = daily_fio2_lowest_pao2_0,
-      daily_o2_lowest_pao2 = daily_o2_lowest_pao2_0,
-      daily_spo2_lowest = daily_spo2_lowest_0,
-      daily_resp_lowest = daily_resp_lowest_0,
-      daily_fio2_lowest = daily_fio2_lowest_0,
-      daily_o2_lowest = daily_o2_lowest_0,
-      daily_platelet_8a = daily_platelet_8a_0,
-      daily_tbili_8a = daily_tbili_8a_0,
-      daily_sbp_8a = daily_sbp_8a_0,
-      daily_dbp_8a = daily_dbp_8a_0,
-      daily_dopa_dos_8a_mcg = daily_dopa_dos_8a_0_mcg,
-      daily_dopa_dos_8a_mcgkg = daily_dopa_dos_8a_0_mcgkg,
-      daily_dobuta_8a_mcg = daily_dobuta_8a_0_mcg,
-      daily_dobuta_8a_mcgkg = daily_dobuta_8a_0_mcgkg,
-      daily_epi_dose_8a_mcg = daily_epi_dose_8a_0_mcg,
-      daily_epi_dose_8a_mcgkg = daily_epi_dose_8a_0_mcgkg,
-      daily_ne_dose_8a_mcg = daily_ne_dose_8a_0_mcg,
-      daily_ne_dose_8a_mcgkg = daily_ne_dose_8a_0_mcgkg,
-      m_weight_kg = m_weight_kg,
-      daily_gcs_8a = daily_gcs_8a_0,
-      daily_cr_8a = daily_cr_8a_0
-    ),
-    sofa_total_day_m1 = calc_sys_organ_failure_trajectory(
-      day = -1,
-      daily_pa02_lowest = daily_pa02_lowest_m1,
-      daily_resp_lowest_pao2 = daily_resp_lowest_pao2_m1,
-      daily_fio2_lowest_pao2 = daily_fio2_lowest_pao2_m1,
-      daily_o2_lowest_pao2 = daily_o2_lowest_pao2_m1,
-      daily_spo2_lowest = daily_spo2_lowest_m1,
-      daily_resp_lowest = daily_resp_lowest_m1,
-      daily_fio2_lowest = daily_fio2_lowest_m1,
-      daily_o2_lowest = daily_o2_lowest_m1,
-      daily_platelet_8a = daily_platelet_8a_m1,
-      daily_tbili_8a = daily_tbili_8a_m1,
-      daily_sbp_8a = daily_sbp_8a_m1,
-      daily_dbp_8a = daily_dbp_8a_m1,
-      daily_dopa_dos_8a_mcg = daily_dopa_dos_8a_m1_mcg,
-      daily_dopa_dos_8a_mcgkg = daily_dopa_dos_8a_m1_mcgkg,
-      daily_dobuta_8a_mcg = daily_dobuta_8a_m1_mcg,
-      daily_dobuta_8a_mcgkg = daily_dobuta_8a_m1_mcgkg,
-      daily_epi_dose_8a_mcg = daily_epi_dose_8a_m1_mcg,
-      daily_epi_dose_8a_mcgkg = daily_epi_dose_8a_m1_mcgkg,
-      daily_ne_dose_8a_mcg = daily_ne_dose_8a_m1_mcg,
-      daily_ne_dose_8a_mcgkg = daily_ne_dose_8a_m1_mcgkg,
-      m_weight_kg = m_weight_kg,
-      daily_gcs_8a = daily_gcs_8a_m1,
-      daily_cr_8a = daily_cr_8a_m1
+    sofa_total_day_0 = calc_sys_sofa_total_0(
+      daily_pa02_lowest_0,
+      daily_resp_lowest_pao2_0,
+      daily_fio2_lowest_pao2_0,
+      daily_o2_lowest_pao2_0,
+      daily_spo2_lowest_0,
+      daily_resp_lowest_0,
+      daily_fio2_lowest_0,
+      daily_o2_lowest_0,
+      daily_platelet_8a_0,
+      daily_tbili_8a_0,
+      daily_sbp_8a_0,
+      daily_dbp_8a_0,
+      daily_dopa_dose_8a_0_mcg,
+      daily_dopa_dos_8a_0_mcgkg,
+      daily_dobuta_8a_0_mcg,
+      daily_dobuta_8a_0_mcgkg,
+      daily_epi_dose_8a_0_mcg,
+      daily_epi_dose_8a_0_mcgkg,
+      daily_ne_dose_8a_0_mcg,
+      daily_ne_dose_8a_0_mcgkg,
+      m_weight_kg,
+      daily_gcs_8a_0,
+      daily_cr_8a_0
     )
   )
 
-data_with_organ_failure |>
+data_with_sofa_day_0 |>
   count(sofa_total_day_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-
-data_with_organ_failure |>
-  count(sofa_total_day_m1) |>
   gt() |>
   grand_summary_rows(
     columns = n,
@@ -179,15 +146,16 @@ data_with_organ_failure |>
   )
 ```
 
-### Unknown/Missing Values
+#### Unknown/Missing Values
 
-Day 0: These records have missing SOFA scores because TODO
+These records have missing SOFA scores because one of the inputs is missing and the SOFA calculations don't explicitly assign NA to a SOFA score.
 
 ```{r}
-data_with_organ_failure |>
+data_with_sofa_day_0 |>
   filter(is.na(sofa_total_day_0)) |>
   select(
     record_id,
+    dailysofa_perf_0,
     daily_pa02_lowest_0,
     daily_resp_lowest_pao2_0,
     daily_fio2_lowest_pao2_0,
@@ -200,30 +168,134 @@ data_with_organ_failure |>
     daily_tbili_8a_0,
     daily_sbp_8a_0,
     daily_dbp_8a_0,
+    daily_dopa_dose_8a_0_mcg,
+    daily_dopa_dos_8a_0_mcgkg,
+    daily_dobuta_8a_0_mcg,
+    daily_dobuta_8a_0_mcgkg,
+    daily_epi_dose_8a_0_mcg,
+    daily_epi_dose_8a_0_mcgkg,
+    daily_ne_dose_8a_0_mcg,
+    daily_ne_dose_8a_0_mcgkg,
+    m_weight_kg,
     daily_gcs_8a_0,
     daily_cr_8a_0
   ) |>
   gt()
 ```
 
-Day -1: These records have `sofa_total_day_m1 == 99` because patient was not in hospital on Day -1
+This is how many of each input are missing:
+```{r}
+data_with_sofa_day_0 |>
+  filter(is.na(sofa_total_day_0)) |>
+  select(
+    daily_pa02_lowest_0,
+    daily_resp_lowest_pao2_0,
+    daily_fio2_lowest_pao2_0,
+    daily_o2_lowest_pao2_0,
+    daily_spo2_lowest_0,
+    daily_resp_lowest_0,
+    daily_fio2_lowest_0,
+    daily_o2_lowest_0,
+    daily_platelet_8a_0,
+    daily_tbili_8a_0,
+    daily_sbp_8a_0,
+    daily_dbp_8a_0,
+    daily_dopa_dose_8a_0_mcg,
+    daily_dopa_dos_8a_0_mcgkg,
+    daily_dobuta_8a_0_mcg,
+    daily_dobuta_8a_0_mcgkg,
+    daily_epi_dose_8a_0_mcg,
+    daily_epi_dose_8a_0_mcgkg,
+    daily_ne_dose_8a_0_mcg,
+    daily_ne_dose_8a_0_mcgkg,
+    m_weight_kg,
+    daily_gcs_8a_0,
+    daily_cr_8a_0
+  ) |>
+  summarise(across(everything(), ~ sum(is.na(.)))) |>
+  pivot_longer(everything(), names_to = "parameter", values_to = "na_count") |>
+  arrange(desc(na_count)) |>
+  gt()
+```
+### Variable 2: Total Day -1 SOFA Score
+
+**Variable Definition:**
+
+Total Day -1 SOFA score (sum of 6 component SOFA scores). Value between 0-24.
+- `99` not applicable (not in hospital on Day -1)
+
+**Summary:**
 
 ```{r}
-data_with_organ_failure |>
+data_with_sofa_day_m1 <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  # Remove the weight variable and merge it back in from the "Day 0" event
+  # where weight is collected
+  select(-m_weight_kg) |>
+  left_join(data |>
+    filter(event_label == 'Day 0') |>
+    select(record_id, m_weight_kg),
+    by='record_id') |>
+  mutate(
+    sofa_total_day_m1 = calc_sys_sofa_total_m1(
+      dailysofa_perf_m1,
+      daily_pa02_lowest_m1,
+      daily_resp_lowest_pao2_m1,
+      daily_fio2_lowest_pao2_m1,
+      daily_o2_lowest_pao2_m1,
+      daily_spo2_lowest_m1,
+      daily_resp_lowest_m1,
+      daily_fio2_lowest_m1,
+      daily_o2_lowest_m1,
+      daily_platelet_8a_m1,
+      daily_tbili_8a_m1,
+      daily_sbp_8a_m1,
+      daily_dbp_8a_m1,
+      daily_dopa_dose_8a_m1_mcg,
+      daily_dopa_dos_8a_m1_mcgkg,
+      daily_dobuta_8a_m1_mcg,
+      daily_dobuta_8a_m1_mcgkg,
+      daily_epi_dose_8a_m1_mcg,
+      daily_epi_dose_8a_m1_mcgkg,
+      daily_ne_dose_8a_m1_mcg,
+      daily_ne_dose_8a_m1_mcgkg,
+      m_weight_kg,
+      daily_gcs_8a_m1,
+      daily_cr_8a_m1
+    )
+  )
+
+data_with_sofa_day_m1 |>
+  count(sofa_total_day_m1) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### Unknown/Missing Values
+
+These records have `sofa_total_day_m1 == 99` because `dailysofa_perf_m1 == 'Not Available'`, indicating patient was not in hospital on Day -1.
+
+```{r}
+data_with_sofa_day_m1 |>
   filter(sofa_total_day_m1 == 99) |>
   select(
-    record_id
+    record_id,
+    dailysofa_perf_m1
   ) |>
   gt()
 ```
 
-Day -1: These records have missing SOFA scores because TODO
+These records have missing SOFA scores because one of the inputs is missing and the SOFA calculations don't explicitly assign NA to a SOFA score.
 
 ```{r}
-data_with_organ_failure |>
+data_with_sofa_day_m1 |>
   filter(is.na(sofa_total_day_m1)) |>
   select(
     record_id,
+    dailysofa_perf_m1,
     daily_pa02_lowest_m1,
     daily_resp_lowest_pao2_m1,
     daily_fio2_lowest_pao2_m1,
@@ -236,9 +308,53 @@ data_with_organ_failure |>
     daily_tbili_8a_m1,
     daily_sbp_8a_m1,
     daily_dbp_8a_m1,
+    daily_dopa_dose_8a_m1_mcg,
+    daily_dopa_dos_8a_m1_mcgkg,
+    daily_dobuta_8a_m1_mcg,
+    daily_dobuta_8a_m1_mcgkg,
+    daily_epi_dose_8a_m1_mcg,
+    daily_epi_dose_8a_m1_mcgkg,
+    daily_ne_dose_8a_m1_mcg,
+    daily_ne_dose_8a_m1_mcgkg,
+    m_weight_kg,
     daily_gcs_8a_m1,
     daily_cr_8a_m1
   ) |>
+  gt()
+```
+
+This is how many of each input are missing:
+```{r}
+data_with_sofa_day_m1 |>
+  filter(is.na(sofa_total_day_m1)) |>
+  select(
+    daily_pa02_lowest_m1,
+    daily_resp_lowest_pao2_m1,
+    daily_fio2_lowest_pao2_m1,
+    daily_o2_lowest_pao2_m1,
+    daily_spo2_lowest_m1,
+    daily_resp_lowest_m1,
+    daily_fio2_lowest_m1,
+    daily_o2_lowest_m1,
+    daily_platelet_8a_m1,
+    daily_tbili_8a_m1,
+    daily_sbp_8a_m1,
+    daily_dbp_8a_m1,
+    daily_dopa_dose_8a_m1_mcg,
+    daily_dopa_dos_8a_m1_mcgkg,
+    daily_dobuta_8a_m1_mcg,
+    daily_dobuta_8a_m1_mcgkg,
+    daily_epi_dose_8a_m1_mcg,
+    daily_epi_dose_8a_m1_mcgkg,
+    daily_ne_dose_8a_m1_mcg,
+    daily_ne_dose_8a_m1_mcgkg,
+    m_weight_kg,
+    daily_gcs_8a_m1,
+    daily_cr_8a_m1
+  ) |>
+  summarise(across(everything(), ~ sum(is.na(.)))) |>
+  pivot_longer(everything(), names_to = "parameter", values_to = "na_count") |>
+  arrange(desc(na_count)) |>
   gt()
 ```
 
