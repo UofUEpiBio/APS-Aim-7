@@ -89,7 +89,7 @@ data |>
 
 **Summary:**
 
-## Organ Failure Trajectory -- Systematic DAG
+## (NEW) Organ Failure Trajectory -- Systematic DAG
 
 ### Variable 1: Total Day 0 SOFA Score
 
@@ -1645,7 +1645,7 @@ data_with_neuromuscular |>
 
 The only missing (NA) record is the same one missing from the N=500 dataset and doesn't need to be queried further.
 
-## (WIP - STARTED) PSI Score -- Streamlined DAG
+## (NEW) PSI Score -- Streamlined DAG
 
 **Variable Definition:**
 
@@ -1654,19 +1654,26 @@ PSI score calculated per formula in the original reference
 
 Inputs to PSI score:
 
+**Demographics:**
 - Age (age in years = points)
 - Female sex (–10 points)
 - Nursing home resident (+10 points)
+
+**Coexisting Illnesses:**
 - Congestive heart failure (+10 points)
-- Cerebrovascular disease (+10 points)
+- Cerebrovascular disease (+10 points) [Prior stroke OR Prior TIA]
 - Neoplastic disease (+30 points)
-- Renal disease (+10 points)
-- Liver disease (+20 points)
+- Renal disease (+10 points) [Chronic kidney disease]
+- Liver disease (+20 points) [Cirrhosis]
+
+**Physical Examination Findings:**
 - Altered mental status (+20 points)
 - Pulse ≥ 125/min (+10 points)
 - Respiratory rate ≥ 30/min (+20 points)
 - Systolic blood pressure < 90 mm Hg (+20 points)
 - Temperature < 35°C or ≥ 40°C (+15 points)
+
+**Laboratory and Radiographic Findings:**
 - Blood urea nitrogen ≥ 30 mg/dl (+20 points)
 - Glucose ≥ 250 mg/dl (+10 points)
 - Hematocrit < 30% (+10 points)
@@ -1679,28 +1686,75 @@ Inputs to PSI score:
 
 ```{r}
 data_with_psi <- data |>
-  filter(event_label == 'PLACEHOLDER') |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  # Remove variables from other events and merge them back in
+  select(-c(age, sex, prssrc,
+            m_cv_conditions___2, m_neurologic_conditions___2, m_neurologic_conditions___3,
+            m_cancer, m_kid_liver_conditions___1, m_kid_liver_conditions___2,
+            highhr_vsorres, highrr_vsorres, lowsysbp_vsorres, lowtemp_vsorres, hightemp_vsorres,
+            pna_effusion)) |>
+  # Join Day 0 variables (demographics, coexisting illnesses, physical exam)
+  left_join(data |>
+    filter(event_label == 'Day 0') |>
+    select(record_id, age, sex, prssrc,
+           m_cv_conditions___2, m_neurologic_conditions___2, m_neurologic_conditions___3,
+           m_cancer, m_kid_liver_conditions___1, m_kid_liver_conditions___2,
+           highhr_vsorres, highrr_vsorres, lowsysbp_vsorres, lowtemp_vsorres, hightemp_vsorres),
+    by = 'record_id') |>
+  # Join Syndrome Adjudication variables (pleural effusion)
+  left_join(data |>
+    filter(event_label == 'Syndrome Adjudication') |>
+    select(record_id, pna_effusion),
+    by = 'record_id') |>
   mutate(
     str_psi_score_0 = calc_str_psi_score_0(
-      age = age,
-      sex = sex,
-      prssrc = prssrc,
-      m_cv_conditions = m_cv_conditions,
-      m_neurologic_conditions = m_neurologic_conditions,
-      m_cancer = m_cancer,
-      m_kid_liver_conditions = m_kid_liver_conditions,
-      cam_0 = cam_0,
-      highhr_vsorres = highhr_vsorres,
-      daily_resp_rate_8a_0 = daily_resp_rate_8a_0,
-      lowsbp_vsorres = lowsbp_vsorres,
-      lowtpr_vsorres = lowtpr_vsorres,
-      daily_bun_8a_0 = daily_bun_8a_0,
-      daily_glucose_8a_0 = daily_glucose_8a_0,
-      daily_hct_8a_0 = daily_hct_8a_0,
-      daily_sodium_8a_0 = daily_sodium_8a_0,
-      daily_po2_8a_0 = daily_po2_8a_0,
-      daily_ph_8a_0 = daily_ph_8a_0,
-      daily_pleural_0 = daily_pleural_0
+      # Demographics (Day 0)
+      age,
+      sex,
+      prssrc,
+      # Coexisting Illnesses (Day 0)
+      m_cv_conditions___2,
+      m_neurologic_conditions___2,
+      m_neurologic_conditions___3,
+      m_cancer,
+      m_kid_liver_conditions___1,
+      m_kid_liver_conditions___2,
+      # Altered Mental Status (Daily In-Hospital Forms)
+      cam_0,
+      cam_m1,
+      cam_m2,
+      # Physical Examination Findings (Day 0)
+      highhr_vsorres,
+      highrr_vsorres,
+      lowsysbp_vsorres,
+      lowtemp_vsorres,
+      hightemp_vsorres,
+      # Laboratory Findings - BUN (Daily In-Hospital Forms)
+      daily_bun_8a_0,
+      daily_bun_8a_m1,
+      daily_bun_8a_m2,
+      # Laboratory Findings - Glucose (Daily In-Hospital Forms)
+      daily_gluc_8a_0,
+      daily_gluc_8a_m1,
+      daily_gluc_8a_m2,
+      # Laboratory Findings - Hematocrit (Daily In-Hospital Forms)
+      daily_hct_8a_0,
+      daily_hct_8a_m1,
+      daily_hct_8a_m2,
+      # Laboratory Findings - Sodium (Daily In-Hospital Forms)
+      daily_na_8a_0,
+      daily_na_8a_m1,
+      daily_na_8a_m2,
+      # Laboratory Findings - PaO2 (Daily In-Hospital Forms)
+      daily_pa02_lowest_0,
+      daily_pa02_lowest_m1,
+      daily_pa02_lowest_m2,
+      # Laboratory Findings - pH (Daily In-Hospital Forms)
+      daily_ph_lowest_0,
+      daily_ph_lowest_m1,
+      daily_ph_lowest_m2,
+      # Radiographic Findings - Pleural Effusion (Syndrome Adjudication)
+      pna_effusion
     )
   )
 
@@ -1713,36 +1767,7 @@ data_with_psi |>
 
 ### Unknown/Missing Values
 
-These records have missing PSI scores because TODO
-
-```{r}
-data_with_psi |>
-  filter(is.na(str_psi_score_0)) |>
-  select(
-    record_id,
-    age,
-    sex,
-    prssrc,
-    m_cv_conditions,
-    m_neurologic_conditions,
-    m_cancer,
-    m_kid_liver_conditions,
-    cam_0,
-    highhr_vsorres,
-    daily_resp_rate_8a_0,
-    lowsbp_vsorres,
-    lowtpr_vsorres,
-    daily_bun_8a_0,
-    daily_glucose_8a_0,
-    daily_hct_8a_0,
-    daily_sodium_8a_0,
-    daily_po2_8a_0,
-    daily_ph_8a_0,
-    daily_pleural_0
-  ) |>
-  gt()
-```
-
+No missing records for this variable.
 
 
 ## Active Vasculitis -- Streamlined DAG
