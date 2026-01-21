@@ -42,13 +42,13 @@ source("R/variables.R")
 
 Currently calculated the same as Systematic DAG: Hypotension Severity (see above).
 
-## (WIP) Baseline Performance Status -- Systematic DAG
+## Baseline Performance Status -- Systematic DAG
 
 ### Variable 1: Frailty Status
 
 **Variable Definition:**
 
-Derived from `frailty_base`:
+Frailty status derived from Clinical Frailty Scale assessment (`frailty_base`):
 
 - 0 = Not performed
 - 1 = Very Fit
@@ -60,20 +60,25 @@ Derived from `frailty_base`:
 - 7 = Living with severe frailty
 - 8 = Living with very severe frailty
 - 9 = Terminally ill
+- 99 = Unknown
 
 **Summary:**
 
 ```{r}
-data |>
+data_with_frailty <- data |>
   filter(event_label == "Patient/Surrogate Interview") |>
   left_join(
     get_code_label_map('frailty_base', dictionary),
-    by ='frailty_base'
-    ) |>
-  mutate(sys_frailty_status_0 = calc_sys_frailty_status_0(
-    frailty_base_code = frailty_base_code,
-    frailty_perf = frailty_perf
-  )) |>
+    by = 'frailty_base'
+  ) |>
+  mutate(
+    sys_frailty_status_0 = calc_sys_frailty_status_0(
+      frailty_base_code = frailty_base_code,
+      frailty_perf = frailty_perf
+    )
+  )
+
+data_with_frailty |>
   count(sys_frailty_status_0) |>
   gt() |>
   grand_summary_rows(
@@ -82,12 +87,95 @@ data |>
   )
 ```
 
+#### Unknown/Missing Values
 
-### (WIP, BLOCKED) Variable 2: Comorbidity Burden
+No missing or unknown records for this variable.
+
+
+### Variable 2: Comorbidity Burden
 
 **Variable Definition:**
 
+The weighted van Walraven Elixhauser comorbidity score (Reference: van Walraven et al. Medical Care 2009;47(6):626-633 https://journals.lww.com/lww-medicalcare/fulltext/2009/06000/a_modification_of_the_elixhauser_comorbidity.4.aspx).
+
 **Summary:**
+
+```{r}
+data_with_comorbid <- data |>
+  filter(event_label == 'Day 0') |>
+  # Remove substance use variables and merge them back in from Patient/Surrogate Interview
+  select(-c(susubcat___1, susubcat___2, susubcat___3, susubcat___4,
+            susubcat___5, susubcat___6, susubcat___7, susubcat___8,
+            susubcat___9, susubcat___88, susubcat___99)) |>
+  # Join Patient/Surrogate Interview variables (substance use)
+  left_join(data |>
+    filter(event_label == 'Patient/Surrogate Interview') |>
+    select(record_id, susubcat___1, susubcat___2, susubcat___3, susubcat___4,
+           susubcat___5, susubcat___6, susubcat___7, susubcat___8,
+           susubcat___9, susubcat___88, susubcat___99),
+    by = 'record_id') |>
+  mutate(
+    sys_comorbid_burden_0 = calc_sys_comorbid_burden_0(
+      # Cardiovascular conditions
+      m_cv_conditions___2,
+      m_cv_conditions___5,
+      m_cv_conditions___6,
+      # Neurologic conditions
+      m_neurologic_conditions___4,
+      m_neurologic_conditions___5,
+      m_neurologic_conditions___1,
+      # Pulmonary conditions
+      m_pulm_conditions___3,
+      # Kidney and liver conditions
+      m_kid_liver_conditions___1,
+      m_kid_liver_conditions___2,
+      # Cancer conditions
+      m_cancer_conditions___2,
+      m_cancer_conditions___3,
+      m_cancer_conditions___4,
+      # Psychiatric conditions
+      m_psych_conditions___1,
+      # Substance use
+      susubcat___1,
+      susubcat___2,
+      susubcat___3,
+      susubcat___4,
+      susubcat___5,
+      susubcat___6,
+      susubcat___7,
+      susubcat___8,
+      susubcat___9,
+      susubcat___88,
+      susubcat___99
+    )
+  )
+
+data_with_comorbid |>
+  summarize(
+    n = n(),
+    mean = mean(sys_comorbid_burden_0, na.rm = TRUE),
+    sd = sd(sys_comorbid_burden_0, na.rm = TRUE),
+    median = median(sys_comorbid_burden_0, na.rm = TRUE),
+    min = min(sys_comorbid_burden_0, na.rm = TRUE),
+    max = max(sys_comorbid_burden_0, na.rm = TRUE)
+  ) |>
+  gt()
+
+data_with_comorbid |>
+  ggplot(aes(sys_comorbid_burden_0)) +
+    geom_histogram(bins = 30) +
+    labs(
+      title = "Distribution of Comorbidity Burden Score",
+      x = "van Walraven Elixhauser Score",
+      y = "Count"
+    )
+```
+
+#### Unknown/Missing Values
+
+The only record missing (NA) was missing all substance abuse data points. This is the `52-0023` record, so doesn't need to be queried.
+
+The reason no others showed up as NA is that we're using checkbox values for all score components, and these are Unchecked by default.
 
 ## (NEW) Organ Failure Trajectory -- Systematic DAG
 
