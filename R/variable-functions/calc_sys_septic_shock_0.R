@@ -2,46 +2,6 @@
 ## Septic Shock (Systematic DAG)
 ## -----------------------------------------------------------------------------
 
-## HELPER FUNCTION: Calculate norepinephrine equivalents
-## Conversion factors for vasopressor doses
-# TODO: Check/update this calculation after completing the hypotension severity NEE calculation
-calc_norepi_equivalents <- function(
-  daily_ne_dose_8a_0_mcg,
-  daily_ne_dose_8a_0_mcgkg,
-  daily_epi_dose_8a_0_mcg,
-  daily_epi_dose_8a_0_mcgkg,
-  daily_phen_dose_8a_0_mcg,
-  daily_phen_dos_8a_0_mcgkg,
-  daily_vaso_dose_8a_0,
-  daily_dopa_dose_8a_0_mcg,
-  daily_dopa_dos_8a_0_mcgkg,
-  daily_ang2_8a_0_mcg,
-  daily_ang2_8a_0_mcgkg,
-  m_weight_kg
-) {
-
-  ## Convert all doses to mcg/min using weight if needed
-  ne_dose <- dplyr::coalesce(daily_ne_dose_8a_0_mcg, daily_ne_dose_8a_0_mcgkg * m_weight_kg, 0)
-  epi_dose <- dplyr::coalesce(daily_epi_dose_8a_0_mcg, daily_epi_dose_8a_0_mcgkg * m_weight_kg, 0)
-  phen_dose <- dplyr::coalesce(daily_phen_dose_8a_0_mcg, daily_phen_dos_8a_0_mcgkg * m_weight_kg, 0)
-  dopa_dose <- dplyr::coalesce(daily_dopa_dose_8a_0_mcg, daily_dopa_dos_8a_0_mcgkg * m_weight_kg, 0)
-  ang2_dose <- dplyr::coalesce(daily_ang2_8a_0_mcg, daily_ang2_8a_0_mcgkg * m_weight_kg, 0)
-  vaso_dose <- dplyr::coalesce(daily_vaso_dose_8a_0, 0)
-
-  ## Calculate norepinephrine equivalents
-  ## NE = 1, Epi = 1, Phenylephrine = 10, Vasopressin = 0.04 units = 1 mcg NE equivalent
-  ## Dopamine at high doses ~ 0.01, Angiotensin II ~ 1
-  norepi_equiv <- ne_dose +
-                  epi_dose +
-                  (phen_dose / 10) +
-                  (vaso_dose / 0.04) +
-                  (dopa_dose * 0.01) +
-                  ang2_dose
-
-  return(norepi_equiv)
-}
-
-
 #' Calculate the systematic DAG variable for severe septic shock on Day 0
 #'
 #' `calc_sys_septic_shock_0` calculates the systematic DAG variable for

@@ -31,18 +31,126 @@ load(file = '../aps-data/20250731_data.RData')
 source("R/variables.R")
 ```
 
-## (WIP) Hypotension Severity -- Systematic DAG
+## (NEW) Hypotension Severity -- Systematic DAG
 
 **Variable Definition:**
 
+SOFA cardiovascular component score based on mean arterial pressure and vasopressor/inotrope use at 8am on Day 0.
+
+- 0 = No vasopressors/inotropes, MAP ≥70
+- 1 = No vasopressors/inotropes, MAP <70
+- 2 = Dobutamine or milrinone (with dopamine ≤5 mcg/min/kg and no other vasopressors)
+- 3 = On vasopressors with norepinephrine equivalents (NEE) ≤0.1 mcg/min/kg
+- 4 = NEE >0.1 mcg/min/kg
+
+Citation for NEE calculation: Goradia S, Sardaneh AA, Narayan SW, Penm J, Patanwala AE. Vasopressor dose equivalence: A scoping review and suggested formula. J Crit Care, 2021;61:233–40.
+
 **Summary:**
+
+```{r}
+data_with_hypotension_sev <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  # Remove the weight variable and merge it back in from the "Day 0" event
+  select(-m_weight_kg) |>
+  left_join(data |>
+    filter(event_label == 'Day 0') |>
+    select(record_id, m_weight_kg),
+    by = 'record_id') |>
+  mutate(
+    sys_hypotension_sev_0 = calc_sys_hypotension_sev_0(
+      daily_vasopressors_0___0,
+      daily_vasopressors_0___1,
+      daily_vasopressors_0___2,
+      daily_vasopressors_0___3,
+      daily_vasopressors_0___4,
+      daily_vasopressors_0___5,
+      daily_vasopressors_0___6,
+      daily_vasopressors_0___7,
+      daily_vasopressors_0___8,
+      daily_vasopressors_0___88,
+
+      daily_sbp_8a_0,
+      daily_dbp_8a_0,
+
+      daily_ne_dose_8a_0_mcg,
+      daily_ne_dose_8a_0_mcgkg,
+      daily_epi_dose_8a_0_mcg,
+      daily_epi_dose_8a_0_mcgkg,
+      daily_phen_dose_8a_0_mcg,
+      daily_phen_dos_8a_0_mcgkg,
+      daily_vaso_dose_8a_0,
+      daily_dopa_dose_8a_0_mcg,
+      daily_dopa_dos_8a_0_mcgkg,
+      daily_dobuta_8a_0_mcg,
+      daily_dobuta_8a_0_mcgkg,
+      daily_ang2_8a_0_mcg,
+      daily_ang2_8a_0_mcgkg,
+      daily_milr_8a_0_mcg,
+      daily_milr_8a_0_mcgkg,
+
+      m_weight_kg
+    )
+  )
+
+data_with_hypotension_sev |>
+  count(sys_hypotension_sev_0) |>
+  gt() |>
+  grand_summary_rows(
+    columns = n,
+    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+  )
+```
+
+#### Unknown/Missing Values
+
+The two records missing for this variable are the same ones missing almost all of their labs. These should be queried.
+
+```{r}
+data_with_hypotension_sev |>
+  filter(is.na(sys_hypotension_sev_0)) |>
+  select(
+    record_id,
+    daily_vasopressors_0___0,
+    daily_vasopressors_0___1,
+    daily_vasopressors_0___2,
+    daily_vasopressors_0___3,
+    daily_vasopressors_0___4,
+    daily_vasopressors_0___5,
+    daily_vasopressors_0___6,
+    daily_vasopressors_0___7,
+    daily_vasopressors_0___8,
+    daily_vasopressors_0___88,
+
+    daily_sbp_8a_0,
+    daily_dbp_8a_0,
+
+    daily_ne_dose_8a_0_mcg,
+    daily_ne_dose_8a_0_mcgkg,
+    daily_epi_dose_8a_0_mcg,
+    daily_epi_dose_8a_0_mcgkg,
+    daily_phen_dose_8a_0_mcg,
+    daily_phen_dos_8a_0_mcgkg,
+    daily_vaso_dose_8a_0,
+    daily_dopa_dose_8a_0_mcg,
+    daily_dopa_dos_8a_0_mcgkg,
+    daily_dobuta_8a_0_mcg,
+    daily_dobuta_8a_0_mcgkg,
+    daily_ang2_8a_0_mcg,
+    daily_ang2_8a_0_mcgkg,
+    daily_milr_8a_0_mcg,
+    daily_milr_8a_0_mcgkg,
+
+    m_weight_kg
+  ) |>
+  gt()
+```
 
 
 ## Hypotension Severity -- Streamlined DAG
 
 Currently calculated the same as Systematic DAG: Hypotension Severity (see above).
 
-## Baseline Performance Status -- Systematic DAG
+## (NEW) Baseline Performance Status -- Systematic DAG
 
 ### Variable 1: Frailty Status
 
