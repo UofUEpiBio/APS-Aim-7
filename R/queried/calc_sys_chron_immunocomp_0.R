@@ -59,6 +59,6 @@ calc_sys_chron_immunocomp_0 <- function(
       is_checked(m_immunosup_conditions___88)
       ) ~ 1,
 
-    m_immunosuppression == "Unknown" ~ 99
+    is_unknown(m_immunosuppression) ~ 99
   )
 }

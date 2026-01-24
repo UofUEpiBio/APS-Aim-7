@@ -79,7 +79,7 @@ calc_sys_steroid_comorb_0 <- function(
       (m_pulmonary == "Yes" &
       is_checked(m_pulm_conditions___6)) ~ 1,
 
-      mhrheumd == "Unknown" | m_pulmonary == "Unknown" ~ 99
+      is_unknown(mhrheumd) | is_unknown(m_pulmonary) ~ 99
   )
 }
 

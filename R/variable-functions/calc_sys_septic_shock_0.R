@@ -86,6 +86,6 @@ calc_sys_septic_shock_0 <- function(
       (sepsis_clinical_judgement == "Yes") &
       is_unchecked(daily_vasopressors_0___0) &
       (norepi_equiv > 0.5) ~ 1,
-    sepsis_clinical_judgement == "Unknown" ~ 99
+    is_unknown(sepsis_clinical_judgement) ~ 99
   )
 }

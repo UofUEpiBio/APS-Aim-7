@@ -24,7 +24,7 @@ calc_sys_hyperglyc_hist_0 <- function(
   dplyr::case_when(
     m_endocrine %in% c("Yes", "No") & is_unchecked(m_endo_conditions___1) ~ 0,
     m_endocrine == "Yes" & is_checked(m_endo_conditions___1) ~ 1,
-    m_endocrine == "Unknown" ~ 99
+    is_unknown(m_endocrine) ~ 99
   )
 }
 

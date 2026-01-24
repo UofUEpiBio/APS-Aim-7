@@ -24,6 +24,6 @@ calc_sys_pneumonia_0 <- function(
   dplyr::case_when(
     pna_clinical_judgement == "No" ~ 0,
     pna_clinical_judgement == "Yes" ~ 1,
-    pna_clinical_judgement == "Unknown" ~ 99
+    is_unknown(pna_clinical_judgement) ~ 99
   )
 }

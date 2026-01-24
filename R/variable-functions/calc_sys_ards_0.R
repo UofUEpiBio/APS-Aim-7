@@ -27,6 +27,6 @@ calc_sys_ards_0 <- function(
   dplyr::case_when(
     ards_present == "No" | ards_clinical_judgement == "No" ~ 0,
     ards_present == "Yes" & ards_clinical_judgement == "Yes" ~ 1,
-    ards_clinical_judgement == "Unknown" ~ 99
+    is_unknown(ards_clinical_judgement) ~ 99
   )
 }

@@ -29,6 +29,6 @@ calc_sys_obstruct_lung_0 <- function(
       (is_checked(m_pulm_conditions___1) | is_checked(m_pulm_conditions___3)) ~ 1,
     m_pulmonary %in% c("Yes", "No") &
       (is_unchecked(m_pulm_conditions___1) & is_unchecked(m_pulm_conditions___3)) ~ 0,
-    m_pulmonary == "Unknown" ~ 99
+    is_unknown(m_pulmonary) ~ 99
   )
 }

@@ -27,6 +27,6 @@ calc_sys_sepsis_0 <- function(
   dplyr::case_when(
     sepsis_present == "No" | sepsis_clinical_judgement == "No" ~ 0,
     sepsis_present == "Yes" & sepsis_clinical_judgement == "Yes" ~ 1,
-    sepsis_clinical_judgement == "Unknown" ~ 99
+    is_unknown(sepsis_clinical_judgement) ~ 99
   )
 }

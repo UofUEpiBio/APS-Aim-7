@@ -25,6 +25,6 @@ calc_str_septic_shock_0 <- function(
   dplyr::case_when(
     sepsis_present == "No" | sepsis_clinical_judgement == "No" | is_checked(daily_vasopressors_0___0) ~ 0,
     sepsis_present == "Yes" & sepsis_clinical_judgement == "Yes" & is_unchecked(daily_vasopressors_0___0) ~ 1,
-    sepsis_clinical_judgement == "Unknown" ~ 99
+    is_unknown(sepsis_clinical_judgement) ~ 99
   )
 }
