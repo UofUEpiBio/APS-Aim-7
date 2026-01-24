@@ -3,38 +3,18 @@
 ## -----------------------------------------------------------------------------
 
 
-#' Calculate the systematic DAG variable for steroid responsive comorbidity on Day 0
+#' Calculate systematic DAG steroid responsive comorbidity on Day 0
 #'
-#' `calc_sys_steroid_comorb_0` calculates the systematic DAG variable for
-#' steroid responsive comorbidity from the data.
+#' Calculates the systematic DAG variable for steroid responsive comorbidity from
+#' baseline medical history. Identifies patients with rheumatologic conditions or
+#' interstitial lung disease that typically respond to steroid therapy.
 #'
-#' @param mhrheumd Character vector. The `mhrheumd` column from the data.
-#' @param m_rheum_conditions___1 Character vector. The `m_rheum_conditions___1` column
-#' from the data.
-#' @param m_rheum_conditions___2 Character vector. The `m_rheum_conditions___2` column
-#' from the data.
-#' @param m_rheum_conditions___3 Character vector. The `m_rheum_conditions___3` column
-#' from the data.
-#' @param m_rheum_conditions___4 Character vector. The `m_rheum_conditions___4` column
-#' from the data.
-#' @param m_rheum_conditions___5 Character vector. The `m_rhe um_conditions___5` column
-#' from the data.
-#' @param m_rheum_conditions___6 Character vector. The `m_rheum_conditions___6` column
-#' from the data.
-#' @param m_rheum_conditions___7 Character vector. The `m_rheum_conditions___7` column
-#' from the data.
-#' @param m_rheum_conditions___8 Character vector. The `m_rheum_conditions___8` column
-#' from the data.
-#' @param m_rheum_conditions___88 Character vector. The `m_rheum_conditions___88` column
-#' from the data.
-#' @param m_pulmonary Character vector. The `m_pulmonary` column from the data.
-#' @param m_pulm_conditions___6 Character vector. The `m_pulm_conditions___6` column
-#' from the data.
+#' @inheritParams day0_baseline_medical_history_params
 #'
-#' @returns A vector with values:
-#' - 0 = No steroid responsive comorbidity
-#' - 1 = Steroid responsive comorbidity present
-#' - 99 = Unknown
+#' @returns Integer vector with values:
+#' - `0` = No steroid responsive comorbidity
+#' - `1` = Steroid responsive comorbidity present
+#' - `99` = Unknown
 #' @export
 calc_sys_steroid_comorb_0 <- function(
   mhrheumd,
@@ -84,14 +64,16 @@ calc_sys_steroid_comorb_0 <- function(
 }
 
 
-#' Calculate the streamlined DAG variable for steroid responsive comorbidity on Day 0
+#' Calculate streamlined DAG steroid responsive comorbidity on Day 0
 #'
-#' `calc_str_steroid_comorb_0` calculates the streamlined DAG variable for
-#' steroid responsive comorbidity from the data.
+#' Calculates the streamlined DAG variable for steroid responsive comorbidity from
+#' baseline medical history and medications. Identifies patients with rheumatologic
+#' conditions or metastatic cancer who are on steroids.
 #'
-#' @inheritParams calc_sys_steroid_comorb_0
+#' @inheritParams day0_baseline_medical_history_params
+#' @inheritParams day0_medications_params
 #'
-#' @inherits calc_sys_steroid_comorb_0 returns
+#' @inherit calc_sys_steroid_comorb_0 return
 #' @export
 calc_str_steroid_comorb_0 <- function(
   mhrheumd,

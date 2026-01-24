@@ -3,25 +3,20 @@
 ## -----------------------------------------------------------------------------
 
 
-#' Calculate the systematic DAG variable for chronic moderate-dose steroid use on Day 0
+#' Calculate systematic DAG chronic moderate-dose steroid use on Day 0
 #'
-#' `calc_str_chron_steroid_moddose_0` calculates the systematic DAG variable for
-#' chronic moderate-dose steroid use. This variable represents chronic
-#' moderate-dose steroid use leading to possible adrenal insufficinecy (but not
-#' definite adrenal insufficiency).
+#' Calculates the systematic DAG variable for chronic moderate-dose steroid use
+#' from medication history and baseline medical history. Represents chronic
+#' moderate-dose steroid use leading to possible (but not definite) adrenal
+#' insufficiency.
 #'
-#' @param mhccster Character vector. The `mhccster` column from the data.
-#' @param m_endo_conditions___2 Character vector. The `m_endo_conditions___2` column
-#' from the data.
-#' @param m_immunosup_conditions___1 Character vector. The `m_immunosup_conditions___1`
-#' column from the data.
-#' @param m_endocrine Character vector. The `m_endocrine` column from the data.
-#' @param m_immunosuppression Character vector. The `m_immunosuppression` column from the data.
+#' @inheritParams day0_medications_params
+#' @inheritParams day0_baseline_medical_history_params
 #'
-#' @returns A vector with values:
-#' - 0 = No possible adrenal insufficiency
-#' - 1 = Possible adrenal insufficiency
-#' - 99 = Unknown
+#' @returns Integer vector with values:
+#' - `0` = No possible adrenal insufficiency
+#' - `1` = Possible adrenal insufficiency (moderate-dose steroids without confirmed AI)
+#' - `99` = Unknown
 #' @export
 calc_sys_chron_steroid_moddose_0 <- function(
   mhccster,
@@ -44,16 +39,17 @@ calc_sys_chron_steroid_moddose_0 <- function(
 }
 
 
-#' Calculate the streamlined DAG variable for chronic moderate-dose steroid use on Day 0
+#' Calculate streamlined DAG chronic moderate-dose steroid use on Day 0
 #'
-#' `calc_str_chron_steroid_moddose_0` calculates the streamlined DAG variable for
-#' chronic moderate-dose steroid use. This variable represents chronic
-#' moderate-dose steroid use leading to possible adrenal insufficinecy (but not
-#' definite adrenal insufficiency).
+#' Calculates the streamlined DAG variable for chronic moderate-dose steroid use
+#' from medication history and baseline medical history. Simplified version that
+#' excludes immunosuppression checkbox screening. Represents chronic moderate-dose
+#' steroid use leading to possible (but not definite) adrenal insufficiency.
 #'
-#' @inheritParams calc_sys_chron_steroid_moddose_0
+#' @inheritParams day0_medications_params
+#' @inheritParams day0_baseline_medical_history_params
 #'
-#' @inherits calc_sys_chron_steroid_moddose_0 returns
+#' @inherit calc_sys_chron_steroid_moddose_0 return
 #' @export
 calc_str_chron_steroid_moddose_0 <- function(
   mhccster,

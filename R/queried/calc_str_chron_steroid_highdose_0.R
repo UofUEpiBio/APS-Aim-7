@@ -3,18 +3,18 @@
 ## -----------------------------------------------------------------------------
 
 
-#' Calculate the streamlined DAG variable for chronic high-dose steroid use on Day 0
+#' Calculate streamlined DAG chronic high-dose steroid use on Day 0
 #'
-#' `calc_str_chron_steroid_highdose_0` calculates the streamlined DAG variable for
-#' chronic high-dose steroid use from the data.
+#' Calculates the streamlined DAG variable for chronic high-dose steroid use
+#' from baseline medical history data. Identifies patients with chronic systemic
+#' corticosteroid use documented in immunosuppression history.
 #'
-#' @param m_immunosup_conditions___1 Character vector. The `m_immunosup_conditions___1`
-#' column from the data.
+#' @inheritParams day0_baseline_medical_history_params
 #'
-#' @returns A vector with values:
-#' - 0 = No chronic high-dose steroid use
-#' - 1 = Chronic high-dose steroid use
-#' - 99 = Unknown
+#' @returns Integer vector with values:
+#' - `0` = No chronic high-dose steroid use
+#' - `1` = Chronic high-dose steroid use present
+#' - `99` = Unknown
 #' @export
 calc_str_chron_steroid_highdose_0 <- function(
   m_immunosuppression,

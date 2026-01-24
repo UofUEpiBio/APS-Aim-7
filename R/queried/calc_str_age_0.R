@@ -3,13 +3,14 @@
 ## -----------------------------------------------------------------------------
 
 
-#' Calculate the streamlined DAG variable for age on Day 0
+#' Calculate streamlined DAG age on Day 0
 #'
-#' `calc_age_0` calculates the streamlined DAG variable for age from the data.
+#' Calculates the streamlined DAG variable for age from patient enrollment data.
+#' Returns the patient's age in years at time of enrollment.
 #'
-#' @param age Numeric vector. The `age` column from the data.
+#' @inheritParams enrollment_demographics_params
 #'
-#' @returns A numeric vector representing age on day 0.
+#' @returns Numeric vector representing age in years on Day 0.
 #' @export
 calc_str_age_0 <- function(
   age

@@ -3,31 +3,19 @@
 ## -----------------------------------------------------------------------------
 
 
-#' Calculate the streamlined DAG variable for chronic immunocompromise on Day 0
+#' Calculate systematic DAG chronic immunocompromise on Day 0
 #'
-#' `calc_sys_chron_immunocomp_0` calculates the streamlined DAG variable for
-#' chronic immunocompromise from the data.
+#' Calculates the systematic DAG variable for chronic immunocompromise from
+#' baseline medical history. Identifies patients with immunocompromising conditions
+#' excluding chronic steroid use (transplant, malignancy, HIV, immunosuppressive
+#' medications, congenital immunodeficiency).
 #'
-#' @param m_immunosuppression Character vector. The `m_immunosuppression` column from the data.
-#' @param m_immunosup_conditions___2 Character vector. The `m_immunosup_conditions___2` column
-#' from the data.
-#' @param m_immunosup_conditions___3 Character vector. The `m_immunosup_conditions___3` column
-#' from the data.
-#' @param m_immunosup_conditions___4 Character vector. The `m_immunosup_conditions___4` column
-#' from the data.
-#' @param m_immunosup_conditions___5 Character vector. The `m_immunosup_conditions___5` column
-#' from the data.
-#' @param m_immunosup_conditions___6 Character vector. The `m_immunosup_conditions___6` column
-#' from the data.
-#' @param m_immunosup_conditions___7 Character vector. The `m_immunosup_conditions___7` column
-#' from the data.
-#' @param m_immunosup_conditions___88 Character vector. The `m_immunosup_conditions___88` column
-#' from the data.
+#' @inheritParams day0_baseline_medical_history_params
 #'
-#' @returns A vector with values:
-#' - 0 = No chronic immunocompromise
-#' - 1 = Chronic immunocompromise present
-#' - 99 = Unknown
+#' @returns Integer vector with values:
+#' - `0` = No chronic immunocompromise
+#' - `1` = Chronic immunocompromise present
+#' - `99` = Unknown
 #' @export
 calc_sys_chron_immunocomp_0 <- function(
   m_immunosuppression,

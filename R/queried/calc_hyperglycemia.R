@@ -3,19 +3,17 @@
 ## -----------------------------------------------------------------------------
 
 
-#' Calculate the systematic DAG variable 1 for hyperglycemia on Day 0
+#' Calculate systematic DAG hyperglycemia history on Day 0
 #'
-#' `calc_sys_hyperglyc_hist_0` calculates the systematic DAG variable 1 for
-#' hyperglycemia from the data.
+#' Calculates the systematic DAG variable 1 for hyperglycemia from baseline
+#' medical history. Identifies patients with documented diabetes mellitus history.
 #'
-#' @param m_endocrine Character vector. The `m_endocrine` column from the data.
-#' @param m_endo_conditions___1 Character vector. The `m_endo_conditions___1` column
-#' from the data.
+#' @inheritParams day0_baseline_medical_history_params
 #'
-#' @returns A vector with values:
-#' - 0 = No diabetes medical history
-#' - 1 = Diabetes medical history present
-#' - 99 = Unknown
+#' @returns Integer vector with values:
+#' - `0` = No diabetes medical history
+#' - `1` = Diabetes medical history present
+#' - `99` = Unknown
 #' @export
 calc_sys_hyperglyc_hist_0 <- function(
   m_endocrine,
@@ -29,18 +27,15 @@ calc_sys_hyperglyc_hist_0 <- function(
 }
 
 
-#' Calculate the systematic DAG variable 2 for hyperglycemia on Day 0
+#' Calculate systematic DAG hyperglycemia glucose level on Day 0
 #'
-#' `calc_sys_hyperglyc_gluc_0` calculates the systematic DAG variable 2 for
-#' hyperglycemia from the data.
+#' Calculates the systematic DAG variable 2 for hyperglycemia from daily
+#' assessment data. Returns the measured glucose level or -1 if not collected.
 #'
-#' @param daily_gluc_8a_0 Numeric vector. The `daily_gluc_8a_0` column from the data.
-#' @param daily_gluc_nc_0 Character vector. The `daily_gluc_nc_0` column from the data.
+#' @inheritParams daily_assessment_params
 #'
-#' @returns A numeric vector representing the glucose level on day 0 based on
-#' available data:
-#' - Glucose value if measured
-#' - -1 if glucose not collected
+#' @returns Numeric vector representing glucose level in mg/dL, or -1 if not
+#'   collected.
 #' @export
 calc_sys_hyperglyc_gluc_0 <- function(
   daily_gluc_8a_0,
@@ -52,16 +47,17 @@ calc_sys_hyperglyc_gluc_0 <- function(
   )
 }
 
-#' Calculate the streamlined DAG variable for hyperglycemia on Day 0
+#' Calculate streamlined DAG hyperglycemia on Day 0
 #'
-#' `calc_str_hyperglyc_hist_0` calculates the streamlined DAG variable for
-#' hyperglycemia from the data.
+#' Calculates the streamlined DAG variable for hyperglycemia from daily
+#' assessment data. Dichotomizes glucose at threshold of 250 mg/dL.
 #'
-#' @inheritParams calc_sys_hyperglyc_gluc_0
+#' @inheritParams daily_assessment_params
 #'
-#' @returns A vector with values:
-#' - 0 = No hyperglycemia on day 0 (glucose ≤ 250 or not collected)
-#' - 1 = Hyperglycemia present (glucose > 250)
+#' @returns Integer vector with values:
+#' - `0` = No hyperglycemia (glucose ≤ 250 mg/dL or not collected)
+#' - `1` = Hyperglycemia present (glucose > 250 mg/dL)
+#' @export
 calc_str_hyperglyc_hist_0 <- function(
   daily_gluc_8a_0,
   daily_gluc_nc_0

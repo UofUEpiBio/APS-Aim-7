@@ -3,21 +3,17 @@
 ## -----------------------------------------------------------------------------
 
 
-#' Calculate the streamlined DAG variable for obstructive lung disease on Day 0
+#' Calculate systematic DAG obstructive lung disease on Day 0
 #'
-#' `calc_sys_obstruct_lung_0` calculates the streamlined DAG variable for
-#' obstructive lung disease from the data.
+#' Calculates the systematic DAG variable for obstructive lung disease from
+#' baseline medical history. Identifies patients with COPD or asthma history.
 #'
-#' @param m_pulmonary Character vector. The `m_pulmonary` column from the data.
-#' @param m_pulm_conditions___1 Character vector. The `m_pulm_conditions___1` column
-#' from the data.
-#' @param m_pulm_conditions___3 Character vector. The `m_pulm_conditions___3` column
-#' from the data.
+#' @inheritParams day0_baseline_medical_history_params
 #'
-#' @returns A vector with values:
-#' - 0 = No obstructive lung disease
-#' - 1 = Obstructive lung disease present
-#' - 99 = Unknown
+#' @returns Integer vector with values:
+#' - `0` = No obstructive lung disease
+#' - `1` = Obstructive lung disease present (COPD or asthma)
+#' - `99` = Unknown
 #' @export
 calc_sys_obstruct_lung_0 <- function(
   m_pulmonary,

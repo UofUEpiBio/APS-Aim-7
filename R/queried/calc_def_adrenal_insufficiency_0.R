@@ -2,22 +2,18 @@
 ## Definite Adrenal Insufficiency (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate the systematic DAG variable for adrenal insufficiency on Day 0
+#' Calculate systematic DAG definite adrenal insufficiency on Day 0
 #'
-#' `calc_sys_def_adrenal_insufficiency_0` calculates the systematic DAG variable for
-#' adrenal insufficiency from the data.
+#' Calculates the systematic DAG variable for adrenal insufficiency from baseline
+#' medical history. Identifies patients with documented adrenal insufficiency or
+#' chronic high-dose steroid use.
 #'
-#' @param m_endocrine Character vector. The `m_endocrine` column from the data.
-#' @param m_endo_conditions___2 Character vector. The `m_endo_conditions___2` column
-#' from the data.
-#' @param m_immunosuppression Character vector. The `m_immunosuppression` column from the data.
-#' @param m_immunosup_conditions___1 Character vector. The `m_immunosup_conditions___1`
-#' column from the data.
+#' @inheritParams day0_baseline_medical_history_params
 #'
-#' @returns A vector with values:
-#' - 0 = No definite adrenal insufficiency
-#' - 1 = Definite adrenal insufficiency
-#' - 99 = Unknown
+#' @returns Integer vector with values:
+#' - `0` = No definite adrenal insufficiency
+#' - `1` = Definite adrenal insufficiency present
+#' - `99` = Unknown
 #' @export
 calc_sys_def_adrenal_insufficiency_0 <- function(
   m_endocrine,
@@ -36,14 +32,14 @@ calc_sys_def_adrenal_insufficiency_0 <- function(
   )
 }
 
-#' Calculate the streamlined DAG variable for adrenal insufficiency on Day 0
+#' Calculate streamlined DAG definite adrenal insufficiency on Day 0
 #'
-#' `calc_sys_def_adrenal_insufficiency_0` calculates the streamlined DAG variable for
-#' adrenal insufficiency from the data.
+#' Calculates the streamlined DAG variable for adrenal insufficiency from baseline
+#' medical history. Simplified version that only checks endocrine conditions.
 #'
-#' @inheritParams calc_sys_def_adrenal_insufficiency_0
+#' @inheritParams day0_baseline_medical_history_params
 #'
-#' @inherits calc_sys_def_adrenal_insufficiency_0 returns
+#' @inherit calc_sys_def_adrenal_insufficiency_0 return
 #' @export
 calc_str_adrenal_insufficiency_0 <- function(
   m_endocrine,
