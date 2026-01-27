@@ -2,24 +2,12 @@
 ## Delirium (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate the systematic DAG variable for delirium on Day 0
-#'
-#' `calc_sys_delirium_0` calculates the systematic DAG variable for delirium
-#' status on Day 0. This variable assesses whether delirium screening was
-#' performed and if delirium was present, using CAM (Confusion Assessment Method)
-#' assessments from Days -2, -1, and 0.
-#'
-#' @param cam_0 Character vector. The `cam_0` column from the data. Possible values:
-#' "Positive for delirium at least once on this day", "Negative for delirium on all
-#' assessments on this day", "Not done", or NA.
-#' @param cam_m1 Character vector. The `cam_m1` column from the data. Same values as cam_0.
-#' @param cam_m2 Character vector. The `cam_m2` column from the data. Same values as cam_0.
-#'
-#' @returns A numeric vector with values:
-#' - 0 = CAM done and delirium not present
-#' - 1 = CAM done and delirium present
-#' - 2 = CAM not done
-#' @export
+# Calculate SYSTEMATIC DAG 'Delirium'
+#
+# Values:
+# - 0 = CAM done and delirium not present
+# - 1 = CAM done and delirium present
+# - 2 = CAM not done
 calc_sys_delirium_0 <- function(
   # Core inputs
   cam_0,

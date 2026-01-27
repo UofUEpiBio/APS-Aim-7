@@ -2,19 +2,12 @@
 ## Inflammatory Profile (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate streamlined DAG inflammatory profile on Day 0
-#'
-#' Calculates the streamlined DAG variable for inflammatory profile from daily
-#' assessment data. Represents C-reactive protein (CRP) level on admission day,
-#' with lookback up to 2 days for missing Day 0 values.
-#'
-#' @inheritParams daily_assessment_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = CRP not checked (Day 0 or lookback)
-#' - `1` = CRP checked and < 15 mg/L
-#' - `2` = CRP checked and ≥ 15 mg/L
-#' @export
+# Calculate STREAMLINED DAG 'Inflammatory Profile'
+#
+# Values:
+# - 0 = CRP not checked
+# - 1 = CRP checked and < 15 mg/L
+# - 2 = CRP checked and >= 15 mg/L
 calc_str_inflamprofile_0 <- function(
   daily_crp_8a_0,
   daily_crp_nc_0,
@@ -34,18 +27,12 @@ calc_str_inflamprofile_0 <- function(
 }
 
 
-#' Calculate CRP component for inflammatory profile
-#'
-#' Internal helper function to calculate the C-reactive protein component of the
-#' inflammatory profile variable. Looks back up to 2 days if Day 0 value is missing.
-#'
-#' @inheritParams daily_assessment_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = CRP not checked
-#' - `1` = CRP checked and < 15 mg/L
-#' - `2` = CRP checked and ≥ 15 mg/L
-#' @keywords internal
+# Calculate SYSTEMATIC DAG 'Inflammatory Profile: CRP Component'
+#
+# Values:
+# - 0 = CRP not checked
+# - 1 = CRP checked and < 15 mg/L
+# - 2 = CRP checked and >= 15 mg/L
 calc_crp_0 <- function(
   daily_crp_8a_0,
   daily_crp_nc_0,
@@ -72,18 +59,12 @@ calc_crp_0 <- function(
   )
 }
 
-#' Calculate ferritin component for inflammatory profile
-#'
-#' Internal helper function to calculate the ferritin component of the
-#' inflammatory profile variable. Looks back up to 2 days if Day 0 value is missing.
-#'
-#' @inheritParams daily_assessment_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = Ferritin not checked
-#' - `1` = Ferritin checked and < 700 ng/mL
-#' - `2` = Ferritin checked and ≥ 700 ng/mL
-#' @keywords internal
+# Calculate SYSTEMATIC DAG 'Inflammatory Profile: Ferritin Component'
+#
+# Values:
+# - 0 = Ferritin not checked
+# - 1 = Ferritin checked and < 700 ng/mL
+# - 2 = Ferritin checked and >= 700 ng/mL
 calc_ferritin_0 <- function(
   daily_ferritin_8a_0,
   daily_ferritin_nc_0,
@@ -110,18 +91,12 @@ calc_ferritin_0 <- function(
   )
 }
 
-#' Calculate fibrinogen component for inflammatory profile
-#'
-#' Internal helper function to calculate the fibrinogen component of the
-#' inflammatory profile variable. Looks back up to 2 days if Day 0 value is missing.
-#'
-#' @inheritParams daily_assessment_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = Fibrinogen not checked
-#' - `1` = Fibrinogen checked and < 150 mg/dL
-#' - `2` = Fibrinogen checked and ≥ 150 mg/dL
-#' @keywords internal
+# Calculate SYSTEMATIC DAG 'Inflammatory Profile: Fibrinogen Component'
+#
+# Values:
+# - 0 = Fibrinogen not checked
+# - 1 = Fibrinogen checked and < 150 mg/dL
+# - 2 = Fibrinogen checked and >= 150 mg/dL
 calc_fibrinogen_0 <- function(
   daily_fibrinogen_8a_0,
   daily_fibrinogen_nc_0,
@@ -148,18 +123,12 @@ calc_fibrinogen_0 <- function(
   )
 }
 
-#' Calculate D-dimer component for inflammatory profile
-#'
-#' Internal helper function to calculate the D-dimer component of the
-#' inflammatory profile variable. Looks back up to 2 days if Day 0 value is missing.
-#'
-#' @inheritParams daily_assessment_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = D-dimer not checked
-#' - `1` = D-dimer checked and < 1500 ng/mL
-#' - `2` = D-dimer checked and ≥ 1500 ng/mL
-#' @keywords internal
+# Calculate SYSTEMATIC DAG 'Inflammatory Profile: D-dimer Component'
+#
+# Values:
+# - 0 = D-dimer not checked
+# - 1 = D-dimer checked and < 1500 ng/mL
+# - 2 = D-dimer checked and >= 1500 ng/mL
 calc_ddimer_0 <- function(
   daily_ddimer_8a_0,
   daily_ddimer_nc_0,

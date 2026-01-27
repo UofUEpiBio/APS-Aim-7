@@ -2,53 +2,9 @@
 ## PSI Score (Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate the streamlined DAG variable for PSI score
-#'
-#' `calc_str_psi_score_0` calculates the Pneumonia Severity Index (PSI) score
-#' using the original Fine et al. formula. The function sums points from
-#' demographic characteristics, comorbidities, physical examination findings,
-#' and laboratory/radiographic findings.
-#'
-#' @param age Numeric vector. Patient age in years.
-#' @param sex Character vector. Patient sex. Values: "Male", "Female", or NA.
-#' @param prssrc Numeric vector. Prior residence source. Value 5 indicates nursing home.
-#' @param m_cv_conditions___2 Character vector. Checkbox for Heart failure.
-#' @param m_neurologic_conditions___2 Character vector. Checkbox for Prior stroke.
-#' @param m_neurologic_conditions___3 Character vector. Checkbox for Prior TIA.
-#' @param m_cancer Character vector. Active cancer status. Values: "Yes", "No", or NA.
-#' @param m_kid_liver_conditions___1 Character vector. Checkbox for Chronic kidney disease.
-#' @param m_kid_liver_conditions___2 Character vector. Checkbox for Cirrhosis.
-#' @param cam_0 Character vector. CAM assessment on Day 0.
-#' @param cam_m1 Character vector. CAM assessment on Day -1.
-#' @param cam_m2 Character vector. CAM assessment on Day -2.
-#' @param highhr_vsorres Numeric vector. Highest heart rate on Day 0.
-#' @param highrr_vsorres Numeric vector. Highest respiratory rate on Day 0.
-#' @param lowsysbp_vsorres Numeric vector. Lowest systolic BP on Day 0.
-#' @param lowtemp_vsorres Numeric vector. Lowest temperature on Day 0 (Celsius).
-#' @param hightemp_vsorres Numeric vector. Highest temperature on Day 0 (Celsius).
-#' @param daily_bun_8a_0 Numeric vector. BUN at 8am on Day 0.
-#' @param daily_bun_8a_m1 Numeric vector. BUN at 8am on Day -1.
-#' @param daily_bun_8a_m2 Numeric vector. BUN at 8am on Day -2.
-#' @param daily_gluc_8a_0 Numeric vector. Glucose at 8am on Day 0.
-#' @param daily_gluc_8a_m1 Numeric vector. Glucose at 8am on Day -1.
-#' @param daily_gluc_8a_m2 Numeric vector. Glucose at 8am on Day -2.
-#' @param daily_hct_8a_0 Numeric vector. Hematocrit at 8am on Day 0.
-#' @param daily_hct_8a_m1 Numeric vector. Hematocrit at 8am on Day -1.
-#' @param daily_hct_8a_m2 Numeric vector. Hematocrit at 8am on Day -2.
-#' @param daily_na_8a_0 Numeric vector. Sodium at 8am on Day 0.
-#' @param daily_na_8a_m1 Numeric vector. Sodium at 8am on Day -1.
-#' @param daily_na_8a_m2 Numeric vector. Sodium at 8am on Day -2.
-#' @param daily_pa02_lowest_0 Numeric vector. Lowest PaO2 on Day 0.
-#' @param daily_pa02_lowest_m1 Numeric vector. Lowest PaO2 on Day -1.
-#' @param daily_pa02_lowest_m2 Numeric vector. Lowest PaO2 on Day -2.
-#' @param daily_ph_lowest_0 Numeric vector. Lowest pH on Day 0.
-#' @param daily_ph_lowest_m1 Numeric vector. Lowest pH on Day -1.
-#' @param daily_ph_lowest_m2 Numeric vector. Lowest pH on Day -2.
-#' @param pna_effusion Numeric vector. Pleural effusion associated with pneumonia.
-#' Values: 1 = Yes, 2 = No, 99 = Unknown.
-#'
-#' @returns A numeric vector representing the PSI score (possible range: negative to ~400+)
-#' @export
+# Calculate STREAMLINED DAG 'PSI Score'
+#
+# Value: Pneumonia Severity Index (PSI) score
 calc_str_psi_score_0 <- function(
   age,
   sex,

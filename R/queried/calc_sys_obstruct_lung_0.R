@@ -2,19 +2,12 @@
 ## Obstructive Lung Disease (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-
-#' Calculate systematic DAG obstructive lung disease on Day 0
-#'
-#' Calculates the systematic DAG variable for obstructive lung disease from
-#' baseline medical history. Identifies patients with COPD or asthma history.
-#'
-#' @inheritParams day0_baseline_medical_history_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = No obstructive lung disease
-#' - `1` = Obstructive lung disease present (COPD or asthma)
-#' - `99` = Unknown
-#' @export
+# Calculate SYSTEMATIC DAG 'Obstructive Lung Disease'
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_sys_obstruct_lung_0 <- function(
   m_pulmonary,
   m_pulm_conditions___1,

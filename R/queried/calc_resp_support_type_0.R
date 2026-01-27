@@ -2,23 +2,16 @@
 ## Respiratory Failure Severity (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate respiratory support type on Day 0
-#'
-#' Calculates the respiratory support type component of the systematic DAG
-#' variable for respiratory failure severity from daily assessment data.
-#' Categorizes the type and intensity of respiratory support on admission day.
-#'
-#' @inheritParams daily_assessment_params code_map_derived_params
-#'
-#' @returns Integer vector with values:
-#' - `1` = No respiratory support on Day 0
-#' - `2` = Standard flow oxygen
-#' - `3` = High-flow nasal cannula (HFNC)
-#' - `4` = Non-invasive ventilation (NIV)
-#' - `5` = Invasive mechanical ventilation (IMV) with PEEP < 12 cm H2O, no ECMO
-#' - `6` = IMV with PEEP ≥ 12 cm H2O, or ECMO
-#' - `99` = Unknown
-#' @export
+# Calculate SYSTEMATIC DAG 'Respiratory Failure Severity: Respiratory Support Type' for Day 0
+#
+# Values:
+# - 1 = No respiratory support
+# - 2 = Standard flow oxygen
+# - 3 = High-flow nasal cannula (HFNC)
+# - 4 = Non-invasive ventilation (NIV)
+# - 5 = Invasive mechanical ventilation (IMV) with PEEP < 12 cm H2O, no ECMO
+# - 6 = IMV with PEEP ≥ 12 cm H2O, or ECMO
+# - 99 = Unknown
 calc_resp_support_type_0 <- function(
   daily_resp_8a_0_code,
   dailysofa_perf_0,
@@ -49,22 +42,14 @@ calc_resp_support_type_0 <- function(
   )
 }
 
-#' Calculate S/F ratio on Day 0
-#'
-#' Calculates the SpO2/FiO2 (S/F) ratio component of the systematic DAG variable
-#' for respiratory failure severity from daily assessment data. The calculation
-#' method varies based on respiratory support type.
-#'
-#' @inheritParams derived_respiratory_params
-#' @inheritParams daily_assessment_params
-#'
-#' @returns Numeric vector representing the S/F ratio on Day 0, calculated as:
-#' - For no respiratory support (type 1): SpO2 / 0.21
-#' - For standard flow (type 2): SpO2 / (0.21 + 0.03 × O2 flow rate)
-#' - For HFNC/NIV/IMV (types 3-6): SpO2 / FiO2
-#' @export
+# Calculate SYSTEMATIC DAG 'Respiratory Failure Severity: S/F Ratio' for Day 0
+#
+# Value: SpO2/FiO2 ratio calculated as:
+# - Resp Support Type 1 (no support): SpO2 / 0.21
+# - Resp Support Type 2 (standard flow): SpO2 / (0.21 + 0.03 × O2 flow rate)
+# - Resp Support Types 3-6 (HFNC/NIV/IMV): SpO2 / FiO2
 calc_sfratio_8a_0 <- function(
-  resp_support_type_0,
+  resp_support_type_0, # Calculated by calc_resp_support_type_0()
   daily_spo2_8a_0,
   daily_standard_flow_8a_0,
   daily_hfnc_fi02_8a_0,

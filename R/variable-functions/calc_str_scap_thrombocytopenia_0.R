@@ -2,19 +2,11 @@
 ## SCAP Criterion: Thrombocytopenia (Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate the streamlined DAG variable for SCAP thrombocytopenia criterion
-#'
-#' `calc_str_scap_thrombocytopenia_0` calculates the SCAP (Severe Community-Acquired
-#' Pneumonia) thrombocytopenia criterion using Day 0 value with lookback to Days -1 and -2.
-#'
-#' @param daily_platelet_8a_0 Numeric vector. Platelet count on Day 0.
-#' @param daily_platelet_8a_m1 Numeric vector. Platelet count on Day -1.
-#' @param daily_platelet_8a_m2 Numeric vector. Platelet count on Day -2.
-#'
-#' @returns A numeric vector with values:
-#' - 0 = Platelets >= 100
-#' - 1 = Platelets < 100
-#' @export
+# Calculate STREAMLINED DAG 'SCAP Criterion: Thrombocytopenia'
+#
+# Values:
+# - 0 = No (Platelets >= 100)
+# - 1 = Yes (Platelets < 100)
 calc_str_scap_thrombocytopenia_0 <- function(
   daily_platelet_8a_0,
   daily_platelet_8a_m1,

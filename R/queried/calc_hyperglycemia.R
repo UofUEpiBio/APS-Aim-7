@@ -2,19 +2,12 @@
 ## Hyperglycemia (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-
-#' Calculate systematic DAG hyperglycemia history on Day 0
-#'
-#' Calculates the systematic DAG variable 1 for hyperglycemia from baseline
-#' medical history. Identifies patients with documented diabetes mellitus history.
-#'
-#' @inheritParams day0_baseline_medical_history_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = No diabetes medical history
-#' - `1` = Diabetes medical history present
-#' - `99` = Unknown
-#' @export
+# Calculate SYSTEMATIC DAG 'Hyperglycemia: History' for Day 0
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_sys_hyperglyc_hist_0 <- function(
   m_endocrine,
   m_endo_conditions___1
@@ -27,16 +20,9 @@ calc_sys_hyperglyc_hist_0 <- function(
 }
 
 
-#' Calculate systematic DAG hyperglycemia glucose level on Day 0
-#'
-#' Calculates the systematic DAG variable 2 for hyperglycemia from daily
-#' assessment data. Returns the measured glucose level or -1 if not collected.
-#'
-#' @inheritParams daily_assessment_params
-#'
-#' @returns Numeric vector representing glucose level in mg/dL, or -1 if not
-#'   collected.
-#' @export
+# Calculate SYSTEMATIC DAG 'Hyperglycemia: Glucose Level' for Day 0
+#
+# Value: Glucose level in mg/dL (-1 = 'Not Collected')
 calc_sys_hyperglyc_gluc_0 <- function(
   daily_gluc_8a_0,
   daily_gluc_nc_0
@@ -47,17 +33,11 @@ calc_sys_hyperglyc_gluc_0 <- function(
   )
 }
 
-#' Calculate streamlined DAG hyperglycemia on Day 0
-#'
-#' Calculates the streamlined DAG variable for hyperglycemia from daily
-#' assessment data. Dichotomizes glucose at threshold of 250 mg/dL.
-#'
-#' @inheritParams daily_assessment_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = No hyperglycemia (glucose ≤ 250 mg/dL or not collected)
-#' - `1` = Hyperglycemia present (glucose > 250 mg/dL)
-#' @export
+# Calculate STREAMLINED DAG 'Hyperglycemia' for Day 0
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
 calc_str_hyperglyc_hist_0 <- function(
   daily_gluc_8a_0,
   daily_gluc_nc_0

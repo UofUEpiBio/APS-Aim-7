@@ -2,20 +2,12 @@
 ## Active Fungal Infection (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate systematic DAG active fungal infection on Day 0
-#'
-#' Calculates the systematic DAG variable for active fungal infection from
-#' medication history and daily treatment data. Identifies patients who were
-#' taking or receiving systemic antifungal agents.
-#'
-#' @inheritParams day0_medications_params
-#' @inheritParams daily_treatments_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = No active fungal infection
-#' - `1` = Active fungal infection present (on antifungals)
-#' - `99` = Unknown
-#' @export
+# Calculate SYSTEMATIC DAG 'Active Fungal Infection' for Day 0
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_sys_active_fungal_0 <- function(
   mhantifungals,
   daily_antifungal_0,

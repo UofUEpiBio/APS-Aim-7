@@ -67,8 +67,11 @@ calc_sofa_total_helper <- function(
   sofa_rena <- calc_sofa_rena(cr = daily_cr_8a)
 
   ## Sum all components to get total SOFA score
-  # QUESTION: How to handle NAs? Many fields have one ore more NA and therefore lead to NA total SOFA.
+  # ANSWERED: How to handle NAs? Many fields have one or more NA and therefore lead to NA total SOFA.
   # - Some are due to how Matt has written his support functions. Should we rely on these?
+  # - ANSWER: Work with Matt to make these more robust (and make sure the data is there!), but otherwise assign 0 for a missing SOFA
+  # - There is absolutely no way we can't calculate SOFA for Day 0, so NA should be exceedingly rare. Data should be there, should always be there! We shouldn't be assuming 0 SOFA points unless we absolutely have to.
+  # - CC Ithan and Dan on emails to Matt
   total_sofa <- rowSums(
     cbind(sofa_resp, sofa_coag, sofa_livr, sofa_card, sofa_cns, sofa_rena),
     na.rm = FALSE
@@ -78,39 +81,9 @@ calc_sofa_total_helper <- function(
 }
 
 
-#' Calculate the systematic DAG variable for total SOFA score on Day 0
-#'
-#' `calc_sys_sofa_total_0` calculates the total SOFA score on Day 0.
-#' This score assesses organ dysfunction across six organ systems using worst
-#' values within the first 24 hours.
-#'
-#' @param daily_pa02_lowest_0 Numeric vector. Lowest PaO2 on Day 0.
-#' @param daily_resp_lowest_pao2_0 Character vector. Respiratory support at lowest PaO2.
-#' @param daily_fio2_lowest_pao2_0 Numeric vector. FiO2 at lowest PaO2.
-#' @param daily_o2_lowest_pao2_0 Numeric vector. Oxygen flow at lowest PaO2.
-#' @param daily_spo2_lowest_0 Numeric vector. Lowest SpO2 on Day 0.
-#' @param daily_resp_lowest_0 Character vector. Respiratory support at lowest SpO2.
-#' @param daily_fio2_lowest_0 Numeric vector. FiO2 at lowest SpO2.
-#' @param daily_o2_lowest_0 Numeric vector. Oxygen flow at lowest SpO2.
-#' @param daily_platelet_8a_0 Numeric vector. Platelet count on Day 0.
-#' @param daily_tbili_8a_0 Numeric vector. Total bilirubin on Day 0.
-#' @param daily_sbp_8a_0 Numeric vector. Systolic BP on Day 0.
-#' @param daily_dbp_8a_0 Numeric vector. Diastolic BP on Day 0.
-#' @param daily_dopa_dose_8a_0_mcg Numeric vector. Dopamine dose (mcg/min).
-#' @param daily_dopa_dose_8a_0_mcgkg Numeric vector. Dopamine dose (mcg/min/kg).
-#' @param daily_dobuta_8a_0_mcg Numeric vector. Dobutamine dose (mcg/min).
-#' @param daily_dobuta_8a_0_mcgkg Numeric vector. Dobutamine dose (mcg/min/kg).
-#' @param daily_epi_dose_8a_0_mcg Numeric vector. Epinephrine dose (mcg/min).
-#' @param daily_epi_dose_8a_0_mcgkg Numeric vector. Epinephrine dose (mcg/min/kg).
-#' @param daily_ne_dose_8a_0_mcg Numeric vector. Norepinephrine dose (mcg/min).
-#' @param daily_ne_dose_8a_0_mcgkg Numeric vector. Norepinephrine dose (mcg/min/kg).
-#' @param m_weight_kg Numeric vector. Patient weight in kg.
-#' @param daily_gcs_8a_0 Character vector. Glasgow Coma Score on Day 0.
-#' @param daily_cr_8a_0 Numeric vector. Creatinine on Day 0.
-#'
-#' @returns A numeric vector representing the total SOFA score on Day 0 (range 0-24),
-#' or NA if component values are missing.
-#' @export
+# Calculate SYSTEMATIC DAG 'Organ Failure Trajectory: Total SOFA Score Day 0'
+#
+# Value: Total SOFA score (range 0-24)
 calc_sys_sofa_total_0 <- function(
   daily_pa02_lowest_0,
   daily_resp_lowest_pao2_0,
@@ -166,40 +139,9 @@ calc_sys_sofa_total_0 <- function(
 }
 
 
-#' Calculate the systematic DAG variable for total SOFA score on Day -1
-#'
-#' `calc_sys_sofa_total_m1` calculates the total SOFA score on Day -1.
-#' This score assesses organ dysfunction across six organ systems using worst
-#' values from the day prior to enrollment.
-#'
-#' @param dailysofa_perf_m1 Character vector. The `dailysofa_perf_m1` column from the data.
-#' @param daily_pa02_lowest_m1 Numeric vector. Lowest PaO2 on Day -1.
-#' @param daily_resp_lowest_pao2_m1 Character vector. Respiratory support at lowest PaO2.
-#' @param daily_fio2_lowest_pao2_m1 Numeric vector. FiO2 at lowest PaO2.
-#' @param daily_o2_lowest_pao2_m1 Numeric vector. Oxygen flow at lowest PaO2.
-#' @param daily_spo2_lowest_m1 Numeric vector. Lowest SpO2 on Day -1.
-#' @param daily_resp_lowest_m1 Character vector. Respiratory support at lowest SpO2.
-#' @param daily_fio2_lowest_m1 Numeric vector. FiO2 at lowest SpO2.
-#' @param daily_o2_lowest_m1 Numeric vector. Oxygen flow at lowest SpO2.
-#' @param daily_platelet_8a_m1 Numeric vector. Platelet count on Day -1.
-#' @param daily_tbili_8a_m1 Numeric vector. Total bilirubin on Day -1.
-#' @param daily_sbp_8a_m1 Numeric vector. Systolic BP on Day -1.
-#' @param daily_dbp_8a_m1 Numeric vector. Diastolic BP on Day -1.
-#' @param daily_dopa_dose_8a_m1_mcg Numeric vector. Dopamine dose (mcg/min).
-#' @param daily_dopa_dos_8a_m1_mcgkg Numeric vector. Dopamine dose (mcg/min/kg).
-#' @param daily_dobuta_8a_m1_mcg Numeric vector. Dobutamine dose (mcg/min).
-#' @param daily_dobuta_8a_m1_mcgkg Numeric vector. Dobutamine dose (mcg/min/kg).
-#' @param daily_epi_dose_8a_m1_mcg Numeric vector. Epinephrine dose (mcg/min).
-#' @param daily_epi_dose_8a_m1_mcgkg Numeric vector. Epinephrine dose (mcg/min/kg).
-#' @param daily_ne_dose_8a_m1_mcg Numeric vector. Norepinephrine dose (mcg/min).
-#' @param daily_ne_dose_8a_m1_mcgkg Numeric vector. Norepinephrine dose (mcg/min/kg).
-#' @param m_weight_kg Numeric vector. Patient weight in kg.
-#' @param daily_gcs_8a_m1 Character vector. Glasgow Coma Score on Day -1.
-#' @param daily_cr_8a_m1 Numeric vector. Creatinine on Day -1.
-#'
-#' @returns A numeric vector representing the total SOFA score on Day -1 (range 0-24),
-#' 99 if not applicable (patient not in hospital), or NA if component values are missing.
-#' @export
+# Calculate SYSTEMATIC DAG 'Organ Failure Trajectory: Total SOFA Score Day -1'
+#
+# Value: Total SOFA score (range 0-24, or 99 if not applicable)
 calc_sys_sofa_total_m1 <- function(
   dailysofa_perf_m1,
   daily_pa02_lowest_m1,

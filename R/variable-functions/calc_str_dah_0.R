@@ -2,18 +2,11 @@
 ## Diffuse Alveolar Hemorrhage (Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate the streamlined DAG variable for diffuse alveolar hemorrhage
-#'
-#' `calc_str_dah_0` calculates the streamlined DAG variable for suspected
-#' diffuse alveolar hemorrhage (DAH) based on organ dysfunction cause and
-#' inflammatory condition description.
-#'
-#' @param organ_dysfnx_cause_code Numeric vector. The `organ_dysfnx_cause` column.
-#'
-#' @returns A numeric vector with values:
-#' - 0 = No suspected DAH
-#' - 1 = Suspected DAH
-#' @export
+# Calculate STREAMLINED DAG 'Diffuse Alveolar Hemorrhage'
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
 calc_str_dah_0 <- function(
   organ_dysfnx_cause_code
   ) {

@@ -2,21 +2,12 @@
 ## Dementia (Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate the streamlined DAG variable for dementia history
-#'
-#' `calc_str_dementia_0` calculates the streamlined DAG variable for
-#' dementia history based on neurologic conditions assessment.
-#'
-#' @param m_neurologic_conditions___1 Character vector. The `m_neurologic_conditions___1`
-#' column from the data. Possible values: "Checked", "Unchecked", or NA.
-#' @param m_neurologic Character vector. The `m_neurologic` column from the data.
-#' Used for branching logic. Possible values: "Yes", "No", "Unknown", or NA.
-#'
-#' @returns A numeric vector with values:
-#' - 0 = No dementia history
-#' - 1 = Dementia history
-#' - 99 = Unknown
-#' @export
+# Calculate STREAMLINED DAG 'Dementia'
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_str_dementia_0 <- function(
   m_neurologic_conditions___1,
   m_neurologic

@@ -2,28 +2,20 @@
 ## Baseline Performance Status (Systematic DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate the systematic DAG variable for frailty status on Day 0
-#'
-#' `calc_sys_frailty_status_0` calculates the first variable component of
-#' the systematic DAG variable for baseline performance status from the data.
-#'
-#' @param frailty_base_code Integer vector. The `frailty_base_code` code map from the
-#' `frailty_base` column from the data.
-#' @param frailty_perf Character vector. The `frailty_perf` column from the data.
-#'
-#' @returns A vector with values:
-#' - 0 = Not performed
-#' - 1 = Very Fit
-#' - 2 = Fit
-#' - 3 = Managing Well
-#' - 4 = Living with very mild frailty
-#' - 5 = Living with mild frailty
-#' - 6 = Living with moderate frailty
-#' - 7 = Living with severe frailty
-#' - 8 = Living with very severe frailty
-#' - 9 = Terminally ill
-#' - 99 = Unknown
-#' @export
+# Calculate SYSTEMATIC DAG 'Baseline Performance Status: Frailty Status'
+#
+# Values:
+# - 0 = Not performed
+# - 1 = Very Fit
+# - 2 = Fit
+# - 3 = Managing Well
+# - 4 = Living with very mild frailty
+# - 5 = Living with mild frailty
+# - 6 = Living with moderate frailty
+# - 7 = Living with severe frailty
+# - 8 = Living with very severe frailty
+# - 9 = Terminally ill
+# - 99 = Unknown
 calc_sys_frailty_status_0 <- function(
   frailty_base_code,
   frailty_perf
@@ -37,75 +29,9 @@ calc_sys_frailty_status_0 <- function(
 
 
 
-#' Calculate the systematic DAG variable for comorbidity burden on Day 0
-#'
-#' `calc_sys_comorbid_burden_0` calculates the weighted van Walraven
-#' Elixhauser comorbidity score. This is a modification of the Elixhauser
-#' comorbidity system into a point system for hospital mortality.
-#'
-#' Reference: van Walraven et al. Medical Care 2009;47(6):626-633
-#' https://journals.lww.com/lww-medicalcare/fulltext/2009/06000/a_modification_of_the_elixhauser_comorbidity.4.aspx
-#'
-#' Van Walraven weights (from Table 1):
-#' - Congestive heart failure: +7
-#' - Cardiac arrhythmias: +5
-#' - Valvular disease: -1
-#' - Pulmonary circulation disorders: +4
-#' - Peripheral vascular disorders: +2
-#' - Hypertension: 0                        # Not calculated
-#' - Paralysis: +7
-#' - Neurodegenerative disorders: +6
-#' - Chronic pulmonary disease: +3
-#' - Diabetes (uncomplicated): 0            # Not calculated
-#' - Diabetes (complicated): 0              # Not calculated
-#' - Hypothyroidism: 0                      # Not calculated
-#' - Renal failure: +5
-#' - Liver disease: +11
-#' - Peptic ulcer disease (no bleeding): 0  # Not calculated
-#' - AIDS/HIV: 0                            # Not calculated
-#' - Lymphoma: +9
-#' - Metastatic cancer: +12
-#' - Solid tumor without metastasis: +4
-#' - Rheumatoid arthritis/collagen vascular diseases: 0 # Not calculated
-#' - Coagulopathy: +3
-#' - Obesity: -4
-#' - Weight loss: +6
-#' - Fluid and electrolyte disorders: +5
-#' - Blood loss anemia: -2
-#' - Deficiency anemia: -2
-#' - Alcohol abuse: 0                       # Not calculated
-#' - Drug abuse: -7
-#' - Psychosis: 0                           # Not calculated
-#' - Depression: -3
-#'
-#' @param m_cv_conditions___2 Checkbox. Heart failure (CHF = +7)
-#' @param m_cv_conditions___5 Checkbox. Atrial fibrillation/flutter (cardiac arrhythmias = +5)
-#' @param m_cv_conditions___6 Checkbox. Peripheral vascular disease (+2)
-#' @param m_neurologic_conditions___4 Checkbox. Hemiplegia (paralysis = +7)
-#' @param m_neurologic_conditions___5 Checkbox. Paraplegia (paralysis = +7)
-#' @param m_neurologic_conditions___1 Checkbox. Dementia (neurodegenerative disorders = +6)
-#' @param m_pulm_conditions___3 Checkbox. COPD (chronic pulmonary disease = +3)
-#' @param m_kid_liver_conditions___1 Checkbox. Chronic kidney disease (renal failure = +5)
-#' @param m_kid_liver_conditions___2 Checkbox. Cirrhosis (liver disease = +11)
-#' @param m_cancer_conditions___2 Checkbox. Lymphoma (+9)
-#' @param m_cancer_conditions___3 Checkbox. Multiple myeloma (metastatic cancer = +12)
-#' @param m_cancer_conditions___4 Checkbox. Solid organ cancer (+4)
-#' @param m_psych_conditions___1 Checkbox. Depression (-3)
-#' @param susubcat___1 Checkbox. Cocaine use (drug abuse = -7)
-#' @param susubcat___2 Checkbox. Oral opioids (drug abuse = -7)
-#' @param susubcat___3 Checkbox. Injection opioids (drug abuse = -7)
-#' @param susubcat___4 Checkbox. Methamphetamine (drug abuse = -7)
-#' @param susubcat___5 Checkbox. Oral stimulants (drug abuse = -7)
-#' @param susubcat___6 Checkbox. Oral sedatives (drug abuse = -7)
-#' @param susubcat___7 Checkbox. Marijuana/Cannabis (drug abuse = -7)
-#' @param susubcat___8 Checkbox. Hallucinogens (drug abuse = -7)
-#' @param susubcat___9 Checkbox. Inhalants (drug abuse = -7)
-#' @param susubcat___88 Checkbox. Other substance use (drug abuse = -7)
-#' @param susubcat___99 Checkbox. Unknown substance use (drug abuse = -7)
-#'
-#' @returns Numeric vector with the weighted Elixhauser score (van Walraven method).
-#'   Missing checkbox values treated as 0 (condition not present).
-#' @export
+# Calculate SYSTEMATIC DAG 'Baseline Performance Status: Comorbidity Burden'
+#
+# Value: Weighted van Walraven Elixhauser comorbidity score
 calc_sys_comorbid_burden_0 <- function(
   # Cardiovascular conditions
   m_cv_conditions___2,      # CHF
@@ -149,22 +75,29 @@ calc_sys_comorbid_burden_0 <- function(
   # Initialize score at 0
   score <- 0
 
+  # TODO: Update will the correct variables (listed under each variable name)
+  # - Also switch to Charlson comorbidity index (will need to handle edge cases)
+
   # Congestive heart failure (CHF): +7
+  # - m_cv_conditions___2
   score <- score + dplyr::if_else(is_checked(m_cv_conditions___2), 7, 0)
 
   # Cardiac arrhythmias: +5 (atrial fib/flutter)
+  # - m_cv_conditions___5 (should be more, might be in other)
   score <- score + dplyr::if_else(is_checked(m_cv_conditions___5), 5, 0)
 
   # Valvular disease: -1
-  # QUESTION: What variable captures this?
+  # - Don't have (maybe look into it)
 
   # Pulmonary circulation disorders: +4
-  # QUESTION: What variable(s) captures this?
+  # - m_pulm_conditions___5
 
   # Peripheral vascular disease: +2
+  # - m_cv_conditions___6 OR m_cv_conditions___7
   score <- score + dplyr::if_else(is_checked(m_cv_conditions___6), 2, 0)
 
   # Paralysis: +7 (hemiplegia or paraplegia)
+  # - m_neurologic_conditions___4 OR m_neurologic_conditions___5
   score <- score + dplyr::if_else(
     is_checked(m_neurologic_conditions___4) | is_checked(m_neurologic_conditions___5),
     7,
@@ -172,49 +105,51 @@ calc_sys_comorbid_burden_0 <- function(
   )
 
   # Neurodegenerative disorders: +6 (neuromuscular disorder or dementia)
-  # QUESTION: Do we need to check more conditions?
-  # - Examples: "1, Dementia (any type, including Alzheimer's Dementia) | 2, Prior stroke (cerebrovascular accident, CVA) | 3, Prior transient ischemic attack (TIA) | 4, Hemiplegia | 5, Paraplegia | 6, Neuromuscular disorder (such as myasthenia gravis, amyotrophic lateral sclerosis) | 7, Visual impairment, defined as not having the visual acuity to be able to read despite visual aids | 8, Hearing impairment, defined as not being able to hear normal conversation despite hearing aids | 9, Degenerative disc disease | 88, Other: {mh_neurologic_other:icons}"
+  # - m_neurologic_conditions___1 OR m_neurologic_conditions___6
   score <- score + dplyr::if_else(is_checked(m_neurologic_conditions___1), 6, 0)
 
   # Chronic pulmonary disease: +3 (COPD)
-  # QUESTION: Do we need to check more conditions?
-  # - Examples: "1, Asthma | 2, Bronchiectasis | 3, Chronic obstructive pulmonary disease (COPD) | 4, Home oxygen use | 5, Pulmonary hypertension | 6, Restrictive or interstitial lung disease | 88, Other: {mh_pulm_other:icons}"
-  # - If whole list, just check if any (m_pulmonary == "Yes")
+  # - m_pulm_conditions___1 OR m_pulm_conditions___2 OR m_pulm_conditions___3 OR m_pulm_conditions___6
   score <- score + dplyr::if_else(is_checked(m_pulm_conditions___3), 3, 0)
 
   # Renal failure: +5 (chronic kidney disease)
+  # - m_kid_liver_conditions___1
   score <- score + dplyr::if_else(is_checked(m_kid_liver_conditions___1), 5, 0)
 
   # Liver disease: +11 (cirrhosis)
+  # - m_kid_liver_conditions___2
   score <- score + dplyr::if_else(is_checked(m_kid_liver_conditions___2), 11, 0)
 
   # Lymphoma: +9 (lymphoma only)
-  # QUESTION: What about leukemia?
+  # - m_cancer_conditions___2
   score <- score + dplyr::if_else(is_checked(m_cancer_conditions___2), 9, 0)
 
   # Metastatic cancer: +12 (multiple myeloma)
+  # - m_cancer_conditions___4 AND mhsolidmeta == 'Yes'
   score <- score + dplyr::if_else(is_checked(m_cancer_conditions___3), 12, 0)
 
   # Solid tumor without metastasis: +4
+  # - m_cancer_conditions___4 AND mhsolidmeta == 'No'/'Unknown'
   score <- score + dplyr::if_else(is_checked(m_cancer_conditions___4), 4, 0)
 
   # Coagulopathy: +3
-  # QUESTION: What variable captures this?
+  # - Don't have (maybe look into it)
 
   # Obesity: -4
-  # QUESTION: What variable captures this?
+  # - Calculate BMI (look up formula): m_weight_kg, m_height (in inches convert to m_height_cm)
+  # - BMI >= 30.0 == YES for obesity
 
   # Weight loss: +6
-  # QUESTION: What variable captures this?
+  # - Don't have (probably won't)
 
   # Fluid and electrolyte disorders: +5
-  # QUESTION: What variable captures this?
+  # - Don't have (probably won't)
 
   # Blood loss anemia: -2
-  # QUESTION: What variable captures this?
+  # -
 
   # Deficiency anemia: -2
-  # QUESTION: What variable captures this?
+  # -
 
   # Drug abuse: -7 (any recreational drug use excluding tobacco/alcohol)
   score <- score + dplyr::if_else(

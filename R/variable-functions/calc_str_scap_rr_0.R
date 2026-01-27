@@ -2,33 +2,11 @@
 ## SCAP Criterion: Respiratory Rate (Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate the streamlined DAG variable for SCAP respiratory rate criterion
-#'
-#' `calc_str_scap_rr_0` calculates the SCAP (Severe Community-Acquired Pneumonia)
-#' respiratory rate criterion using Day 0 value with lookback to Days -1 and -2.
-#'
-#' - Update the DAG sheet
-#' @param daily_resp_8a_0_code Integer vector. Respiratory support type code on Day 0.
-#' @param daily_resp_8a_m1_code Integer vector. Respiratory support type code on Day -1.
-#' @param daily_resp_8a_m2_code Integer vector. Respiratory support type code on Day -2.
-#' @param daily_hfnc_rr_8a_0 Numeric vector. RR for HFNC on Day 0.
-#' @param daily_hfnc_rr_8a_m1 Numeric vector. RR for HFNC on Day -1.
-#' @param daily_hfnc_rr_8a_m2 Numeric vector. RR for HFNC on Day -2.
-#' @param daily_niv_rr_8a_0 Numeric vector. RR for NIV on Day 0.
-#' @param daily_niv_rr_8a_m1 Numeric vector. RR for NIV on Day -1.
-#' @param daily_niv_rr_8a_m2 Numeric vector. RR for NIV on Day -2.
-#' @param daily_standard_rr_8a_0 Numeric vector. RR for standard oxygen on Day 0.
-#' @param daily_standard_rr_8a_m1 Numeric vector. RR for standard oxygen on Day -1.
-#' @param daily_standard_rr_8a_m2 Numeric vector. RR for standard oxygen on Day -2.
-#' @param daily_resp_rate_8a_0 Numeric vector. RR for IMV on Day 0.
-#' @param daily_resp_rate_8a_m1 Numeric vector. RR for IMV on Day -1.
-#' @param daily_resp_rate_8a_m2 Numeric vector. RR for IMV on Day -2.
-#' @param highrr_vsorres Numeric vector. Highest RR for other support types.
-#'
-#' @returns A numeric vector with values:
-#' - 0 = Respiratory rate ≤ 30
-#' - 1 = Respiratory rate > 30
-#' @export
+# Calculate STREAMLINED DAG 'SCAP Criterion: Respiratory Rate'
+#
+# Values:
+# - 0 = No (Respiratory rate <= 30)
+# - 1 = Yes (Respiratory rate > 30)
 calc_str_scap_rr_0 <- function(
   daily_resp_8a_0_code,
   daily_resp_8a_m1_code,

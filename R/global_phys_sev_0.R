@@ -108,9 +108,9 @@ calc_aps_rr_score <- function(
 # Calculates APS oxygenation score component
 # Uses A-aDO2 if FiO2 >= 0.5, else uses PaO2
 calc_aps_oxy_score <- function(
-  resp_support_type_0,
-  resp_support_type_m1,
-  resp_support_type_m2,
+  resp_support_type_0,  # Calculated by calc_resp_support_type_0()
+  resp_support_type_m1, # Calculated by calc_resp_support_type_0()
+  resp_support_type_m2, # Calculated by calc_resp_support_type_0()
 
   daily_resp_8a_0_code,
   daily_resp_8a_m1_code,
@@ -174,8 +174,9 @@ calc_aps_oxy_score <- function(
   fio2 <- get_value_with_lookback(fio2_0, fio2_m1, fio2_m2)
 
   # Check if patient is on ECMO
-  # QUESTION: We're essentially checking if patient was ever on ECMO in the lookback period, which
+  # ANSWERED: We're essentially checking if patient was ever on ECMO in the lookback period, which
   # might override more recent data. I don't think there is a better way to approach this. Will it be okay?
+  # - ANSWER: Choose the sooner of the two days (if ECMO and Fi02 value on different days)
   resp_code <- get_value_with_lookback(daily_resp_8a_0_code, daily_resp_8a_m1_code, daily_resp_8a_m2_code)
   is_ecmo <- !is.na(resp_code) & resp_code %in% c(1, 2)
 
@@ -439,8 +440,9 @@ calc_aps_gcs_score <- function(
 ## APS Score (Combining All Components)
 ## -----------------------------------------------------------------------------
 
-# Calculates total APS score by summing all 12 component scores
-# Returns an integer value from 0 to 48 (with potential for higher if creatinine points are doubled)
+# Calculate SYSTEMATIC DAG 'Global Physiology Severity'
+#
+# Value: Total APS score (sum of 12 components, range 0-48+)
 calc_aps_score <- function(
   aps_temp_score,
   aps_map_score,
@@ -484,27 +486,13 @@ calc_aps_score <- function(
 ## Helper Functions
 ## -----------------------------------------------------------------------------
 
-#' Calculate FiO2 from respiratory support type
-#'
-#' Helper function to calculate FiO2 based on respiratory support type.
-#' Uses the same logic as the denominator calculation in calc_sfratio_8a_0
-#' to ensure consistency.
-#'
-#' @param resp_support_type Integer vector. Respiratory support type (1-7, 99)
-#' @param standard_flow Numeric vector. Standard oxygen flow (L/min)
-#' @param hfnc_fio2 Numeric vector. HFNC FiO2
-#' @param niv_fio2 Numeric vector. NIV FiO2
-#' @param imv_fio2 Numeric vector. IMV FiO2
-#'
-#' @returns A numeric vector representing the FiO2 based on respiratory support type:
-#' - Type 1 (no support): 0.21 (room air)
-#' - Type 2 (standard flow): 0.21 + (0.03 * standard_flow)
-#' - Type 3 (HFNC): hfnc_fio2
-#' - Type 4 (NIV): niv_fio2
-#' - Type 5, 6 (IMV, ECMO): imv_fio2
-#' - Other: NA (treated as < 0.5 for APS calculation)
+# Helper function to calculate FiO2 from respiratory support type
+#
+# Value: FiO2 based on respiratory support type
+# - Uses the same logic as the denominator calculation in `calc_sfratio_8a_0()`
+# - to ensure consistency.
 calc_fio2_from_resp_support <- function(
-  resp_support_type,
+  resp_support_type, # Calculated by calc_resp_support_type_0()
   standard_flow,
   hfnc_fio2,
   niv_fio2,

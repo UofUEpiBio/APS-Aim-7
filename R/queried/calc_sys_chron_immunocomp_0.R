@@ -2,21 +2,12 @@
 ## Chronic Immunocompromise (Systematic DAG)
 ## -----------------------------------------------------------------------------
 
-
-#' Calculate systematic DAG chronic immunocompromise on Day 0
-#'
-#' Calculates the systematic DAG variable for chronic immunocompromise from
-#' baseline medical history. Identifies patients with immunocompromising conditions
-#' excluding chronic steroid use (transplant, malignancy, HIV, immunosuppressive
-#' medications, congenital immunodeficiency).
-#'
-#' @inheritParams day0_baseline_medical_history_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = No chronic immunocompromise
-#' - `1` = Chronic immunocompromise present
-#' - `99` = Unknown
-#' @export
+# Calculate SYSTEMATIC DAG 'Chronic Immunocompromise'
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_sys_chron_immunocomp_0 <- function(
   m_immunosuppression,
   m_immunosup_conditions___2,

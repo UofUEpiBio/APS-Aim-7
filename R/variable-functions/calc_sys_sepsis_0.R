@@ -2,22 +2,12 @@
 ## Presence of Sepsis Syndrome (Systematic DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate the systematic DAG variable for presence of sepsis syndrome on Day 0
-#'
-#' `calc_sys_sepsis_0` calculates the systematic DAG variable for whether
-#' sepsis syndrome was present on or before Day 0. This combines both documented
-#' presence and clinical judgement assessments.
-#'
-#' @param sepsis_present Character vector. The `sepsis_present` column from the data.
-#' Possible values: "Yes", "No", or NA.
-#' @param sepsis_clinical_judgement Character vector. The `sepsis_clinical_judgement`
-#' column from the data. Possible values: "Yes", "No", "Unknown", or NA.
-#'
-#' @returns A numeric vector with values:
-#' - 0 = Sepsis syndrome not present or not present on/before Day 0
-#' - 1 = Sepsis syndrome present on or before Day 0
-#' - 99 = Unknown
-#' @export
+# Calculate SYSTEMATIC DAG 'Presence of Sepsis Syndrome'
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_sys_sepsis_0 <- function(
   sepsis_present,
   sepsis_clinical_judgement

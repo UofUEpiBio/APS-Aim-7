@@ -2,20 +2,12 @@
 ## Steroid Responsive Comorbidity (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-
-#' Calculate systematic DAG steroid responsive comorbidity on Day 0
-#'
-#' Calculates the systematic DAG variable for steroid responsive comorbidity from
-#' baseline medical history. Identifies patients with rheumatologic conditions or
-#' interstitial lung disease that typically respond to steroid therapy.
-#'
-#' @inheritParams day0_baseline_medical_history_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = No steroid responsive comorbidity
-#' - `1` = Steroid responsive comorbidity present
-#' - `99` = Unknown
-#' @export
+# Calculate SYSTEMATIC DAG 'Steroid Responsive Comorbidity' for Day 0
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_sys_steroid_comorb_0 <- function(
   mhrheumd,
   m_rheum_conditions___1,
@@ -64,17 +56,12 @@ calc_sys_steroid_comorb_0 <- function(
 }
 
 
-#' Calculate streamlined DAG steroid responsive comorbidity on Day 0
-#'
-#' Calculates the streamlined DAG variable for steroid responsive comorbidity from
-#' baseline medical history and medications. Identifies patients with rheumatologic
-#' conditions or metastatic cancer who are on steroids.
-#'
-#' @inheritParams day0_baseline_medical_history_params
-#' @inheritParams day0_medications_params
-#'
-#' @inherit calc_sys_steroid_comorb_0 return
-#' @export
+# Calculate STREAMLINED DAG 'Steroid Responsive Comorbidity' for Day 0
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_str_steroid_comorb_0 <- function(
   mhrheumd,
   m_rheum_conditions___1,

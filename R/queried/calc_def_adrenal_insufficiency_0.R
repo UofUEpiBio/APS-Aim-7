@@ -2,19 +2,12 @@
 ## Definite Adrenal Insufficiency (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate systematic DAG definite adrenal insufficiency on Day 0
-#'
-#' Calculates the systematic DAG variable for adrenal insufficiency from baseline
-#' medical history. Identifies patients with documented adrenal insufficiency or
-#' chronic high-dose steroid use.
-#'
-#' @inheritParams day0_baseline_medical_history_params
-#'
-#' @returns Integer vector with values:
-#' - `0` = No definite adrenal insufficiency
-#' - `1` = Definite adrenal insufficiency present
-#' - `99` = Unknown
-#' @export
+# Calculate SYSTEMATIC DAG 'Definite Adrenal Insufficiency' for Day 0
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_sys_def_adrenal_insufficiency_0 <- function(
   m_endocrine,
   m_endo_conditions___2,
@@ -32,15 +25,12 @@ calc_sys_def_adrenal_insufficiency_0 <- function(
   )
 }
 
-#' Calculate streamlined DAG definite adrenal insufficiency on Day 0
-#'
-#' Calculates the streamlined DAG variable for adrenal insufficiency from baseline
-#' medical history. Simplified version that only checks endocrine conditions.
-#'
-#' @inheritParams day0_baseline_medical_history_params
-#'
-#' @inherit calc_sys_def_adrenal_insufficiency_0 return
-#' @export
+# Calculate STREAMLINED DAG 'Definite Adrenal Insufficiency' for Day 0
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_str_adrenal_insufficiency_0 <- function(
   m_endocrine,
   m_endo_conditions___2

@@ -2,22 +2,12 @@
 ## Presence of ARDS Syndrome (Systematic & Streamlined DAG)
 ## -----------------------------------------------------------------------------
 
-#' Calculate the systematic DAG variable for presence of ARDS syndrome on Day 0
-#'
-#' `calc_sys_ards_0` calculates the systematic DAG variable for whether
-#' ARDS syndrome was present on or before Day 0. This combines both documented
-#' presence and clinical judgement assessments.
-#'
-#' @param ards_present Character vector. The `ards_present` column from the data.
-#' Possible values: "Yes", "No", or NA.
-#' @param ards_clinical_judgement Character vector. The `ards_clinical_judgement`
-#' column from the data. Possible values: "Yes", "No", "Unknown", or NA.
-#'
-#' @returns A numeric vector with values:
-#' - 0 = ARDS syndrome not present or not present on/before Day 0
-#' - 1 = ARDS syndrome present on or before Day 0
-#' - 99 = Unknown
-#' @export
+# Calculate SYSTEMATIC DAG 'Presence of ARDS Syndrome'
+#
+# Values:
+# - 0 = No
+# - 1 = Yes
+# - 99 = Unknown
 calc_sys_ards_0 <- function(
   ards_present,
   ards_clinical_judgement
