@@ -28,7 +28,7 @@ load(file = '../aps-data/20250731_data.RData')
 
 ```{r, echo = FALSE}
 # Source variable derivation code
-source("R/variables.R")
+source("R/steroid-dag-variables.R")
 ```
 
 ## (NEW) Hypotension Severity -- Systematic DAG
