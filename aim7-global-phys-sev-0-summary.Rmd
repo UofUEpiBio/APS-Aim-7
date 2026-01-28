@@ -162,34 +162,34 @@ data_aps_vars <- data_day0_vars |>
 data_aps_vars <- data_aps_vars |>
   mutate(
     # Calculate respiratory support type for day 0
-    resp_support_type_0 = calc_resp_support_type_0(
-      daily_resp_8a_0_code = daily_resp_8a_0_code,
-      dailysofa_perf_0 = dailysofa_perf_0,
-      daily_standard_flow_8a_0 = daily_standard_flow_8a_0,
-      daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_0,
-      daily_niv_fi02_8a_0 = daily_niv_fi02_8a_0,
-      daily_imv_fio2_8a_0 = daily_imv_fio2_8a_0,
-      daily_epap_8a_0 = daily_epap_8a_0
+    resp_support_type_0 = calc_resp_support_type(
+      daily_resp_8a_code = daily_resp_8a_0_code,
+      dailysofa_perf = dailysofa_perf_0,
+      daily_standard_flow_8a = daily_standard_flow_8a_0,
+      daily_hfnc_fi02_8a = daily_hfnc_fi02_8a_0,
+      daily_niv_fi02_8a = daily_niv_fi02_8a_0,
+      daily_imv_fio2_8a = daily_imv_fio2_8a_0,
+      daily_epap_8a = daily_epap_8a_0
     ),
     # Calculate respiratory support type for day -1
-    resp_support_type_m1 = calc_resp_support_type_0(
-      daily_resp_8a_0_code = daily_resp_8a_m1_code,
-      dailysofa_perf_0 = dailysofa_perf_m1,
-      daily_standard_flow_8a_0 = daily_standard_flow_8a_m1,
-      daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_m1,
-      daily_niv_fi02_8a_0 = daily_niv_fi02_8a_m1,
-      daily_imv_fio2_8a_0 = daily_imv_fio2_8a_m1,
-      daily_epap_8a_0 = daily_epap_8a_m1
+    resp_support_type_m1 = calc_resp_support_type(
+      daily_resp_8a_code = daily_resp_8a_m1_code,
+      dailysofa_perf = dailysofa_perf_m1,
+      daily_standard_flow_8a = daily_standard_flow_8a_m1,
+      daily_hfnc_fi02_8a = daily_hfnc_fi02_8a_m1,
+      daily_niv_fi02_8a = daily_niv_fi02_8a_m1,
+      daily_imv_fio2_8a = daily_imv_fio2_8a_m1,
+      daily_epap_8a = daily_epap_8a_m1
     ),
     # Calculate respiratory support type for day -2
-    resp_support_type_m2 = calc_resp_support_type_0(
-      daily_resp_8a_0_code = daily_resp_8a_m2_code,
-      dailysofa_perf_0 = dailysofa_perf_m2,
-      daily_standard_flow_8a_0 = daily_standard_flow_8a_m2,
-      daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_m2,
-      daily_niv_fi02_8a_0 = daily_niv_fi02_8a_m2,
-      daily_imv_fio2_8a_0 = daily_imv_fio2_8a_m2,
-      daily_epap_8a_0 = daily_epap_8a_m2
+    resp_support_type_m2 = calc_resp_support_type(
+      daily_resp_8a_code = daily_resp_8a_m2_code,
+      dailysofa_perf = dailysofa_perf_m2,
+      daily_standard_flow_8a = daily_standard_flow_8a_m2,
+      daily_hfnc_fi02_8a = daily_hfnc_fi02_8a_m2,
+      daily_niv_fi02_8a = daily_niv_fi02_8a_m2,
+      daily_imv_fio2_8a = daily_imv_fio2_8a_m2,
+      daily_epap_8a = daily_epap_8a_m2
     )
   )
 ```

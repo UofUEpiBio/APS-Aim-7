@@ -308,14 +308,14 @@ data_with_sysrespfail_var1 <- data |>
     get_code_label_map('daily_resp_8a_0', dictionary),
     by ='daily_resp_8a_0'
     ) |>
-  mutate(resp_support_type_0 = calc_resp_support_type_0(
-    daily_resp_8a_0_code = daily_resp_8a_0_code,
-    dailysofa_perf_0 = dailysofa_perf_0,
-    daily_standard_flow_8a_0 = daily_standard_flow_8a_0,
-    daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_0,
-    daily_niv_fi02_8a_0 = daily_niv_fi02_8a_0,
-    daily_imv_fio2_8a_0 = daily_imv_fio2_8a_0,
-    daily_epap_8a_0 = daily_epap_8a_0
+  mutate(resp_support_type_0 = calc_resp_support_type(
+    daily_resp_8a_code = daily_resp_8a_0_code,
+    dailysofa_perf = dailysofa_perf_0,
+    daily_standard_flow_8a = daily_standard_flow_8a_0,
+    daily_hfnc_fi02_8a = daily_hfnc_fi02_8a_0,
+    daily_niv_fi02_8a = daily_niv_fi02_8a_0,
+    daily_imv_fio2_8a = daily_imv_fio2_8a_0,
+    daily_epap_8a = daily_epap_8a_0
   ))
 
 data_with_sysrespfail_var1 |>

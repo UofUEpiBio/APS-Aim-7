@@ -1,6 +1,6 @@
 source("R/queried/calc_sys_nmblockade_0.R")
 source("R/queried/calc_str_inflamprofile_0.R")
-source("R/queried/calc_resp_support_type_0.R")
+source("R/queried/calc_resp_support_type.R")
 source("R/queried/calc_chron_steroid_moddose_0.R")
 source("R/queried/calc_def_adrenal_insufficiency_0.R")
 source("R/queried/calc_str_chron_steroid_highdose_0.R")

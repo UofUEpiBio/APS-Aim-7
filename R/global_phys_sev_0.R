@@ -108,9 +108,9 @@ calc_aps_rr_score <- function(
 # Calculates APS oxygenation score component
 # Uses A-aDO2 if FiO2 >= 0.5, else uses PaO2
 calc_aps_oxy_score <- function(
-  resp_support_type_0,  # Calculated by calc_resp_support_type_0()
-  resp_support_type_m1, # Calculated by calc_resp_support_type_0()
-  resp_support_type_m2, # Calculated by calc_resp_support_type_0()
+  resp_support_type_0,  # Calculated by calc_resp_support_type()
+  resp_support_type_m1, # Calculated by calc_resp_support_type()
+  resp_support_type_m2, # Calculated by calc_resp_support_type()
 
   daily_resp_8a_0_code,
   daily_resp_8a_m1_code,
@@ -492,7 +492,7 @@ calc_aps_score <- function(
 # - Uses the same logic as the denominator calculation in `calc_sfratio_8a_0()`
 # - to ensure consistency.
 calc_fio2_from_resp_support <- function(
-  resp_support_type, # Calculated by calc_resp_support_type_0()
+  resp_support_type, # Calculated by calc_resp_support_type()
   standard_flow,
   hfnc_fio2,
   niv_fio2,
