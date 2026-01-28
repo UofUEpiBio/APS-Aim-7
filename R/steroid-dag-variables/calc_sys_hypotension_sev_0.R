@@ -107,3 +107,56 @@ calc_sys_hypotension_sev_0 <- function(
     norepi_equiv > 0.1 ~ 4,
   )
 }
+
+# Convenience wrapper function
+# Returns a data frame with record_id and sys_hypotension_sev_0 columns (one row per record_id)
+wrapper_calc_sys_hypotension_sev_0 <- function(data) {
+  data_with_hypotension_sev <- data |>
+    filter(event_label == 'Daily In-Hospital Forms') |>
+    # Remove the weight variable and merge it back in from the "Day 0" event
+    select(-m_weight_kg) |>
+    left_join(data |>
+      filter(event_label == 'Day 0') |>
+      select(record_id, m_weight_kg),
+      by = 'record_id') |>
+    mutate(
+      sys_hypotension_sev_0 = calc_sys_hypotension_sev_0(
+        daily_vasopressors_0___0,
+        daily_vasopressors_0___1,
+        daily_vasopressors_0___2,
+        daily_vasopressors_0___3,
+        daily_vasopressors_0___4,
+        daily_vasopressors_0___5,
+        daily_vasopressors_0___6,
+        daily_vasopressors_0___7,
+        daily_vasopressors_0___8,
+        daily_vasopressors_0___88,
+
+        daily_sbp_8a_0,
+        daily_dbp_8a_0,
+
+        daily_ne_dose_8a_0_mcg,
+        daily_ne_dose_8a_0_mcgkg,
+        daily_epi_dose_8a_0_mcg,
+        daily_epi_dose_8a_0_mcgkg,
+        daily_phen_dose_8a_0_mcg,
+        daily_phen_dos_8a_0_mcgkg,
+        daily_vaso_dose_8a_0,
+        daily_dopa_dose_8a_0_mcg,
+        daily_dopa_dos_8a_0_mcgkg,
+        daily_dobuta_8a_0_mcg,
+        daily_dobuta_8a_0_mcgkg,
+        daily_ang2_8a_0_mcg,
+        daily_ang2_8a_0_mcgkg,
+        daily_milr_8a_0_mcg,
+        daily_milr_8a_0_mcgkg,
+
+        m_weight_kg
+      )
+    ) |>
+    select(record_id, sys_hypotension_sev_0)
+
+  data |>
+    distinct(record_id) |>
+    left_join(data_with_hypotension_sev, by = 'record_id')
+}

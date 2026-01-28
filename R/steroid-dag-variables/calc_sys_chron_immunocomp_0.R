@@ -41,3 +41,28 @@ calc_sys_chron_immunocomp_0 <- function(
     is_unknown(m_immunosuppression) ~ 99
   )
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id and sys_chron_immunocomp_0 columns (one row per record_id)
+wrapper_calc_sys_chron_immunocomp_0 <- function(data) {
+  data |>
+    distinct(record_id) |>
+
+    left_join(
+      data |>
+        filter(event_label == 'Day 0') |>
+        mutate(sys_chron_immunocomp_0 = calc_sys_chron_immunocomp_0(
+          m_immunosuppression = m_immunosuppression,
+          m_immunosup_conditions___2 = m_immunosup_conditions___2,
+          m_immunosup_conditions___3 = m_immunosup_conditions___3,
+          m_immunosup_conditions___4 = m_immunosup_conditions___4,
+          m_immunosup_conditions___5 = m_immunosup_conditions___5,
+          m_immunosup_conditions___6 = m_immunosup_conditions___6,
+          m_immunosup_conditions___7 = m_immunosup_conditions___7,
+          m_immunosup_conditions___88 = m_immunosup_conditions___88
+        )) |>
+        select(record_id, sys_chron_immunocomp_0),
+      by = 'record_id'
+    )
+}

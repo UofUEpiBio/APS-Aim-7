@@ -1,0 +1,86 @@
+---
+title: "Final Aim 7 Report"
+output:
+  github_document:
+    toc: true
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+# Libraries
+library('ggplot2')
+library('dplyr')
+library('tidyr')
+library('knitr')
+library('gt')
+
+## Get support functions
+source('support_functions.R')
+
+## Load data from N=500 APS cohortcolli
+## provides "data", "dictionary" and "codebook" in the working environment
+load(file = '../aps-data/20250731_data.RData')
+```
+
+```{r, echo = FALSE}
+# Source variable derivation code
+source("R/steroid-dag-variables.R")
+```
+
+Steroid DAG Variables are defined as follows:
+
+```{r}
+steroid_dag_data <- data |>
+  # Get unique record IDs
+  distinct(record_id) |>
+  # DAG Variables
+  left_join(wrapper_calc_sys_nmblockade_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_chron_steroid_moddose_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_chron_steroid_moddose_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_def_adrenal_insufficiency_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_adrenal_insufficiency_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_hyperglycemia_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_hyperglyc_hist_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_resp_failure_sev_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_sys_steroid_comorb_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_steroid_comorb_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_acute_allergic_reaction_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_str_age_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_chron_steroid_highdose_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_cop_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_str_dah_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_str_dementia_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_drug_toxicity_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_str_gi_bleeding_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_inflamprofile_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_inflamprofile_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_major_surgery_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_neuromuscular_disease_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_psi_score_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_scap_acidosis_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_scap_bilateral_opacities_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_str_scap_bun_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_scap_hypothermia_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_scap_leukopenia_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_scap_rr_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_str_scap_thrombocytopenia_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_septic_shock_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_vasculitis_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_active_covid19_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_sys_active_fungal_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_active_influenza_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_sys_ards_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_baseline_performance_status_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_sys_chron_immunocomp_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_delirium_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_hypotension_sev_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_obstruct_lung_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_organ_failure_trajectory(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_pneumonia_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_sepsis_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_septic_shock_0(data), by = "record_id")
+```

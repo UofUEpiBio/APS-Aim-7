@@ -58,3 +58,31 @@ calc_str_gi_bleeding_0 <- function(
 
   return(total_prbc)
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id and str_gi_bleeding_0 columns (one row per record_id)
+wrapper_calc_str_gi_bleeding_0 <- function(data) {
+  data |>
+    # Ensure one row per record_id (even if data is missing)
+    distinct(record_id) |>
+
+    left_join(
+      # Calculate str_gi_bleeding_0 and join back to record_id
+      data |>
+        filter(event_label == 'Daily In-Hospital Forms') |>
+        mutate(str_gi_bleeding_0 = calc_str_gi_bleeding_0(
+          blood_prbc_units_m2 = blood_prbc_units_m2,
+          blood_prbc_units_m1 = blood_prbc_units_m1,
+          blood_prbc_units_0 = blood_prbc_units_0,
+          daily_blood_product_m2 = daily_blood_product_m2,
+          daily_blood_product_m1 = daily_blood_product_m1,
+          daily_blood_product_0 = daily_blood_product_0,
+          blood_product_spec_m2___1 = blood_product_spec_m2___1,
+          blood_product_spec_m1___1 = blood_product_spec_m1___1,
+          blood_product_spec_0___1 = blood_product_spec_0___1
+        )) |>
+        select(record_id, str_gi_bleeding_0),
+      by = 'record_id'
+    )
+}

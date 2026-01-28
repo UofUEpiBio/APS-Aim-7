@@ -154,3 +154,79 @@ calc_ddimer_0 <- function(
       daily_ddimer_nc_m2 == 'Not Collected' ~ 0
   )
 }
+
+
+# Convenience wrapper function for SYSTEMATIC DAG
+# Returns a data frame with record_id and the four component columns (one row per record_id)
+wrapper_calc_sys_inflamprofile_0 <- function(data) {
+  data |>
+    # Ensure one row per record_id (even if data is missing)
+    distinct(record_id) |>
+
+    left_join(
+      # Calculate all four inflammatory profile components and join back to record_id
+      data |>
+        filter(event_label == 'Daily In-Hospital Forms') |>
+        mutate(
+          crp_0 = calc_crp_0(
+            daily_crp_8a_0 = daily_crp_8a_0,
+            daily_crp_nc_0 = daily_crp_nc_0,
+            daily_crp_8a_m1 = daily_crp_8a_m1,
+            daily_crp_nc_m1 = daily_crp_nc_m1,
+            daily_crp_8a_m2 = daily_crp_8a_m2,
+            daily_crp_nc_m2 = daily_crp_nc_m2
+          ),
+          ferritin_0 = calc_ferritin_0(
+            daily_ferritin_8a_0 = daily_ferritin_8a_0,
+            daily_ferritin_nc_0 = daily_ferritin_nc_0,
+            daily_ferritin_8a_m1 = daily_ferritin_8a_m1,
+            daily_ferritin_nc_m1 = daily_ferritin_nc_m1,
+            daily_ferritin_8a_m2 = daily_ferritin_8a_m2,
+            daily_ferritin_nc_m2 = daily_ferritin_nc_m2
+          ),
+          fibrinogen_0 = calc_fibrinogen_0(
+            daily_fibrinogen_8a_0 = daily_fibrinogen_8a_0,
+            daily_fibrinogen_nc_0 = daily_fibrinogen_nc_0,
+            daily_fibrinogen_8a_m1 = daily_fibrinogen_8a_m1,
+            daily_fibrinogen_nc_m1 = daily_fibrinogen_nc_m1,
+            daily_fibrinogen_8a_m2 = daily_fibrinogen_8a_m2,
+            daily_fibrinogen_nc_m2 = daily_fibrinogen_nc_m2
+          ),
+          ddimer_0 = calc_ddimer_0(
+            daily_ddimer_8a_0 = daily_ddimer_8a_0,
+            daily_ddimer_nc_0 = daily_ddimer_nc_0,
+            daily_ddimer_8a_m1 = daily_ddimer_8a_m1,
+            daily_ddimer_nc_m1 = daily_ddimer_nc_m1,
+            daily_ddimer_8a_m2 = daily_ddimer_8a_m2,
+            daily_ddimer_nc_m2 = daily_ddimer_nc_m2
+          )
+        ) |>
+        select(record_id, crp_0, ferritin_0, fibrinogen_0, ddimer_0),
+      by = 'record_id'
+    )
+}
+
+
+# Convenience wrapper function for STREAMLINED DAG
+# Returns a data frame with record_id and str_inflamprofile_0 columns (one row per record_id)
+wrapper_calc_str_inflamprofile_0 <- function(data) {
+  data |>
+    # Ensure one row per record_id (even if data is missing)
+    distinct(record_id) |>
+
+    left_join(
+      # Calculate str_inflamprofile_0 and join back to record_id
+      data |>
+        filter(event_label == 'Daily In-Hospital Forms') |>
+        mutate(str_inflamprofile_0 = calc_str_inflamprofile_0(
+          daily_crp_8a_0 = daily_crp_8a_0,
+          daily_crp_nc_0 = daily_crp_nc_0,
+          daily_crp_8a_m1 = daily_crp_8a_m1,
+          daily_crp_nc_m1 = daily_crp_nc_m1,
+          daily_crp_8a_m2 = daily_crp_8a_m2,
+          daily_crp_nc_m2 = daily_crp_nc_m2
+        )) |>
+        select(record_id, str_inflamprofile_0),
+      by = 'record_id'
+    )
+}

@@ -81,3 +81,31 @@ calc_sys_delirium_0 <- function(
     any_correctly_missing_due_to_branching ~ 2 # CAM correctly missing due to branching logic
   )
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id and sys_delirium_0 columns (one row per record_id)
+wrapper_calc_sys_delirium_0 <- function(data) {
+  data_with_delirium <- data |>
+    filter(event_label == 'Daily In-Hospital Forms') |>
+    mutate(
+      sys_delirium_0 = calc_sys_delirium_0(
+        cam_0 = cam_0,
+        cam_m1 = cam_m1,
+        cam_m2 = cam_m2,
+
+        lowrass_orres_0 = lowrass_orres_0,
+        lowrass_orres_m1 = lowrass_orres_m1,
+        lowrass_orres_m2 = lowrass_orres_m2,
+
+        highestrass_orres_0 = highestrass_orres_0,
+        highestrass_orres_m1 = highestrass_orres_m1,
+        highestrass_orres_m2 = highestrass_orres_m2
+      )
+    ) |>
+    select(record_id, sys_delirium_0)
+
+  data |>
+    distinct(record_id) |>
+    left_join(data_with_delirium, by = 'record_id')
+}

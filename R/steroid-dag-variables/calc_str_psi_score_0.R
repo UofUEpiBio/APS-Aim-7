@@ -156,3 +156,81 @@ calc_str_psi_score_0 <- function(
 
   return(score)
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id and str_psi_score_0 columns (one row per record_id)
+wrapper_calc_str_psi_score_0 <- function(data) {
+  data |>
+    # Ensure one row per record_id (even if data is missing)
+    distinct(record_id) |>
+
+    left_join(
+      # Calculate str_psi_score_0 and join back to record_id
+      # This requires joining from multiple event labels
+      data |>
+        filter(event_label == 'Daily In-Hospital Forms') |>
+        select(record_id, cam_0, cam_m1, cam_m2,
+               daily_bun_8a_0, daily_bun_8a_m1, daily_bun_8a_m2,
+               daily_gluc_8a_0, daily_gluc_8a_m1, daily_gluc_8a_m2,
+               daily_hct_8a_0, daily_hct_8a_m1, daily_hct_8a_m2,
+               daily_na_8a_0, daily_na_8a_m1, daily_na_8a_m2,
+               daily_pa02_lowest_0, daily_pa02_lowest_m1, daily_pa02_lowest_m2,
+               daily_ph_lowest_0, daily_ph_lowest_m1, daily_ph_lowest_m2) |>
+        left_join(
+          data |>
+            filter(event_label == 'Day 0') |>
+            select(record_id, age, sex, prssrc,
+                   m_cv_conditions___2, m_neurologic_conditions___2, m_neurologic_conditions___3,
+                   m_cancer, m_kid_liver_conditions___1, m_kid_liver_conditions___2,
+                   highhr_vsorres, highrr_vsorres, lowsysbp_vsorres, lowtemp_vsorres, hightemp_vsorres),
+          by = 'record_id'
+        ) |>
+        left_join(
+          data |>
+            filter(event_label == 'Syndrome Adjudication') |>
+            select(record_id, pna_effusion),
+          by = 'record_id'
+        ) |>
+        mutate(str_psi_score_0 = calc_str_psi_score_0(
+          age = age,
+          sex = sex,
+          prssrc = prssrc,
+          m_cv_conditions___2 = m_cv_conditions___2,
+          m_neurologic_conditions___2 = m_neurologic_conditions___2,
+          m_neurologic_conditions___3 = m_neurologic_conditions___3,
+          m_cancer = m_cancer,
+          m_kid_liver_conditions___1 = m_kid_liver_conditions___1,
+          m_kid_liver_conditions___2 = m_kid_liver_conditions___2,
+          cam_0 = cam_0,
+          cam_m1 = cam_m1,
+          cam_m2 = cam_m2,
+          highhr_vsorres = highhr_vsorres,
+          highrr_vsorres = highrr_vsorres,
+          lowsysbp_vsorres = lowsysbp_vsorres,
+          lowtemp_vsorres = lowtemp_vsorres,
+          hightemp_vsorres = hightemp_vsorres,
+          daily_bun_8a_0 = daily_bun_8a_0,
+          daily_bun_8a_m1 = daily_bun_8a_m1,
+          daily_bun_8a_m2 = daily_bun_8a_m2,
+          daily_gluc_8a_0 = daily_gluc_8a_0,
+          daily_gluc_8a_m1 = daily_gluc_8a_m1,
+          daily_gluc_8a_m2 = daily_gluc_8a_m2,
+          daily_hct_8a_0 = daily_hct_8a_0,
+          daily_hct_8a_m1 = daily_hct_8a_m1,
+          daily_hct_8a_m2 = daily_hct_8a_m2,
+          daily_na_8a_0 = daily_na_8a_0,
+          daily_na_8a_m1 = daily_na_8a_m1,
+          daily_na_8a_m2 = daily_na_8a_m2,
+          daily_pa02_lowest_0 = daily_pa02_lowest_0,
+          daily_pa02_lowest_m1 = daily_pa02_lowest_m1,
+          daily_pa02_lowest_m2 = daily_pa02_lowest_m2,
+          daily_ph_lowest_0 = daily_ph_lowest_0,
+          daily_ph_lowest_m1 = daily_ph_lowest_m1,
+          daily_ph_lowest_m2 = daily_ph_lowest_m2,
+          pna_effusion = pna_effusion
+        )) |>
+        select(record_id, str_psi_score_0),
+      by = 'record_id'
+    )
+}

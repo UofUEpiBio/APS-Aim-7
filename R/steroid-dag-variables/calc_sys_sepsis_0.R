@@ -20,3 +20,22 @@ calc_sys_sepsis_0 <- function(
     is_unknown(sepsis_clinical_judgement) ~ 99
   )
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id and sys_sepsis_0 columns (one row per record_id)
+wrapper_calc_sys_sepsis_0 <- function(data) {
+  data_with_sepsis <- data |>
+    filter(event_label == 'Syndrome Adjudication') |>
+    mutate(
+      sys_sepsis_0 = calc_sys_sepsis_0(
+        sepsis_present,
+        sepsis_clinical_judgement
+      )
+    ) |>
+    select(record_id, sys_sepsis_0)
+
+  data |>
+    distinct(record_id) |>
+    left_join(data_with_sepsis, by = 'record_id')
+}

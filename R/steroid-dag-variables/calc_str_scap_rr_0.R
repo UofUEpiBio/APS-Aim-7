@@ -83,3 +83,88 @@ calc_str_scap_rr_0 <- function(
     rr > 30 ~ 1
   )
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id and str_scap_rr_0 columns (one row per record_id)
+wrapper_calc_str_scap_rr_0 <- function(data, dictionary) {
+  data_with_highrr_vsorres <- data |>
+    filter(event_label == 'Day 0') |>
+    select(
+      record_id,
+      highrr_vsorres
+    )
+
+  data_with_scap_rr <- data |>
+    filter(event_label == 'Daily In-Hospital Forms') |>
+    left_join(
+      get_code_label_map("daily_resp_8a_0", dictionary),
+      by = "daily_resp_8a_0"
+    ) |>
+    left_join(
+      get_code_label_map("daily_resp_8a_m1", dictionary),
+      by = "daily_resp_8a_m1"
+    ) |>
+    left_join(
+      get_code_label_map("daily_resp_8a_m2", dictionary),
+      by = "daily_resp_8a_m2"
+    ) |>
+    select(
+      record_id,
+
+      daily_resp_8a_0_code,
+      daily_resp_8a_m1_code,
+      daily_resp_8a_m2_code,
+
+      daily_hfnc_rr_8a_0,
+      daily_hfnc_rr_8a_m1,
+      daily_hfnc_rr_8a_m2,
+
+      daily_niv_rr_8a_0,
+      daily_niv_rr_8a_m1,
+      daily_niv_rr_8a_m2,
+
+      daily_standard_rr_8a_0,
+      daily_standard_rr_8a_m1,
+      daily_standard_rr_8a_m2,
+
+      daily_resp_rate_8a_0,
+      daily_resp_rate_8a_m1,
+      daily_resp_rate_8a_m2
+    ) |>
+    left_join(
+      data_with_highrr_vsorres,
+      by = "record_id"
+    ) |>
+    mutate(
+      str_scap_rr_0 = calc_str_scap_rr_0(
+        daily_resp_8a_0_code,
+        daily_resp_8a_m1_code,
+        daily_resp_8a_m2_code,
+
+        daily_hfnc_rr_8a_0,
+        daily_hfnc_rr_8a_m1,
+        daily_hfnc_rr_8a_m2,
+
+        daily_niv_rr_8a_0,
+        daily_niv_rr_8a_m1,
+        daily_niv_rr_8a_m2,
+
+        daily_standard_rr_8a_0,
+        daily_standard_rr_8a_m1,
+        daily_standard_rr_8a_m2,
+
+        daily_resp_rate_8a_0,
+        daily_resp_rate_8a_m1,
+        daily_resp_rate_8a_m2,
+
+        highrr_vsorres
+      )
+    ) |>
+    select(record_id, str_scap_rr_0)
+
+  data |>
+    # Ensure one row per record_id (even if data is missing)
+    distinct(record_id) |>
+    left_join(data_with_scap_rr, by = 'record_id')
+}

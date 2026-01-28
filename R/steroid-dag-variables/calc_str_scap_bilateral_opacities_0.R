@@ -66,3 +66,58 @@ calc_str_scap_bilateral_opacities_0 <- function(
     has_no_opacity ~ 0
   )
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id and str_scap_bilateral_opacities_0 columns (one row per record_id)
+wrapper_calc_str_scap_bilateral_opacities_0 <- function(data, dictionary) {
+  data |>
+    # Ensure one row per record_id (even if data is missing)
+    distinct(record_id) |>
+
+    left_join(
+      # Calculate str_scap_bilateral_opacities_0 and join back to record_id
+      data |>
+        filter(event_label == 'Syndrome Adjudication') |>
+        left_join(
+          get_code_label_map('cxr_dm2_opacity', dictionary),
+          by = 'cxr_dm2_opacity'
+        ) |>
+        left_join(
+          get_code_label_map('ct_dm2_opacity', dictionary),
+          by = 'ct_dm2_opacity'
+        ) |>
+        left_join(
+          get_code_label_map('cxr_dm1_opacity', dictionary),
+          by = 'cxr_dm1_opacity'
+        ) |>
+        left_join(
+          get_code_label_map('ct_dm1_opacity', dictionary),
+          by = 'ct_dm1_opacity'
+        ) |>
+        left_join(
+          get_code_label_map('cxr_d0_opacity', dictionary),
+          by = 'cxr_d0_opacity'
+        ) |>
+        left_join(
+          get_code_label_map('ct_d0_opacity', dictionary),
+          by = 'ct_d0_opacity'
+        ) |>
+        mutate(str_scap_bilateral_opacities_0 = calc_str_scap_bilateral_opacities_0(
+          cxr_dm2_available = cxr_dm2_available,
+          cxr_dm2_opacity_code = cxr_dm2_opacity_code,
+          ct_dm2_available = ct_dm2_available,
+          ct_dm2_opacity_code = ct_dm2_opacity_code,
+          cxr_dm1_available = cxr_dm1_available,
+          cxr_dm1_opacity_code = cxr_dm1_opacity_code,
+          ct_dm1_available = ct_dm1_available,
+          ct_dm1_opacity_code = ct_dm1_opacity_code,
+          cxr_d0_available = cxr_d0_available,
+          cxr_d0_opacity_code = cxr_d0_opacity_code,
+          ct_d0_available = ct_d0_available,
+          ct_d0_opacity_code = ct_d0_opacity_code
+        )) |>
+        select(record_id, str_scap_bilateral_opacities_0),
+      by = 'record_id'
+    )
+}

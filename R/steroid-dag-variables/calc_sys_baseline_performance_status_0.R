@@ -173,3 +173,79 @@ calc_sys_comorbid_burden_0 <- function(
 
   return(score)
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id, sys_frailty_status_0, and sys_comorbid_burden_0 columns (one row per record_id)
+wrapper_calc_sys_baseline_performance_status_0 <- function(data, dictionary) {
+  # Get frailty data from Patient/Surrogate Interview
+  data_with_frailty <- data |>
+    filter(event_label == "Patient/Surrogate Interview") |>
+    left_join(
+      get_code_label_map('frailty_base', dictionary),
+      by = 'frailty_base'
+    ) |>
+    mutate(
+      sys_frailty_status_0 = calc_sys_frailty_status_0(
+        frailty_base_code = frailty_base_code,
+        frailty_perf = frailty_perf
+      )
+    ) |>
+    select(record_id, sys_frailty_status_0)
+
+  # Get comorbidity data from Day 0 and Patient/Surrogate Interview
+  data_with_comorbid <- data |>
+    filter(event_label == 'Day 0') |>
+    # Remove substance use variables and merge them back in from Patient/Surrogate Interview
+    select(-c(susubcat___1, susubcat___2, susubcat___3, susubcat___4,
+              susubcat___5, susubcat___6, susubcat___7, susubcat___8,
+              susubcat___9, susubcat___88, susubcat___99)) |>
+    # Join Patient/Surrogate Interview variables (substance use)
+    left_join(data |>
+      filter(event_label == 'Patient/Surrogate Interview') |>
+      select(record_id, susubcat___1, susubcat___2, susubcat___3, susubcat___4,
+             susubcat___5, susubcat___6, susubcat___7, susubcat___8,
+             susubcat___9, susubcat___88, susubcat___99),
+      by = 'record_id') |>
+    mutate(
+      sys_comorbid_burden_0 = calc_sys_comorbid_burden_0(
+        # Cardiovascular conditions
+        m_cv_conditions___2,
+        m_cv_conditions___5,
+        m_cv_conditions___6,
+        # Neurologic conditions
+        m_neurologic_conditions___4,
+        m_neurologic_conditions___5,
+        m_neurologic_conditions___1,
+        # Pulmonary conditions
+        m_pulm_conditions___3,
+        # Kidney and liver conditions
+        m_kid_liver_conditions___1,
+        m_kid_liver_conditions___2,
+        # Cancer conditions
+        m_cancer_conditions___2,
+        m_cancer_conditions___3,
+        m_cancer_conditions___4,
+        # Psychiatric conditions
+        m_psych_conditions___1,
+        # Substance use
+        susubcat___1,
+        susubcat___2,
+        susubcat___3,
+        susubcat___4,
+        susubcat___5,
+        susubcat___6,
+        susubcat___7,
+        susubcat___8,
+        susubcat___9,
+        susubcat___88,
+        susubcat___99
+      )
+    ) |>
+    select(record_id, sys_comorbid_burden_0)
+
+  data |>
+    distinct(record_id) |>
+    left_join(data_with_frailty, by = 'record_id') |>
+    left_join(data_with_comorbid, by = 'record_id')
+}

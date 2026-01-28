@@ -30,7 +30,7 @@ source("R/steroid-dag-variables/global_phys_sev_0.R")
 # Variables below this line have been queried
 source("R/steroid-dag-variables/calc_sys_nmblockade_0.R")
 source("R/steroid-dag-variables/calc_str_inflamprofile_0.R")
-source("R/steroid-dag-variables/calc_resp_support_type.R")
+source("R/steroid-dag-variables/calc_sys_resp_failure_sev_0.R")
 source("R/steroid-dag-variables/calc_chron_steroid_moddose_0.R")
 source("R/steroid-dag-variables/calc_def_adrenal_insufficiency_0.R")
 source("R/steroid-dag-variables/calc_str_chron_steroid_highdose_0.R")

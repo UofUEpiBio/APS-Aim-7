@@ -203,3 +203,76 @@ calc_sys_sofa_total_m1 <- function(
   ## Return 99 if not applicable, otherwise return total SOFA
   dplyr::if_else(not_applicable, 99, total_sofa, missing = NA_real_)
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id, sofa_total_day_0, and sofa_total_day_m1 columns (one row per record_id)
+wrapper_calc_sys_organ_failure_trajectory <- function(data) {
+  data_with_sofa <- data |>
+    filter(event_label == 'Daily In-Hospital Forms') |>
+    # Remove the weight variable and merge it back in from the "Day 0" event
+    # where weight is collected
+    select(-m_weight_kg) |>
+    left_join(data |>
+      filter(event_label == 'Day 0') |>
+      select(record_id, m_weight_kg),
+      by='record_id') |>
+    mutate(
+      sofa_total_day_0 = calc_sys_sofa_total_0(
+        daily_pa02_lowest_0,
+        daily_resp_lowest_pao2_0,
+        daily_fio2_lowest_pao2_0,
+        daily_o2_lowest_pao2_0,
+        daily_spo2_lowest_0,
+        daily_resp_lowest_0,
+        daily_fio2_lowest_0,
+        daily_o2_lowest_0,
+        daily_platelet_8a_0,
+        daily_tbili_8a_0,
+        daily_sbp_8a_0,
+        daily_dbp_8a_0,
+        daily_dopa_dose_8a_0_mcg,
+        daily_dopa_dos_8a_0_mcgkg,
+        daily_dobuta_8a_0_mcg,
+        daily_dobuta_8a_0_mcgkg,
+        daily_epi_dose_8a_0_mcg,
+        daily_epi_dose_8a_0_mcgkg,
+        daily_ne_dose_8a_0_mcg,
+        daily_ne_dose_8a_0_mcgkg,
+        m_weight_kg,
+        daily_gcs_8a_0,
+        daily_cr_8a_0
+      ),
+      sofa_total_day_m1 = calc_sys_sofa_total_m1(
+        dailysofa_perf_m1,
+        daily_pa02_lowest_m1,
+        daily_resp_lowest_pao2_m1,
+        daily_fio2_lowest_pao2_m1,
+        daily_o2_lowest_pao2_m1,
+        daily_spo2_lowest_m1,
+        daily_resp_lowest_m1,
+        daily_fio2_lowest_m1,
+        daily_o2_lowest_m1,
+        daily_platelet_8a_m1,
+        daily_tbili_8a_m1,
+        daily_sbp_8a_m1,
+        daily_dbp_8a_m1,
+        daily_dopa_dose_8a_m1_mcg,
+        daily_dopa_dos_8a_m1_mcgkg,
+        daily_dobuta_8a_m1_mcg,
+        daily_dobuta_8a_m1_mcgkg,
+        daily_epi_dose_8a_m1_mcg,
+        daily_epi_dose_8a_m1_mcgkg,
+        daily_ne_dose_8a_m1_mcg,
+        daily_ne_dose_8a_m1_mcgkg,
+        m_weight_kg,
+        daily_gcs_8a_m1,
+        daily_cr_8a_m1
+      )
+    ) |>
+    select(record_id, sofa_total_day_0, sofa_total_day_m1)
+
+  data |>
+    distinct(record_id) |>
+    left_join(data_with_sofa, by = 'record_id')
+}

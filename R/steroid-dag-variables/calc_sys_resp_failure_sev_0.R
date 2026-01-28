@@ -65,3 +65,43 @@ calc_sfratio_8a_0 <- function(
     resp_support_type_0 %in% c(5, 6) & !is.na(daily_imv_fio2_8a_0) ~ daily_spo2_8a_0 / daily_imv_fio2_8a_0
   )
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id, resp_support_type_0, and sfratio_8a_0 columns (one row per record_id)
+wrapper_calc_sys_resp_failure_sev_0 <- function(data, dictionary) {
+  data |>
+    # Ensure one row per record_id (even if data is missing)
+    distinct(record_id) |>
+
+    left_join(
+      # Calculate resp_support_type and sfratio_8a_0 and join back to record_id
+      data |>
+        filter(event_label == 'Daily In-Hospital Forms') |>
+        left_join(
+          get_code_label_map('daily_resp_8a_0', dictionary),
+          by = 'daily_resp_8a_0'
+        ) |>
+        mutate(
+          resp_support_type_0 = calc_resp_support_type(
+            daily_resp_8a_code = daily_resp_8a_0_code,
+            dailysofa_perf = dailysofa_perf_0,
+            daily_standard_flow_8a = daily_standard_flow_8a_0,
+            daily_hfnc_fi02_8a = daily_hfnc_fi02_8a_0,
+            daily_niv_fi02_8a = daily_niv_fi02_8a_0,
+            daily_imv_fio2_8a = daily_imv_fio2_8a_0,
+            daily_epap_8a = daily_epap_8a_0
+          ),
+          sfratio_8a_0 = calc_sfratio_8a_0(
+            resp_support_type_0 = resp_support_type_0,
+            daily_spo2_8a_0 = daily_spo2_8a_0,
+            daily_standard_flow_8a_0 = daily_standard_flow_8a_0,
+            daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_0,
+            daily_niv_fi02_8a_0 = daily_niv_fi02_8a_0,
+            daily_imv_fio2_8a_0 = daily_imv_fio2_8a_0
+          )
+        ) |>
+        select(record_id, resp_support_type_0, sfratio_8a_0),
+      by = 'record_id'
+    )
+}
