@@ -77,6 +77,7 @@ steroid_dag_data <- data |>
   left_join(wrapper_calc_sys_baseline_performance_status_0(data, dictionary), by = "record_id") |>
   left_join(wrapper_calc_sys_chron_immunocomp_0(data), by = "record_id") |>
   left_join(wrapper_calc_sys_delirium_0(data), by = "record_id") |>
+  left_join(wrapper_calc_sys_global_phys_sev_0(data, dictionary), by = "record_id") |>
   left_join(wrapper_calc_sys_hypotension_sev_0(data), by = "record_id") |>
   left_join(wrapper_calc_sys_obstruct_lung_0(data), by = "record_id") |>
   left_join(wrapper_calc_sys_organ_failure_trajectory(data), by = "record_id") |>

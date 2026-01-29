@@ -521,3 +521,302 @@ calc_fio2_from_resp_support <- function(
     TRUE ~ NA_real_
   )
 }
+
+
+# Convenience wrapper function
+# Returns a data frame with record_id and sys_global_phys_sev_0 (APS score) columns (one row per record_id)
+wrapper_calc_sys_global_phys_sev_0 <- function(data, dictionary) {
+  # Get Day 0 variables
+  data_day0_vars <- data |>
+    filter(event_label == 'Day 0') |>
+    select(
+      record_id,
+      vs_perf, # branching logic
+      hightemp_vsorres,
+      lowtemp_vsorres,
+      highhr_vsorres,
+      lowhr_vsorres,
+      highrr_vsorres,
+      lowrr_vsorres,
+      lowsysbp_vsorres,
+      lowdbp_vsorres,
+      sofa_unk, # branching logic
+      sofa_base_renal_dysnfx,
+      sofa_base_renal_chronic
+    )
+
+  # Get Daily In-Hospital Forms variables (Days 0, -1, -2)
+  data_hospitalform_vars <- data |>
+    filter(event_label == 'Daily In-Hospital Forms') |>
+    select(
+      record_id,
+
+      ## - Day 0
+      dailysofa_perf_0, # branching logic
+      daily_resp_8a_0, # branching logic
+      daily_imv_mode_8a_0,
+      daily_imv_fio2_8a_0,
+      daily_standard_flow_8a_0,
+      daily_hfnc_fi02_8a_0,
+      daily_niv_fi02_8a_0,
+      daily_epap_8a_0,
+      daily_pao2_occur_0, # branching logic
+      daily_pa02_lowest_0,
+      daily_paco2_lowest_0,
+      daily_ph_lowest_0,
+      daily_k_nc_0, # branching logic
+      daily_k_8a_0,
+      daily_na_nc_0, # branching logic
+      daily_na_8a_0,
+      daily_hct_nc_0, # branching logic
+      daily_hct_8a_0,
+      daily_wbc_nc_0, # branching logic
+      daily_wbc_8a_0,
+      daily_cr_nc_0, # branching logic
+      daily_cr_8a_0,
+      daily_gcs_8a_0,
+
+      ## - Day -1
+      dailysofa_perf_m1, # branching logic
+      daily_resp_8a_m1, # branching logic
+      daily_imv_mode_8a_m1,
+      daily_imv_fio2_8a_m1,
+      daily_standard_flow_8a_m1,
+      daily_hfnc_fi02_8a_m1,
+      daily_niv_fi02_8a_m1,
+      daily_epap_8a_m1,
+      daily_pao2_occur_m1, # branching logic
+      daily_pa02_lowest_m1,
+      daily_paco2_lowest_m1,
+      daily_ph_lowest_m1,
+      daily_k_nc_m1, # branching logic
+      daily_k_8a_m1,
+      daily_na_nc_m1, # branching logic
+      daily_na_8a_m1,
+      daily_hct_nc_m1, # branching logic
+      daily_hct_8a_m1,
+      daily_wbc_nc_m1, # branching logic
+      daily_wbc_8a_m1,
+      daily_cr_nc_m1, # branching logic
+      daily_cr_8a_m1,
+      daily_gcs_8a_m1,
+
+      ## - Day -2
+      dailysofa_perf_m2, # branching logic
+      daily_resp_8a_m2, # branching logic
+      daily_imv_mode_8a_m2,
+      daily_imv_fio2_8a_m2,
+      daily_standard_flow_8a_m2,
+      daily_hfnc_fi02_8a_m2,
+      daily_niv_fi02_8a_m2,
+      daily_epap_8a_m2,
+      daily_pao2_occur_m2, # branching logic
+      daily_pa02_lowest_m2,
+      daily_paco2_lowest_m2,
+      daily_ph_lowest_m2,
+      daily_k_nc_m2, # branching logic
+      daily_k_8a_m2,
+      daily_na_nc_m2, # branching logic
+      daily_na_8a_m2,
+      daily_hct_nc_m2, # branching logic
+      daily_hct_8a_m2,
+      daily_wbc_nc_m2, # branching logic
+      daily_wbc_8a_m2,
+      daily_cr_nc_m2, # branching logic
+      daily_cr_8a_m2,
+      daily_gcs_8a_m2
+    ) |>
+    # Add code mappings for respiratory support variables
+    left_join(
+      get_code_label_map('daily_resp_8a_0', dictionary),
+      by = 'daily_resp_8a_0'
+    ) |>
+    left_join(
+      get_code_label_map('daily_resp_8a_m1', dictionary),
+      by = 'daily_resp_8a_m1'
+    ) |>
+    left_join(
+      get_code_label_map('daily_resp_8a_m2', dictionary),
+      by = 'daily_resp_8a_m2'
+    )
+
+  # Join Day 0 and Daily In-Hospital Forms data
+  data_aps_vars <- data_day0_vars |>
+    left_join(
+      data_hospitalform_vars,
+      by = 'record_id'
+    )
+
+  # Calculate respiratory support types for all 3 days
+  data_aps_vars <- data_aps_vars |>
+    mutate(
+      # Calculate respiratory support type for day 0
+      resp_support_type_0 = calc_resp_support_type(
+        daily_resp_8a_code = daily_resp_8a_0_code,
+        dailysofa_perf = dailysofa_perf_0,
+        daily_standard_flow_8a = daily_standard_flow_8a_0,
+        daily_hfnc_fi02_8a = daily_hfnc_fi02_8a_0,
+        daily_niv_fi02_8a = daily_niv_fi02_8a_0,
+        daily_imv_fio2_8a = daily_imv_fio2_8a_0,
+        daily_epap_8a = daily_epap_8a_0
+      ),
+      # Calculate respiratory support type for day -1
+      resp_support_type_m1 = calc_resp_support_type(
+        daily_resp_8a_code = daily_resp_8a_m1_code,
+        dailysofa_perf = dailysofa_perf_m1,
+        daily_standard_flow_8a = daily_standard_flow_8a_m1,
+        daily_hfnc_fi02_8a = daily_hfnc_fi02_8a_m1,
+        daily_niv_fi02_8a = daily_niv_fi02_8a_m1,
+        daily_imv_fio2_8a = daily_imv_fio2_8a_m1,
+        daily_epap_8a = daily_epap_8a_m1
+      ),
+      # Calculate respiratory support type for day -2
+      resp_support_type_m2 = calc_resp_support_type(
+        daily_resp_8a_code = daily_resp_8a_m2_code,
+        dailysofa_perf = dailysofa_perf_m2,
+        daily_standard_flow_8a = daily_standard_flow_8a_m2,
+        daily_hfnc_fi02_8a = daily_hfnc_fi02_8a_m2,
+        daily_niv_fi02_8a = daily_niv_fi02_8a_m2,
+        daily_imv_fio2_8a = daily_imv_fio2_8a_m2,
+        daily_epap_8a = daily_epap_8a_m2
+      )
+    )
+
+  # Calculate all APS component scores
+  data_aps_component_vars <- data_aps_vars |>
+    mutate(
+      aps_temp_score = calc_aps_temp_score(
+        hightemp_vsorres = hightemp_vsorres,
+        lowtemp_vsorres = lowtemp_vsorres
+      )
+    ) |>
+    mutate(
+      aps_map_score = calc_aps_map_score(
+        lowsysbp_vsorres = lowsysbp_vsorres,
+        lowdbp_vsorres = lowdbp_vsorres
+      )
+    ) |>
+    mutate(
+      aps_hr_score = calc_aps_hr_score(
+        highhr_vsorres = highhr_vsorres,
+        lowhr_vsorres = lowhr_vsorres
+      )
+    ) |>
+    mutate(
+      aps_rr_score = calc_aps_rr_score(
+        highrr_vsorres = highrr_vsorres,
+        lowrr_vsorres = lowrr_vsorres
+      )
+    ) |>
+    mutate(
+      aps_oxy_score = calc_aps_oxy_score(
+        resp_support_type_0 = resp_support_type_0,
+        resp_support_type_m1 = resp_support_type_m1,
+        resp_support_type_m2 = resp_support_type_m2,
+
+        daily_resp_8a_0_code = daily_resp_8a_0_code,
+        daily_resp_8a_m1_code = daily_resp_8a_m1_code,
+        daily_resp_8a_m2_code = daily_resp_8a_m2_code,
+
+        daily_standard_flow_8a_0 = daily_standard_flow_8a_0,
+        daily_standard_flow_8a_m1 = daily_standard_flow_8a_m1,
+        daily_standard_flow_8a_m2 = daily_standard_flow_8a_m2,
+
+        daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_0,
+        daily_hfnc_fi02_8a_m1 = daily_hfnc_fi02_8a_m1,
+        daily_hfnc_fi02_8a_m2 = daily_hfnc_fi02_8a_m2,
+
+        daily_niv_fi02_8a_0 = daily_niv_fi02_8a_0,
+        daily_niv_fi02_8a_m1 = daily_niv_fi02_8a_m1,
+        daily_niv_fi02_8a_m2 = daily_niv_fi02_8a_m2,
+
+        daily_imv_fio2_8a_0 = daily_imv_fio2_8a_0,
+        daily_imv_fio2_8a_m1 = daily_imv_fio2_8a_m1,
+        daily_imv_fio2_8a_m2 = daily_imv_fio2_8a_m2,
+
+        daily_pa02_lowest_0 = daily_pa02_lowest_0,
+        daily_pa02_lowest_m1 = daily_pa02_lowest_m1,
+        daily_pa02_lowest_m2 = daily_pa02_lowest_m2,
+
+        daily_paco2_lowest_0 = daily_paco2_lowest_0,
+        daily_paco2_lowest_m1 = daily_paco2_lowest_m1,
+        daily_paco2_lowest_m2 = daily_paco2_lowest_m2
+      )
+    ) |>
+    mutate(
+      aps_ph_score = calc_aps_ph_score(
+        daily_ph_lowest_0 = daily_ph_lowest_0,
+        daily_ph_lowest_m1 = daily_ph_lowest_m1,
+        daily_ph_lowest_m2 = daily_ph_lowest_m2
+      )
+    ) |>
+    mutate(
+      aps_sodium_score = calc_aps_sodium_score(
+        daily_na_8a_0 = daily_na_8a_0,
+        daily_na_8a_m1 = daily_na_8a_m1,
+        daily_na_8a_m2 = daily_na_8a_m2
+      )
+    ) |>
+    mutate(
+      aps_potassium_score = calc_aps_potassium_score(
+        daily_k_8a_0 = daily_k_8a_0,
+        daily_k_8a_m1 = daily_k_8a_m1,
+        daily_k_8a_m2 = daily_k_8a_m2
+      )
+    ) |>
+    mutate(
+      aps_creatinine_score = calc_aps_creatinine_score(
+        daily_cr_8a_0 = daily_cr_8a_0,
+        daily_cr_8a_m1 = daily_cr_8a_m1,
+        daily_cr_8a_m2 = daily_cr_8a_m2,
+        sofa_base_renal_dysnfx = sofa_base_renal_dysnfx,
+        sofa_base_renal_chronic = sofa_base_renal_chronic
+      )
+    ) |>
+    mutate(
+      aps_hct_score = calc_aps_hct_score(
+        daily_hct_8a_0 = daily_hct_8a_0,
+        daily_hct_8a_m1 = daily_hct_8a_m1,
+        daily_hct_8a_m2 = daily_hct_8a_m2
+      )
+    ) |>
+    mutate(
+      aps_wbc_score = calc_aps_wbc_score(
+        daily_wbc_8a_0 = daily_wbc_8a_0,
+        daily_wbc_8a_m1 = daily_wbc_8a_m1,
+        daily_wbc_8a_m2 = daily_wbc_8a_m2
+      )
+    ) |>
+    mutate(
+      aps_gcs_score = calc_aps_gcs_score(
+        daily_gcs_8a_0 = daily_gcs_8a_0,
+        daily_gcs_8a_m1 = daily_gcs_8a_m1,
+        daily_gcs_8a_m2 = daily_gcs_8a_m2
+      )
+    )
+
+  # Calculate final APS score
+  data_aps_var <- data_aps_component_vars |>
+    mutate(
+      sys_global_phys_sev_0 = calc_aps_score(
+        aps_temp_score = aps_temp_score,
+        aps_map_score = aps_map_score,
+        aps_hr_score = aps_hr_score,
+        aps_rr_score = aps_rr_score,
+        aps_oxy_score = aps_oxy_score,
+        aps_ph_score = aps_ph_score,
+        aps_sodium_score = aps_sodium_score,
+        aps_potassium_score = aps_potassium_score,
+        aps_creatinine_score = aps_creatinine_score,
+        aps_hct_score = aps_hct_score,
+        aps_wbc_score = aps_wbc_score,
+        aps_gcs_score = aps_gcs_score
+      )
+    ) |>
+    select(record_id, sys_global_phys_sev_0)
+
+  # Return data with one row per record_id
+  data |>
+    distinct(record_id) |>
+    left_join(data_aps_var, by = 'record_id')
+}
