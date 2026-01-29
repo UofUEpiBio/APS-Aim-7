@@ -67,11 +67,6 @@ calc_sofa_total_helper <- function(
   sofa_rena <- calc_sofa_rena(cr = daily_cr_8a)
 
   ## Sum all components to get total SOFA score
-  # ANSWERED: How to handle NAs? Many fields have one or more NA and therefore lead to NA total SOFA.
-  # - Some are due to how Matt has written his support functions. Should we rely on these?
-  # - ANSWER: Work with Matt to make these more robust (and make sure the data is there!), but otherwise assign 0 for a missing SOFA
-  # - There is absolutely no way we can't calculate SOFA for Day 0, so NA should be exceedingly rare. Data should be there, should always be there! We shouldn't be assuming 0 SOFA points unless we absolutely have to.
-  # - CC Ithan and Dan on emails to Matt
   total_sofa <- rowSums(
     cbind(sofa_resp, sofa_coag, sofa_livr, sofa_card, sofa_cns, sofa_rena),
     na.rm = FALSE

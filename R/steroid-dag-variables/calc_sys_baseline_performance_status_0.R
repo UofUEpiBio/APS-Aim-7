@@ -31,145 +31,191 @@ calc_sys_frailty_status_0 <- function(
 
 # Calculate SYSTEMATIC DAG 'Baseline Performance Status: Comorbidity Burden'
 #
-# Value: Weighted van Walraven Elixhauser comorbidity score
+# Value: Charlson Comorbidity Index
 calc_sys_comorbid_burden_0 <- function(
   # Cardiovascular conditions
   m_cv_conditions___2,      # CHF
-  m_cv_conditions___5,      # Atrial fib/flutter
+  m_cv_conditions___4,      # MI
   m_cv_conditions___6,      # Peripheral vascular disease
 
   # Neurologic conditions
+  m_neurologic_conditions___1,  # Dementia
+  m_neurologic_conditions___2,  # Stroke
+  m_neurologic_conditions___3,  # TIA
   m_neurologic_conditions___4,  # Hemiplegia
   m_neurologic_conditions___5,  # Paraplegia
-  m_neurologic_conditions___1,  # Dementia
 
   # Pulmonary conditions
+  m_pulm_conditions___1,    # Asthma
+  m_pulm_conditions___2,    # Interstitial lung disease
   m_pulm_conditions___3,    # COPD
+  m_pulm_conditions___6,    # Obstructive sleep apnea
 
   # Kidney and liver conditions
   m_kid_liver_conditions___1,  # Chronic kidney disease
   m_kid_liver_conditions___2,  # Cirrhosis
+  mhckdsev,                 # CKD severity
+  mhhepsev,                 # Liver disease severity
+  mhhepfail,                # Hepatic failure
+
+  # Endocrine conditions
+  m_endo_conditions___1,    # Diabetes
+  mhdmsev,                  # Diabetes severity
 
   # Cancer conditions
+  m_cancer_conditions___1,  # Leukemia
   m_cancer_conditions___2,  # Lymphoma
-  m_cancer_conditions___3,  # Multiple myeloma
   m_cancer_conditions___4,  # Solid organ cancer
+  mhsolidmeta,              # Solid tumor metastasis
 
-  # Psychiatric conditions
-  m_psych_conditions___1,   # Depression
+  # Immunosuppression conditions
+  m_immunosup_conditions___5,  # AIDS
 
-  # Substance use (drug abuse)
-  susubcat___1,             # Cocaine
-  susubcat___2,             # Oral opioids
-  susubcat___3,             # Injection opioids
-  susubcat___4,             # Methamphetamine
-  susubcat___5,             # Oral stimulants
-  susubcat___6,             # Oral sedatives
-  susubcat___7,             # Marijuana/Cannabis
-  susubcat___8,             # Hallucinogens
-  susubcat___9,             # Inhalants
-  susubcat___88,            # Other substance
-  susubcat___99             # Unknown substance
+  # Other conditions
+  mhrheumd,                 # Rheumatologic/connective tissue disease
+  m_eso_stom_int_conditions___1  # Peptic ulcer disease
 ) {
 
   # Initialize score at 0
   score <- 0
 
-  # TODO: Update will the correct variables (listed under each variable name)
-  # - Also switch to Charlson comorbidity index (will need to handle edge cases)
+  # Charlson Comorbidity Index scoring (standard weights)
 
-  # Congestive heart failure (CHF): +7
-  # - m_cv_conditions___2
-  score <- score + dplyr::if_else(is_checked(m_cv_conditions___2), 7, 0)
+  # 1 POINT CONDITIONS
 
-  # Cardiac arrhythmias: +5 (atrial fib/flutter)
-  # - m_cv_conditions___5 (should be more, might be in other)
-  score <- score + dplyr::if_else(is_checked(m_cv_conditions___5), 5, 0)
+  # Myocardial infarction: +1
+  score <- score + dplyr::if_else(is_checked(m_cv_conditions___4), 1, 0)
 
-  # Valvular disease: -1
-  # - Don't have (maybe look into it)
+  # Congestive heart failure: +1
+  score <- score + dplyr::if_else(is_checked(m_cv_conditions___2), 1, 0)
 
-  # Pulmonary circulation disorders: +4
-  # - m_pulm_conditions___5
+  # Peripheral vascular disease: +1
+  score <- score + dplyr::if_else(is_checked(m_cv_conditions___6), 1, 0)
 
-  # Peripheral vascular disease: +2
-  # - m_cv_conditions___6 OR m_cv_conditions___7
-  score <- score + dplyr::if_else(is_checked(m_cv_conditions___6), 2, 0)
+  # Cerebrovascular disease (stroke or TIA): +1
+  score <- score + dplyr::if_else(
+    is_checked(m_neurologic_conditions___2) | is_checked(m_neurologic_conditions___3),
+    1,
+    0
+  )
 
-  # Paralysis: +7 (hemiplegia or paraplegia)
-  # - m_neurologic_conditions___4 OR m_neurologic_conditions___5
+  # Dementia: +1
+  score <- score + dplyr::if_else(is_checked(m_neurologic_conditions___1), 1, 0)
+
+  # Chronic pulmonary disease: +1
+  score <- score + dplyr::if_else(
+    is_checked(m_pulm_conditions___1) |
+    is_checked(m_pulm_conditions___2) |
+    is_checked(m_pulm_conditions___3) |
+    is_checked(m_pulm_conditions___6),
+    1,
+    0
+  )
+
+  # Connective tissue disease: +1
+  score <- score + dplyr::if_else(mhrheumd == "Yes", 1, 0)
+
+  # Ulcer disease: +1
+  score <- score + dplyr::if_else(is_checked(m_eso_stom_int_conditions___1), 1, 0)
+
+  # Mild liver disease: +1
+  # (has liver disease AND (mild severity OR unknown severity) AND (no hepatic failure OR unknown failure))
+  # Note: Only count if NOT moderate/severe (checked later)
+  has_mild_liver <- is_checked(m_kid_liver_conditions___2) &
+                    (mhhepsev == "Mild (chronic hepatitis w/o portal HTN)" |
+                      mhhepsev == "Unknown cirrhosis severity") &
+                    (mhhepfail == "No" | mhhepfail == "Unknown")
+  mild_liver_points <- dplyr::if_else(has_mild_liver, 1, 0)
+
+  # Diabetes uncomplicated: +1
+  # (has diabetes AND (mild/uncomplicated severity OR unknown severity))
+  # Note: Only count if NOT complicated (checked later)
+  has_diabetes_uncomplicated <- is_checked(m_endo_conditions___1) &
+                                (mhdmsev == "Diet controlled" |
+                                mhdmsev == "Uncomplicated: treated with insulin or oral diabetic medication, no end organ damage" |
+                                mhdmsev == "Unknown severity")
+  diabetes_uncomplicated_points <- dplyr::if_else(has_diabetes_uncomplicated, 1, 0)
+
+  # 2 POINT CONDITIONS
+
+  # Hemiplegia or paraplegia: +2
   score <- score + dplyr::if_else(
     is_checked(m_neurologic_conditions___4) | is_checked(m_neurologic_conditions___5),
-    7,
+    2,
     0
   )
 
-  # Neurodegenerative disorders: +6 (neuromuscular disorder or dementia)
-  # - m_neurologic_conditions___1 OR m_neurologic_conditions___6
-  score <- score + dplyr::if_else(is_checked(m_neurologic_conditions___1), 6, 0)
+  # Moderate or severe renal disease: +2
+  # (has CKD AND severity is moderate (2) OR severe (3))
+  has_mod_severe_renal <- is_checked(m_kid_liver_conditions___1) &
+                          (mhckdsev == "Baseline (before acute illness) creatinine >3.0 mg/dl" |
+                          mhckdsev == "Chronic kidney replacement therapy (such as hemodialysis or peritoneal dialysis)")
+  score <- score + dplyr::if_else(has_mod_severe_renal, 2, 0)
 
-  # Chronic pulmonary disease: +3 (COPD)
-  # - m_pulm_conditions___1 OR m_pulm_conditions___2 OR m_pulm_conditions___3 OR m_pulm_conditions___6
-  score <- score + dplyr::if_else(is_checked(m_pulm_conditions___3), 3, 0)
+  # Diabetes with end organ damage: +2
+  # (has diabetes AND complicated/severe)
+  # Note: Only count if NOT uncomplicated (replaces uncomplicated score)
+  # QUESTION: You set this to == 2 instead of == 3 (also missed 2 for uncomplicated
+  # above). I adjusted, but was that correct?
+  has_diabetes_complicated <- is_checked(m_endo_conditions___1) &
+                              (mhdmsev == "Complicated: treated with insulin or oral diabetic medication, end-organ damage present")
+  diabetes_complicated_points <- dplyr::if_else(has_diabetes_complicated, 2, 0)
 
-  # Renal failure: +5 (chronic kidney disease)
-  # - m_kid_liver_conditions___1
-  score <- score + dplyr::if_else(is_checked(m_kid_liver_conditions___1), 5, 0)
-
-  # Liver disease: +11 (cirrhosis)
-  # - m_kid_liver_conditions___2
-  score <- score + dplyr::if_else(is_checked(m_kid_liver_conditions___2), 11, 0)
-
-  # Lymphoma: +9 (lymphoma only)
-  # - m_cancer_conditions___2
-  score <- score + dplyr::if_else(is_checked(m_cancer_conditions___2), 9, 0)
-
-  # Metastatic cancer: +12 (multiple myeloma)
-  # - m_cancer_conditions___4 AND mhsolidmeta == 'Yes'
-  score <- score + dplyr::if_else(is_checked(m_cancer_conditions___3), 12, 0)
-
-  # Solid tumor without metastasis: +4
-  # - m_cancer_conditions___4 AND mhsolidmeta == 'No'/'Unknown'
-  score <- score + dplyr::if_else(is_checked(m_cancer_conditions___4), 4, 0)
-
-  # Coagulopathy: +3
-  # - Don't have (maybe look into it)
-
-  # Obesity: -4
-  # - Calculate BMI (look up formula): m_weight_kg, m_height (in inches convert to m_height_cm)
-  # - BMI >= 30.0 == YES for obesity
-
-  # Weight loss: +6
-  # - Don't have (probably won't)
-
-  # Fluid and electrolyte disorders: +5
-  # - Don't have (probably won't)
-
-  # Blood loss anemia: -2
-  # -
-
-  # Deficiency anemia: -2
-  # -
-
-  # Drug abuse: -7 (any recreational drug use excluding tobacco/alcohol)
+  # Add diabetes points (only one or the other, not both)
   score <- score + dplyr::if_else(
-    is_checked(susubcat___1) |
-    is_checked(susubcat___2) |
-    is_checked(susubcat___3) |
-    is_checked(susubcat___4) |
-    is_checked(susubcat___5) |
-    is_checked(susubcat___6) |
-    is_checked(susubcat___7) |
-    is_checked(susubcat___8) |
-    is_checked(susubcat___9) |
-    is_checked(susubcat___88) |
-    is_checked(susubcat___99),
-    -7,
-    0
+    has_diabetes_complicated,
+    diabetes_complicated_points,
+    diabetes_uncomplicated_points
   )
 
-  # Depression: -3
-  score <- score + dplyr::if_else(is_checked(m_psych_conditions___1), -3, 0)
+  # Any tumor without metastasis: +2
+  # (has solid tumor AND (no mets OR unknown mets))
+  # Note: Only count if NOT metastatic (checked later)
+  has_tumor_no_mets <- is_checked(m_cancer_conditions___4) &
+                       (mhsolidmeta == "No" | mhsolidmeta == "Unknown")
+  tumor_no_mets_points <- dplyr::if_else(has_tumor_no_mets, 2, 0)
+
+  # Leukemia: +2
+  score <- score + dplyr::if_else(is_checked(m_cancer_conditions___1), 2, 0)
+
+  # Lymphoma: +2
+  score <- score + dplyr::if_else(is_checked(m_cancer_conditions___2), 2, 0)
+
+  # 3 POINT CONDITIONS
+
+  # Moderate or severe liver disease: +3
+  # (has liver disease AND (moderate severity (2) OR severe severity (3) OR hepatic failure))
+  # Note: Only count if NOT mild (replaces mild liver score)
+  has_mod_severe_liver <- is_checked(m_kid_liver_conditions___2) &
+                          (mhhepsev == "Mod (cirrhosis with portal HTN)" |
+                          mhhepsev == "Severe (cirrhosis with portal HTN & variceal bleed)" |
+                          mhhepfail == "Yes")
+  mod_severe_liver_points <- dplyr::if_else(has_mod_severe_liver, 3, 0)
+
+  # Add liver points (only one or the other, not both)
+  score <- score + dplyr::if_else(
+    has_mod_severe_liver,
+    mod_severe_liver_points,
+    mild_liver_points
+  )
+
+  # 6 POINT CONDITIONS
+
+  # Metastatic solid tumor: +6
+  # (has solid tumor AND has metastasis)
+  # Note: Only count if metastatic (replaces non-metastatic score)
+  has_tumor_with_mets <- is_checked(m_cancer_conditions___4) & mhsolidmeta == "Yes"
+  tumor_with_mets_points <- dplyr::if_else(has_tumor_with_mets, 6, 0)
+
+  # Add solid tumor points (only one or the other, not both)
+  score <- score + dplyr::if_else(
+    has_tumor_with_mets,
+    tumor_with_mets_points,
+    tumor_no_mets_points
+  )
+
+  # AIDS: +6
+  score <- score + dplyr::if_else(is_checked(m_immunosup_conditions___5), 6, 0)
 
   return(score)
 }
@@ -196,50 +242,42 @@ wrapper_calc_sys_baseline_performance_status_0 <- function(data, dictionary) {
   # Get comorbidity data from Day 0 and Patient/Surrogate Interview
   data_with_comorbid <- data |>
     filter(event_label == 'Day 0') |>
-    # Remove substance use variables and merge them back in from Patient/Surrogate Interview
-    select(-c(susubcat___1, susubcat___2, susubcat___3, susubcat___4,
-              susubcat___5, susubcat___6, susubcat___7, susubcat___8,
-              susubcat___9, susubcat___88, susubcat___99)) |>
-    # Join Patient/Surrogate Interview variables (substance use)
-    left_join(data |>
-      filter(event_label == 'Patient/Surrogate Interview') |>
-      select(record_id, susubcat___1, susubcat___2, susubcat___3, susubcat___4,
-             susubcat___5, susubcat___6, susubcat___7, susubcat___8,
-             susubcat___9, susubcat___88, susubcat___99),
-      by = 'record_id') |>
     mutate(
       sys_comorbid_burden_0 = calc_sys_comorbid_burden_0(
         # Cardiovascular conditions
         m_cv_conditions___2,
-        m_cv_conditions___5,
+        m_cv_conditions___4,
         m_cv_conditions___6,
         # Neurologic conditions
+        m_neurologic_conditions___1,
+        m_neurologic_conditions___2,
+        m_neurologic_conditions___3,
         m_neurologic_conditions___4,
         m_neurologic_conditions___5,
-        m_neurologic_conditions___1,
         # Pulmonary conditions
+        m_pulm_conditions___1,
+        m_pulm_conditions___2,
         m_pulm_conditions___3,
+        m_pulm_conditions___6,
         # Kidney and liver conditions
         m_kid_liver_conditions___1,
         m_kid_liver_conditions___2,
+        mhckdsev,
+        mhhepsev,
+        mhhepfail,
+        # Endocrine conditions
+        m_endo_conditions___1,
+        mhdmsev,
         # Cancer conditions
+        m_cancer_conditions___1,
         m_cancer_conditions___2,
-        m_cancer_conditions___3,
         m_cancer_conditions___4,
-        # Psychiatric conditions
-        m_psych_conditions___1,
-        # Substance use
-        susubcat___1,
-        susubcat___2,
-        susubcat___3,
-        susubcat___4,
-        susubcat___5,
-        susubcat___6,
-        susubcat___7,
-        susubcat___8,
-        susubcat___9,
-        susubcat___88,
-        susubcat___99
+        mhsolidmeta,
+        # Immunosuppression conditions
+        m_immunosup_conditions___5,
+        # Other conditions
+        mhrheumd,
+        m_eso_stom_int_conditions___1
       )
     ) |>
     select(record_id, sys_comorbid_burden_0)

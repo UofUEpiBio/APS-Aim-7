@@ -173,12 +173,26 @@ calc_aps_oxy_score <- function(
   ## Get final FiO2 with lookback (Day 0 -> Day -1 -> Day -2)
   fio2 <- get_value_with_lookback(fio2_0, fio2_m1, fio2_m2)
 
-  # Check if patient is on ECMO
-  # ANSWERED: We're essentially checking if patient was ever on ECMO in the lookback period, which
-  # might override more recent data. I don't think there is a better way to approach this. Will it be okay?
-  # - ANSWER: Choose the sooner of the two days (if ECMO and Fi02 value on different days)
+  # Track which day FiO2 came from (0 = Day 0, 1 = Day -1, 2 = Day -2)
+  fio2_day <- dplyr::case_when(
+    !is.na(fio2_0) ~ 0,
+    !is.na(fio2_m1) ~ 1,
+    !is.na(fio2_m2) ~ 2
+  )
+
+  # Check if patient is on ECMO, but only if ECMO occurred on same or earlier day than FiO2
   resp_code <- get_value_with_lookback(daily_resp_8a_0_code, daily_resp_8a_m1_code, daily_resp_8a_m2_code)
-  is_ecmo <- !is.na(resp_code) & resp_code %in% c(1, 2)
+
+  # Track which day resp_code came from (0 = Day 0, 1 = Day -1, 2 = Day -2)
+  resp_code_day <- dplyr::case_when(
+    !is.na(daily_resp_8a_0_code) ~ 0,
+    !is.na(daily_resp_8a_m1_code) ~ 1,
+    !is.na(daily_resp_8a_m2_code) ~ 2
+  )
+
+  # ECMO is only prioritized if it occurred on an earlier or same available day as FiO2
+  is_ecmo <- !is.na(resp_code) & resp_code %in% c(1, 2) &
+              (is.na(fio2_day) | (resp_code_day <= fio2_day))
 
   # Get PaO2 and PaCO2 with lookback
   pao2 <- get_value_with_lookback(daily_pa02_lowest_0, daily_pa02_lowest_m1, daily_pa02_lowest_m2)

@@ -48,8 +48,7 @@ calc_sys_septic_shock_0 <- function(
     m_weight_kg = m_weight_kg
   )
 
-  # ANSWERED: Is is appropriate to use OR is_checked(vasopressors) here? (alterative creates many more NA records)
-  # - ANSWER: If final answer (after query) is that 'Unknown' won't be changed, then set those to 0.
+  # TODO: If after querying, it is determined that 'Unknown' cannot be fixed, set those to 0 as well
   dplyr::case_when(
     (sepsis_present == "No") |
       (sepsis_clinical_judgement == "No") |

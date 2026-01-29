@@ -204,65 +204,55 @@ No missing or unknown records for this variable.
 
 **Variable Definition:**
 
-The weighted van Walraven Elixhauser comorbidity score (Reference: van Walraven et al. Medical Care 2009;47(6):626-633 https://journals.lww.com/lww-medicalcare/fulltext/2009/06000/a_modification_of_the_elixhauser_comorbidity.4.aspx).
+The Charlson Comorbidity Index (Reference: https://pubmed.ncbi.nlm.nih.gov/34991091/).
 
 **Summary:**
 
 ```{r}
 data_with_comorbid <- data |>
   filter(event_label == 'Day 0') |>
-  # Remove substance use variables and merge them back in from Patient/Surrogate Interview
-  select(-c(susubcat___1, susubcat___2, susubcat___3, susubcat___4,
-            susubcat___5, susubcat___6, susubcat___7, susubcat___8,
-            susubcat___9, susubcat___88, susubcat___99)) |>
-  # Join Patient/Surrogate Interview variables (substance use)
-  left_join(data |>
-    filter(event_label == 'Patient/Surrogate Interview') |>
-    select(record_id, susubcat___1, susubcat___2, susubcat___3, susubcat___4,
-           susubcat___5, susubcat___6, susubcat___7, susubcat___8,
-           susubcat___9, susubcat___88, susubcat___99),
-    by = 'record_id') |>
   mutate(
     sys_comorbid_burden_0 = calc_sys_comorbid_burden_0(
       # Cardiovascular conditions
       m_cv_conditions___2,
-      m_cv_conditions___5,
+      m_cv_conditions___4,
       m_cv_conditions___6,
       # Neurologic conditions
+      m_neurologic_conditions___1,
+      m_neurologic_conditions___2,
+      m_neurologic_conditions___3,
       m_neurologic_conditions___4,
       m_neurologic_conditions___5,
-      m_neurologic_conditions___1,
       # Pulmonary conditions
+      m_pulm_conditions___1,
+      m_pulm_conditions___2,
       m_pulm_conditions___3,
+      m_pulm_conditions___6,
       # Kidney and liver conditions
       m_kid_liver_conditions___1,
       m_kid_liver_conditions___2,
+      mhckdsev,
+      mhhepsev,
+      mhhepfail,
+      # Endocrine conditions
+      m_endo_conditions___1,
+      mhdmsev,
       # Cancer conditions
+      m_cancer_conditions___1,
       m_cancer_conditions___2,
-      m_cancer_conditions___3,
       m_cancer_conditions___4,
-      # Psychiatric conditions
-      m_psych_conditions___1,
-      # Substance use
-      susubcat___1,
-      susubcat___2,
-      susubcat___3,
-      susubcat___4,
-      susubcat___5,
-      susubcat___6,
-      susubcat___7,
-      susubcat___8,
-      susubcat___9,
-      susubcat___88,
-      susubcat___99
+      mhsolidmeta,
+      # Immunosuppression conditions
+      m_immunosup_conditions___5,
+      # Other conditions
+      mhrheumd,
+      m_eso_stom_int_conditions___1
     )
   )
 
 data_with_comorbid |>
   summarize(
     n = n(),
-    mean = mean(sys_comorbid_burden_0, na.rm = TRUE),
-    sd = sd(sys_comorbid_burden_0, na.rm = TRUE),
     median = median(sys_comorbid_burden_0, na.rm = TRUE),
     min = min(sys_comorbid_burden_0, na.rm = TRUE),
     max = max(sys_comorbid_burden_0, na.rm = TRUE)
@@ -270,22 +260,23 @@ data_with_comorbid |>
   gt()
 
 data_with_comorbid |>
+  filter(!is.na(sys_comorbid_burden_0)) |>
   ggplot(aes(sys_comorbid_burden_0)) +
     geom_histogram(bins = 30) +
     labs(
       title = "Distribution of Comorbidity Burden Score",
-      x = "van Walraven Elixhauser Score",
+      x = "Charlson Comorbidity Index",
       y = "Count"
     )
 ```
 
 #### Unknown/Missing Values
 
-The only record missing (NA) was missing all substance abuse data points. This is the `52-0023` record, so doesn't need to be queried.
+The only record missing (NA) was the `52-0023` record, which doesn't need to be queried.
 
 The reason no others showed up as NA is that we're using checkbox values for all score components, and these are Unchecked by default.
 
-## (NEW) Organ Failure Trajectory -- Systematic DAG
+## Organ Failure Trajectory -- Systematic DAG
 
 ### Variable 1: Total Day 0 SOFA Score
 
@@ -794,7 +785,7 @@ data_with_sepsis <- data |>
     sepsis_clinical_judgement
   )
 ```
-## (NEW) Septic Shock -- Systematic DAG
+## Septic Shock -- Systematic DAG
 
 **Variable Definition:**
 
@@ -883,7 +874,7 @@ data_with_sys_septic_shock |>
 
 No missing records for this variable.
 
-## (NEW) Septic Shock -- Streamlined DAG
+## Septic Shock -- Streamlined DAG
 
 **Variable Definition:**
 
@@ -945,7 +936,7 @@ data_with_str_septic_shock |>
   gt()
 ```
 
-## (NEW) Gastrointestinal Bleeding -- Streamlined DAG
+## Gastrointestinal Bleeding -- Streamlined DAG
 
 **Variable Definition:**
 
@@ -959,6 +950,9 @@ data_with_gi_bleeding <- data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
   mutate(
     str_gi_bleeding_0 = calc_str_gi_bleeding_0(
+      trx_0 = trx_0,
+      trx_m1 = trx_m1,
+      trx_m2 = trx_m2,
       blood_prbc_units_m2 = blood_prbc_units_m2,
       blood_prbc_units_m1 = blood_prbc_units_m1,
       blood_prbc_units_0 = blood_prbc_units_0,
@@ -982,15 +976,7 @@ data_with_gi_bleeding |>
 
 ### Unknown/Missing Values
 
-This many records are missing (NA):
-
-```{r}
-data_with_gi_bleeding |>
-  filter(is.na(str_gi_bleeding_0)) |>
-  count()
-```
-
-This is because of an invalid branching logic on one of the three days (typically Day -2), which causes the whole count to be NA.
+These records are missing (NA) due to having `trx_0 == NA` (though `trx_m1 == 'Available'` and `trx_m2 == 'Not Available'`). This shouldn't happen and this record should be queried.
 
 ```{r}
 data_with_gi_bleeding |>
@@ -1015,6 +1001,18 @@ data_with_gi_bleeding |>
   ) |>
   gt()
 ```
+
+### Additional Queries
+
+Additionally, these records have an unusually high unit count and should be queried. We suspect many of these simply misinterpreted the question and answered in terms of volume not units of blood.
+
+```{r}
+data_with_gi_bleeding |>
+  filter(str_gi_bleeding_0 > 6) |>
+  select(record_id, str_gi_bleeding_0, blood_prbc_units_0, blood_prbc_units_m1, blood_prbc_units_m2) |>
+  gt()
+```
+
 
 ## Major Recent Surgery -- Streamlined DAG
 
@@ -2786,7 +2784,7 @@ data |>
 Currently calculated the same as the Systematic DAG Neuromuscular Blockade (see above).
 
 
-## (REWORKED) Inflammatory Profile -- Systematic DAG
+## Inflammatory Profile -- Systematic DAG
 
 **Variable Definition:**
 
@@ -2918,7 +2916,7 @@ data_with_sys_inflamprofile_0 |>
 
 
 
-## (REWORKED) Inflammatory Profile -- Streamlined DAG
+## Inflammatory Profile -- Streamlined DAG
 
 **Variable Definition:**
 
@@ -3588,7 +3586,7 @@ Those with "Unknown" for `m_immunosuppression` listed under the variable "Defini
 
 The record missing (NA) for the variable "Definite Adrenal Insufficiency" (Systematic DAG) above is also missing for this variable.
 
-## (REWORK) Hyperglycemia -- Systematic DAG
+## Hyperglycemia -- Systematic DAG
 
 ### Variable 1: Diabetes Medical History
 
@@ -3680,7 +3678,7 @@ data_with_sys_hyperglyc_gluc_0 |>
   gt()
 ```
 
-## (REWORK) Hyperglycemia -- Streamlined DAG
+## Hyperglycemia -- Streamlined DAG
 
 **Variable Definition:**
 
