@@ -61,6 +61,18 @@ get_value_with_lookback <- function(val_0, val_m1, val_m2) {
   dplyr::coalesce(val_0, val_m1, val_m2)
 }
 
+# Helper function: Display count table with grand total row
+# Usage: data |> display_count_with_total(column_name)
+display_grand_total <- function(data, col) {
+  data |>
+    count({{ col }}) |>
+    gt() |>
+    grand_summary_rows(
+      columns = n,
+      fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
+    )
+}
+
 
 ## SOFA score functions
 

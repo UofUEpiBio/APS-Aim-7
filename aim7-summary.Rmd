@@ -24,6 +24,8 @@ source('support_functions.R')
 ## Load data from N=500 APS cohort
 ## provides "data", "dictionary" and "codebook" in the working environment
 load(file = '../aps-data/20250731_data.RData')
+## Filter the excluded record to not muddy the variable summaries
+data <- data |> filter(record_id != '52-0023')
 ```
 
 ```{r, echo = FALSE}
@@ -31,7 +33,11 @@ load(file = '../aps-data/20250731_data.RData')
 source("R/steroid-dag-variables.R")
 ```
 
-## (NEW) Hypotension Severity -- Systematic DAG
+## Missing Record Data
+
+The record `52-0023` was erroneously included in the `N=500` data set. As it will be omitted in the final data set, I have filtered it out of the data before deriving the variables below. Consequently, the total counts for any given variable will sum to 499 not 500. This should be corrected with the final `N=500` data set, assuming a different record is chosen to replace `52-0023`.
+
+## (NEW) Hypotension Severity -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -48,107 +54,18 @@ Citation for NEE calculation: Goradia S, Sardaneh AA, Narayan SW, Penm J, Patanw
 **Summary:**
 
 ```{r}
-data_with_hypotension_sev <- data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  # Remove the weight variable and merge it back in from the "Day 0" event
-  select(-m_weight_kg) |>
-  left_join(data |>
-    filter(event_label == 'Day 0') |>
-    select(record_id, m_weight_kg),
-    by = 'record_id') |>
-  mutate(
-    sys_hypotension_sev_0 = calc_sys_hypotension_sev_0(
-      daily_vasopressors_0___0,
-      daily_vasopressors_0___1,
-      daily_vasopressors_0___2,
-      daily_vasopressors_0___3,
-      daily_vasopressors_0___4,
-      daily_vasopressors_0___5,
-      daily_vasopressors_0___6,
-      daily_vasopressors_0___7,
-      daily_vasopressors_0___8,
-      daily_vasopressors_0___88,
-
-      daily_sbp_8a_0,
-      daily_dbp_8a_0,
-
-      daily_ne_dose_8a_0_mcg,
-      daily_ne_dose_8a_0_mcgkg,
-      daily_epi_dose_8a_0_mcg,
-      daily_epi_dose_8a_0_mcgkg,
-      daily_phen_dose_8a_0_mcg,
-      daily_phen_dos_8a_0_mcgkg,
-      daily_vaso_dose_8a_0,
-      daily_dopa_dose_8a_0_mcg,
-      daily_dopa_dos_8a_0_mcgkg,
-      daily_dobuta_8a_0_mcg,
-      daily_dobuta_8a_0_mcgkg,
-      daily_ang2_8a_0_mcg,
-      daily_ang2_8a_0_mcgkg,
-      daily_milr_8a_0_mcg,
-      daily_milr_8a_0_mcgkg,
-
-      m_weight_kg
-    )
-  )
-
-data_with_hypotension_sev |>
-  count(sys_hypotension_sev_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_hypotension_sev_0(data) |>
+  display_grand_total(sys_hypotension_sev_0)
 ```
 
 #### Unknown/Missing Values
 
-The two records missing for this variable are the same ones missing almost all of their labs. These should be queried.
+The two records missing for this variable are missing almost all of their labs. These should be queried.
 
 ```{r}
-data_with_hypotension_sev |>
-  filter(is.na(sys_hypotension_sev_0)) |>
-  select(
-    record_id,
-    daily_vasopressors_0___0,
-    daily_vasopressors_0___1,
-    daily_vasopressors_0___2,
-    daily_vasopressors_0___3,
-    daily_vasopressors_0___4,
-    daily_vasopressors_0___5,
-    daily_vasopressors_0___6,
-    daily_vasopressors_0___7,
-    daily_vasopressors_0___8,
-    daily_vasopressors_0___88,
-
-    daily_sbp_8a_0,
-    daily_dbp_8a_0,
-
-    daily_ne_dose_8a_0_mcg,
-    daily_ne_dose_8a_0_mcgkg,
-    daily_epi_dose_8a_0_mcg,
-    daily_epi_dose_8a_0_mcgkg,
-    daily_phen_dose_8a_0_mcg,
-    daily_phen_dos_8a_0_mcgkg,
-    daily_vaso_dose_8a_0,
-    daily_dopa_dose_8a_0_mcg,
-    daily_dopa_dos_8a_0_mcgkg,
-    daily_dobuta_8a_0_mcg,
-    daily_dobuta_8a_0_mcgkg,
-    daily_ang2_8a_0_mcg,
-    daily_ang2_8a_0_mcgkg,
-    daily_milr_8a_0_mcg,
-    daily_milr_8a_0_mcgkg,
-
-    m_weight_kg
-  ) |>
+missing_sys_hypotension_sev_0(data) |>
   gt()
 ```
-
-
-## Hypotension Severity -- Streamlined DAG
-
-Currently calculated the same as Systematic DAG: Hypotension Severity (see above).
 
 ## (NEW) Baseline Performance Status -- Systematic DAG
 
@@ -173,32 +90,9 @@ Frailty status derived from Clinical Frailty Scale assessment (`frailty_base`):
 **Summary:**
 
 ```{r}
-data_with_frailty <- data |>
-  filter(event_label == "Patient/Surrogate Interview") |>
-  left_join(
-    get_code_label_map('frailty_base', dictionary),
-    by = 'frailty_base'
-  ) |>
-  mutate(
-    sys_frailty_status_0 = calc_sys_frailty_status_0(
-      frailty_base_code = frailty_base_code,
-      frailty_perf = frailty_perf
-    )
-  )
-
-data_with_frailty |>
-  count(sys_frailty_status_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_baseline_performance_status_0(data, dictionary) |>
+  display_grand_total(sys_frailty_status_0)
 ```
-
-#### Unknown/Missing Values
-
-No missing or unknown records for this variable.
-
 
 ### Variable 2: Comorbidity Burden
 
@@ -209,72 +103,25 @@ The Charlson Comorbidity Index (Reference: https://pubmed.ncbi.nlm.nih.gov/34991
 **Summary:**
 
 ```{r}
-data_with_comorbid <- data |>
-  filter(event_label == 'Day 0') |>
-  mutate(
-    sys_comorbid_burden_0 = calc_sys_comorbid_burden_0(
-      # Cardiovascular conditions
-      m_cv_conditions___2,
-      m_cv_conditions___4,
-      m_cv_conditions___6,
-      # Neurologic conditions
-      m_neurologic_conditions___1,
-      m_neurologic_conditions___2,
-      m_neurologic_conditions___3,
-      m_neurologic_conditions___4,
-      m_neurologic_conditions___5,
-      # Pulmonary conditions
-      m_pulm_conditions___1,
-      m_pulm_conditions___2,
-      m_pulm_conditions___3,
-      m_pulm_conditions___6,
-      # Kidney and liver conditions
-      m_kid_liver_conditions___1,
-      m_kid_liver_conditions___2,
-      mhckdsev,
-      mhhepsev,
-      mhhepfail,
-      # Endocrine conditions
-      m_endo_conditions___1,
-      mhdmsev,
-      # Cancer conditions
-      m_cancer_conditions___1,
-      m_cancer_conditions___2,
-      m_cancer_conditions___4,
-      mhsolidmeta,
-      # Immunosuppression conditions
-      m_immunosup_conditions___5,
-      # Other conditions
-      mhrheumd,
-      m_eso_stom_int_conditions___1
-    )
-  )
-
-data_with_comorbid |>
+wrapper_calc_sys_baseline_performance_status_0(data, dictionary) |>
   summarize(
     n = n(),
+    na_count = sum(is.na(sys_comorbid_burden_0)),
     median = median(sys_comorbid_burden_0, na.rm = TRUE),
     min = min(sys_comorbid_burden_0, na.rm = TRUE),
     max = max(sys_comorbid_burden_0, na.rm = TRUE)
   ) |>
   gt()
 
-data_with_comorbid |>
-  filter(!is.na(sys_comorbid_burden_0)) |>
+wrapper_calc_sys_baseline_performance_status_0(data, dictionary) |>
   ggplot(aes(sys_comorbid_burden_0)) +
-    geom_histogram(bins = 30) +
-    labs(
-      title = "Distribution of Comorbidity Burden Score",
-      x = "Charlson Comorbidity Index",
-      y = "Count"
-    )
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Distribution of Comorbidity Burden Score",
+    x = "Charlson Comorbidity Index",
+    y = "Count"
+  )
 ```
-
-#### Unknown/Missing Values
-
-The only record missing (NA) was the `52-0023` record, which doesn't need to be queried.
-
-The reason no others showed up as NA is that we're using checkbox values for all score components, and these are Unchecked by default.
 
 ## Organ Failure Trajectory -- Systematic DAG
 
@@ -287,50 +134,8 @@ Total Day 0 SOFA score (sum of 6 component SOFA scores). Value between 0-24.
 **Summary:**
 
 ```{r}
-data_with_sofa_day_0 <- data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  # Remove the weight variable and merge it back in from the "Day 0" event
-  # where weight is collected
-  select(-m_weight_kg) |>
-  left_join(data |>
-    filter(event_label == 'Day 0') |>
-    select(record_id, m_weight_kg),
-    by='record_id') |>
-  mutate(
-    sofa_total_day_0 = calc_sys_sofa_total_0(
-      daily_pa02_lowest_0,
-      daily_resp_lowest_pao2_0,
-      daily_fio2_lowest_pao2_0,
-      daily_o2_lowest_pao2_0,
-      daily_spo2_lowest_0,
-      daily_resp_lowest_0,
-      daily_fio2_lowest_0,
-      daily_o2_lowest_0,
-      daily_platelet_8a_0,
-      daily_tbili_8a_0,
-      daily_sbp_8a_0,
-      daily_dbp_8a_0,
-      daily_dopa_dose_8a_0_mcg,
-      daily_dopa_dos_8a_0_mcgkg,
-      daily_dobuta_8a_0_mcg,
-      daily_dobuta_8a_0_mcgkg,
-      daily_epi_dose_8a_0_mcg,
-      daily_epi_dose_8a_0_mcgkg,
-      daily_ne_dose_8a_0_mcg,
-      daily_ne_dose_8a_0_mcgkg,
-      m_weight_kg,
-      daily_gcs_8a_0,
-      daily_cr_8a_0
-    )
-  )
-
-data_with_sofa_day_0 |>
-  count(sofa_total_day_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_organ_failure_trajectory(data) |>
+  display_grand_total(sofa_total_day_0)
 ```
 
 #### Unknown/Missing Values
@@ -338,72 +143,20 @@ data_with_sofa_day_0 |>
 These records have missing SOFA scores because one of the inputs is missing and the SOFA calculations don't explicitly assign NA to a SOFA score.
 
 ```{r}
-data_with_sofa_day_0 |>
-  filter(is.na(sofa_total_day_0)) |>
-  select(
-    record_id,
-    dailysofa_perf_0,
-    daily_pa02_lowest_0,
-    daily_resp_lowest_pao2_0,
-    daily_fio2_lowest_pao2_0,
-    daily_o2_lowest_pao2_0,
-    daily_spo2_lowest_0,
-    daily_resp_lowest_0,
-    daily_fio2_lowest_0,
-    daily_o2_lowest_0,
-    daily_platelet_8a_0,
-    daily_tbili_8a_0,
-    daily_sbp_8a_0,
-    daily_dbp_8a_0,
-    daily_dopa_dose_8a_0_mcg,
-    daily_dopa_dos_8a_0_mcgkg,
-    daily_dobuta_8a_0_mcg,
-    daily_dobuta_8a_0_mcgkg,
-    daily_epi_dose_8a_0_mcg,
-    daily_epi_dose_8a_0_mcgkg,
-    daily_ne_dose_8a_0_mcg,
-    daily_ne_dose_8a_0_mcgkg,
-    m_weight_kg,
-    daily_gcs_8a_0,
-    daily_cr_8a_0
-  ) |>
+missing_sofa_total_day_0(data) |>
   gt()
 ```
 
 This is how many of each input are missing:
+
 ```{r}
-data_with_sofa_day_0 |>
-  filter(is.na(sofa_total_day_0)) |>
-  select(
-    daily_pa02_lowest_0,
-    daily_resp_lowest_pao2_0,
-    daily_fio2_lowest_pao2_0,
-    daily_o2_lowest_pao2_0,
-    daily_spo2_lowest_0,
-    daily_resp_lowest_0,
-    daily_fio2_lowest_0,
-    daily_o2_lowest_0,
-    daily_platelet_8a_0,
-    daily_tbili_8a_0,
-    daily_sbp_8a_0,
-    daily_dbp_8a_0,
-    daily_dopa_dose_8a_0_mcg,
-    daily_dopa_dos_8a_0_mcgkg,
-    daily_dobuta_8a_0_mcg,
-    daily_dobuta_8a_0_mcgkg,
-    daily_epi_dose_8a_0_mcg,
-    daily_epi_dose_8a_0_mcgkg,
-    daily_ne_dose_8a_0_mcg,
-    daily_ne_dose_8a_0_mcgkg,
-    m_weight_kg,
-    daily_gcs_8a_0,
-    daily_cr_8a_0
-  ) |>
+missing_sofa_total_day_0(data) |>
   summarise(across(everything(), ~ sum(is.na(.)))) |>
   pivot_longer(everything(), names_to = "parameter", values_to = "na_count") |>
   arrange(desc(na_count)) |>
   gt()
 ```
+
 ### Variable 2: Total Day -1 SOFA Score
 
 **Variable Definition:**
@@ -412,6 +165,15 @@ Total Day -1 SOFA score (sum of 6 component SOFA scores). Value between 0-24.
 - `99` not applicable (not in hospital on Day -1)
 
 **Summary:**
+
+```{r}
+wrapper_calc_sys_organ_failure_trajectory(data) |>
+  display_grand_total(sofa_total_day_m1)
+```
+
+#### Unknown/Missing Values
+
+These records have `sofa_total_day_m1 == 99` because `dailysofa_perf_m1 == 'Not Available'`, indicating patient was not in hospital on Day -1.
 
 ```{r}
 data_with_sofa_day_m1 <- data |>
@@ -453,20 +215,6 @@ data_with_sofa_day_m1 <- data |>
   )
 
 data_with_sofa_day_m1 |>
-  count(sofa_total_day_m1) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-#### Unknown/Missing Values
-
-These records have `sofa_total_day_m1 == 99` because `dailysofa_perf_m1 == 'Not Available'`, indicating patient was not in hospital on Day -1.
-
-```{r}
-data_with_sofa_day_m1 |>
   filter(sofa_total_day_m1 == 99) |>
   select(
     record_id,
@@ -478,67 +226,14 @@ data_with_sofa_day_m1 |>
 These records have missing SOFA scores because one of the inputs is missing and the SOFA calculations don't explicitly assign NA to a SOFA score.
 
 ```{r}
-data_with_sofa_day_m1 |>
-  filter(is.na(sofa_total_day_m1)) |>
-  select(
-    record_id,
-    dailysofa_perf_m1,
-    daily_pa02_lowest_m1,
-    daily_resp_lowest_pao2_m1,
-    daily_fio2_lowest_pao2_m1,
-    daily_o2_lowest_pao2_m1,
-    daily_spo2_lowest_m1,
-    daily_resp_lowest_m1,
-    daily_fio2_lowest_m1,
-    daily_o2_lowest_m1,
-    daily_platelet_8a_m1,
-    daily_tbili_8a_m1,
-    daily_sbp_8a_m1,
-    daily_dbp_8a_m1,
-    daily_dopa_dose_8a_m1_mcg,
-    daily_dopa_dos_8a_m1_mcgkg,
-    daily_dobuta_8a_m1_mcg,
-    daily_dobuta_8a_m1_mcgkg,
-    daily_epi_dose_8a_m1_mcg,
-    daily_epi_dose_8a_m1_mcgkg,
-    daily_ne_dose_8a_m1_mcg,
-    daily_ne_dose_8a_m1_mcgkg,
-    m_weight_kg,
-    daily_gcs_8a_m1,
-    daily_cr_8a_m1
-  ) |>
+missing_sofa_total_day_m1(data) |>
   gt()
 ```
 
 This is how many of each input are missing:
+
 ```{r}
-data_with_sofa_day_m1 |>
-  filter(is.na(sofa_total_day_m1)) |>
-  select(
-    daily_pa02_lowest_m1,
-    daily_resp_lowest_pao2_m1,
-    daily_fio2_lowest_pao2_m1,
-    daily_o2_lowest_pao2_m1,
-    daily_spo2_lowest_m1,
-    daily_resp_lowest_m1,
-    daily_fio2_lowest_m1,
-    daily_o2_lowest_m1,
-    daily_platelet_8a_m1,
-    daily_tbili_8a_m1,
-    daily_sbp_8a_m1,
-    daily_dbp_8a_m1,
-    daily_dopa_dose_8a_m1_mcg,
-    daily_dopa_dos_8a_m1_mcgkg,
-    daily_dobuta_8a_m1_mcg,
-    daily_dobuta_8a_m1_mcgkg,
-    daily_epi_dose_8a_m1_mcg,
-    daily_epi_dose_8a_m1_mcgkg,
-    daily_ne_dose_8a_m1_mcg,
-    daily_ne_dose_8a_m1_mcgkg,
-    m_weight_kg,
-    daily_gcs_8a_m1,
-    daily_cr_8a_m1
-  ) |>
+missing_sofa_total_day_m1(data) |>
   summarise(across(everything(), ~ sum(is.na(.)))) |>
   pivot_longer(everything(), names_to = "parameter", values_to = "na_count") |>
   arrange(desc(na_count)) |>
@@ -546,7 +241,7 @@ data_with_sofa_day_m1 |>
 ```
 
 
-## Delirium -- Systematic DAG
+## Delirium -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -559,41 +254,9 @@ Three-level variable:
 **Summary:**
 
 ```{r}
-data_with_delirium <- data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(
-    sys_delirium_0 = calc_sys_delirium_0(
-      cam_0 = cam_0,
-      cam_m1 = cam_m1,
-      cam_m2 = cam_m2,
-
-      lowrass_orres_0 = lowrass_orres_0,
-      lowrass_orres_m1 = lowrass_orres_m1,
-      lowrass_orres_m2 = lowrass_orres_m2,
-
-      highestrass_orres_0 = highestrass_orres_0,
-      highestrass_orres_m1 = highestrass_orres_m1,
-      highestrass_orres_m2 = highestrass_orres_m2
-    )
-  )
-
-data_with_delirium |>
-  count(sys_delirium_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_delirium_0(data) |>
+  display_grand_total(sys_delirium_0)
 ```
-
-### Unknown/Missing Values
-
-After checking the branching logic, it appears there are no unknown or missing values for this variable.
-
-## Delirium -- Streamlined DAG
-
-Currently calculated the same as Systematic DAG: Delirium (see above).
-
 
 ## Presence of Sepsis Syndrome -- Systematic DAG
 
@@ -608,6 +271,15 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_sys_sepsis_0(data) |>
+  display_grand_total(sys_sepsis_0)
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because they were missing (NA) `sepsis_present` and have `sepsis_clinical_judgement == 'Unknown'`. These should be queried.
+
+```{r}
 data_with_sepsis <- data |>
   filter(event_label == 'Syndrome Adjudication') |>
   mutate(
@@ -617,20 +289,6 @@ data_with_sepsis <- data |>
     )
   )
 
-data_with_sepsis |>
-  count(sys_sepsis_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were classified as `99 (Unknown)` because they were missing (NA) `sepsis_present` and have `sepsis_clinical_judgement == 'Unknown'`. These should be queried.
-
-```{r}
 data_with_sepsis |>
   filter(sys_sepsis_0 == 99) |>
   select(
@@ -654,7 +312,22 @@ data_with_sepsis |>
   gt()
 ```
 
-## Presence of ARDS Syndrome -- Systematic DAG
+This record is missing from the 'Syndrome Adjudication' event entirely:
+```{r}
+data |>
+  distinct(record_id) |>
+  left_join(data_with_sepsis, by = 'record_id') |>
+  filter(is.na(sys_sepsis_0) & is.na(sepsis_present) & is.na(sepsis_clinical_judgement)) |>
+  select(
+    record_id,
+    sepsis_present,
+    sepsis_clinical_judgement
+  ) |>
+  gt()
+```
+
+
+## Presence of ARDS Syndrome -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -667,34 +340,15 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
-data_with_ards <- data |>
-  filter(event_label == 'Syndrome Adjudication') |>
-  mutate(
-    sys_ards_0 = calc_sys_ards_0(
-      ards_present,
-      ards_clinical_judgement
-    )
-  )
-
-data_with_ards |>
-  count(sys_ards_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_ards_0(data) |>
+  display_grand_total(sys_ards_0)
 ```
 
 ### Unknown/Missing Values
 
-There are no unknown or missing values for this variable.
+The missing (NA) record is `13-0016`, which is missing from the 'Syndrome Adjudication' event entirely (see Presence of Sepsis Syndrome DAGs above).
 
-
-## Presence of ARDS Syndrome -- Streamlined DAG
-
-Currently calculated the same as Systematic DAG: Presence of ARDS Syndrome (see above).
-
-## Presence of Pneumonia Syndrome -- Systematic DAG
+## Presence of Pneumonia Syndrome -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -707,6 +361,15 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_sys_pneumonia_0(data) |>
+  display_grand_total(sys_pneumonia_0)
+```
+
+### Unknown/Missing Values
+
+These records have `pna_clinical_judgement == 'Unknown'`:
+
+```{r}
 data_with_pneumonia <- data |>
   filter(event_label == 'Syndrome Adjudication') |>
   mutate(
@@ -716,19 +379,6 @@ data_with_pneumonia <- data |>
   )
 
 data_with_pneumonia |>
-  count(sys_pneumonia_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-### Unknown/Missing Values
-
-These records have `pna_clinical_judgement == 'Unknown'`:
-
-```{r}
-data_with_pneumonia |>
   filter(sys_pneumonia_0 == 99) |>
   select(
     record_id,
@@ -737,9 +387,7 @@ data_with_pneumonia |>
   gt()
 ```
 
-## Presence of Pneumonia Syndrome -- Streamlined DAG
-
-Currently calculated the same as Systematic DAG: Presence of Pneumonia Syndrome (see above).
+The missing (NA) record is `13-0016`, which is missing from the 'Syndrome Adjudication' event entirely (see Presence of Sepsis Syndrome DAGs above).
 
 ## Septic Shock Variables (Systematic and Streamlined)
 ```{r}
@@ -798,6 +446,15 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_sys_septic_shock_0(data) |>
+  display_grand_total(sys_septic_shock_0)
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because they have `sepsis_clinical_judgement == 'Unknown'` and are missing `sepsis_present`. They are all also recorded as Unknown in "Presence of Sepsis Syndrome Systematic DAG" (above). These should be queried.
+
+```{r}
 data_with_sys_septic_shock <- data_with_weight |>
   left_join(data_with_vasopressors, by = 'record_id') |>
   left_join(data_with_sepsis, by = 'record_id') |>
@@ -830,20 +487,6 @@ data_with_sys_septic_shock <- data_with_weight |>
   )
 
 data_with_sys_septic_shock |>
-  count(sys_septic_shock_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were classified as `99 (Unknown)` because they have `sepsis_clinical_judgement == 'Unknown'` and are missing `sepsis_present`. They are all also recorded as Unknown in "Presence of Sepsis Syndrome Systematic DAG" (above). These should be queried.
-
-```{r}
-data_with_sys_septic_shock |>
   filter(sys_septic_shock_0 == 99) |>
   select(
     record_id,
@@ -872,8 +515,6 @@ data_with_sys_septic_shock |>
   gt()
 ```
 
-No missing records for this variable.
-
 ## Septic Shock -- Streamlined DAG
 
 **Variable Definition:**
@@ -887,6 +528,15 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_str_septic_shock_0(data) |>
+  display_grand_total(str_septic_shock_0)
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because they have `sepsis_clinical_judgement == 'Unknown'` and are missing `sepsis_present`. They are all also recorded as Unknown in "Presence of Sepsis Syndrome Systematic DAG" (above). These should be queried.
+
+```{r}
 data_with_str_septic_shock <- data_with_vasopressors |>
   left_join(data_with_sepsis, by = 'record_id') |>
   mutate(
@@ -898,20 +548,6 @@ data_with_str_septic_shock <- data_with_vasopressors |>
   )
 
 data_with_str_septic_shock |>
-  count(str_septic_shock_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were classified as `99 (Unknown)` because they have `sepsis_clinical_judgement == 'Unknown'` and are missing `sepsis_present`. They are all also recorded as Unknown in "Presence of Sepsis Syndrome Systematic DAG" (above). These should be queried.
-
-```{r}
-data_with_str_septic_shock |>
   filter(str_septic_shock_0 == 99) |>
   select(
     record_id,
@@ -922,19 +558,7 @@ data_with_str_septic_shock |>
   gt()
 ```
 
-These record were missing (NA) because they are missing `sepsis_present` and `sepsis_clinical_judgement` and `daily_vasopressors_0___0` is unchecked (indicated patient is not on vasopressors).
-
-```{r}
-data_with_str_septic_shock |>
-  filter(is.na(str_septic_shock_0)) |>
-  select(
-    record_id,
-    sepsis_present,
-    sepsis_clinical_judgement,
-    daily_vasopressors_0___0
-  ) |>
-  gt()
-```
+The missing (NA) record is `13-0016`, which is missing from the 'Syndrome Adjudication' event entirely (see Presence of Sepsis Syndrome DAGs above).
 
 ## Gastrointestinal Bleeding -- Streamlined DAG
 
@@ -944,6 +568,18 @@ Continuous variable summing total number of packed red blood cell units
 transfused on study days -2 to 0.
 
 **Summary:**
+
+```{r}
+wrapper_calc_str_gi_bleeding_0(data) |>
+  select(str_gi_bleeding_0) |>
+  filter(!is.na(str_gi_bleeding_0) & str_gi_bleeding_0 > -1) |>
+  ggplot(aes(str_gi_bleeding_0)) +
+    geom_histogram(bins = 40)
+```
+
+### Unknown/Missing Values
+
+These records are missing (NA) due to having `trx_0 == NA` (though `trx_m1 == 'Available'` and `trx_m2 == 'Not Available'`). This shouldn't happen and this record should be queried.
 
 ```{r}
 data_with_gi_bleeding <- data |>
@@ -965,20 +601,6 @@ data_with_gi_bleeding <- data |>
     )
   )
 
-data_with_gi_bleeding |>
-  select(str_gi_bleeding_0) |>
-  filter(!is.na(str_gi_bleeding_0) & str_gi_bleeding_0 > -1) |>
-  ggplot(aes(str_gi_bleeding_0)) +
-    geom_histogram(bins = 40)
-```
-
-
-
-### Unknown/Missing Values
-
-These records are missing (NA) due to having `trx_0 == NA` (though `trx_m1 == 'Available'` and `trx_m2 == 'Not Available'`). This shouldn't happen and this record should be queried.
-
-```{r}
 data_with_gi_bleeding |>
   filter(is.na(str_gi_bleeding_0)) |>
   select(
@@ -1004,7 +626,7 @@ data_with_gi_bleeding |>
 
 ### Additional Queries
 
-Additionally, these records have an unusually high unit count and should be queried. We suspect many of these simply misinterpreted the question and answered in terms of volume not units of blood.
+Additionally, these records have an unusually high unit count and should be queried. As they are from the same site, we suspect that the person entering the data simply misinterpreted the question and didn't answer in "units of blood" but in some other unit.
 
 ```{r}
 data_with_gi_bleeding |>
@@ -1028,28 +650,9 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
-data_with_major_surgery <- data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(
-    str_major_surgery_0 = calc_str_major_surgery_0(
-      daily_surgery_m2,
-      daily_surgery_m1,
-      daily_surgery_0
-    )
-  )
-
-data_with_major_surgery |>
-  count(str_major_surgery_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_str_major_surgery_0(data) |>
+  display_grand_total(str_major_surgery_0)
 ```
-
-### Unknown/Missing Values
-
-No missing values for Major Recent Surgery.
 
 ## Dementia -- Streamlined DAG
 
@@ -1064,6 +667,15 @@ Binary variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_str_dementia_0(data) |>
+  display_grand_total(str_dementia_0)
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because `m_neurologic == "Unknown"`:
+
+```{r}
 data_with_dementia <- data |>
   filter(event_label == 'Day 0') |>
   mutate(
@@ -1074,20 +686,6 @@ data_with_dementia <- data |>
   )
 
 data_with_dementia |>
-  count(str_dementia_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were classified as `99 (Unknown)` because `m_neurologic == "Unknown"`:
-
-```{r}
-data_with_dementia |>
   filter(str_dementia_0 == 99) |>
   select(
     record_id,
@@ -1096,8 +694,6 @@ data_with_dementia |>
   ) |>
   gt()
 ```
-
-One record was missing (NA) `m_neurologic`, but this is the same record missing from the N=500 dataset and does not need to be queried further.
 
 ## Acute Allergic Reaction -- Streamlined DAG
 
@@ -1113,30 +709,13 @@ Binary variable:
 **Summary:**
 
 ```{r}
-data_with_allergic <- data |>
-  filter(event_label == 'Syndrome Adjudication') |>
-  left_join(
-    get_code_label_map('organ_dysfnx_cause', dictionary),
-    by = 'organ_dysfnx_cause'
-  ) |>
-  mutate(
-    str_acute_allergic_reaction_0 = calc_str_acute_allergic_reaction_0(
-      organ_dysfnx_cause_code
-    )
-  )
-
-data_with_allergic |>
-  count(str_acute_allergic_reaction_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_str_acute_allergic_reaction_0(data, dictionary) |>
+  display_grand_total(str_acute_allergic_reaction_0)
 ```
 
 ### Unknown/Missing Values
 
-After checking the branching logic, it appears there are no unknown or missing values for this variable.
+The missing (NA) record is `13-0016`, which is missing from the 'Syndrome Adjudication' event entirely (see Presence of Sepsis Syndrome DAGs above).
 
 ## Diffuse Alveolar Hemorrhage -- Streamlined DAG
 
@@ -1152,30 +731,13 @@ Binary variable (likely not used in primary analysis):
 **Summary:**
 
 ```{r}
-data_with_dah <- data |>
-  filter(event_label == 'Syndrome Adjudication') |>
-  left_join(
-    get_code_label_map('organ_dysfnx_cause', dictionary),
-    by = 'organ_dysfnx_cause'
-  ) |>
-  mutate(
-    str_dah_0 = calc_str_dah_0(
-      organ_dysfnx_cause_code
-    )
-  )
-
-data_with_dah |>
-  count(str_dah_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_str_dah_0(data, dictionary) |>
+  display_grand_total(str_dah_0)
 ```
 
 ### Unknown/Missing Values
 
-After checking the branching logic, it appears there are no unknown or missing values for this variable.
+The missing (NA) record is `13-0016`, which is missing from the 'Syndrome Adjudication' event entirely (see Presence of Sepsis Syndrome DAGs above).
 
 ## Acute Inflammatory Drug Toxicity -- Streamlined DAG
 
@@ -1191,30 +753,13 @@ Binary variable (likely not used in primary analysis):
 **Summary:**
 
 ```{r}
-data_with_drug_toxicity <- data |>
-  filter(event_label == 'Syndrome Adjudication') |>
-  left_join(
-    get_code_label_map('organ_dysfnx_cause', dictionary),
-    by = 'organ_dysfnx_cause'
-  ) |>
-  mutate(
-    str_drug_toxicity_0 = calc_str_drug_toxicity_0(
-      organ_dysfnx_cause_code
-    )
-  )
-
-data_with_drug_toxicity |>
-  count(str_drug_toxicity_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_str_drug_toxicity_0(data, dictionary) |>
+  display_grand_total(str_drug_toxicity_0)
 ```
 
 ### Unknown/Missing Values
 
-After checking the branching logic, it appears there are no unknown or missing values for this variable.
+The missing (NA) record is `13-0016`, which is missing from the 'Syndrome Adjudication' event entirely (see Presence of Sepsis Syndrome DAGs above).
 
 ## Acute Cryptogenic Organizing Pneumonia -- Streamlined DAG
 
@@ -1230,30 +775,13 @@ Binary variable (likely not used in primary analysis):
 **Summary:**
 
 ```{r}
-data_with_cop <- data |>
-  filter(event_label == 'Syndrome Adjudication') |>
-  left_join(
-    get_code_label_map('organ_dysfnx_cause', dictionary),
-    by = 'organ_dysfnx_cause'
-  ) |>
-  mutate(
-    str_cop_0 = calc_str_cop_0(
-      organ_dysfnx_cause_code
-    )
-  )
-
-data_with_cop |>
-  count(str_cop_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_str_cop_0(data, dictionary) |>
+  display_grand_total(str_cop_0)
 ```
 
 ### Unknown/Missing Values
 
-After checking the branching logic, it appears there are no unknown or missing values for this variable.
+The missing (NA) record is `13-0016`, which is missing from the 'Syndrome Adjudication' event entirely (see Presence of Sepsis Syndrome DAGs above).
 
 ## SCAP Criterion Respiratory Rate -- Streamlined DAG
 
@@ -1268,6 +796,15 @@ value carried forward from Day -1 or Day -2.
 Respiratory rate is based on the respiratory support type. Check the support type for Day 0 and look for the associated respiratory rate variable. If missing, repeat for Day -1 then again for Day -2. If still missing after that, treat as missing (NA). For ECMO without IMV (2), No resp support at all (7), Unknown (99) use `highrr_vsorres` (for all days, even though only measured on Day 0).
 
 **Summary:**
+
+```{r}
+wrapper_calc_str_scap_rr_0(data, dictionary) |>
+  display_grand_total(str_scap_rr_0)
+```
+
+### Unknown/Missing Values
+
+There are 3 missing (NA) records for this variable:
 
 ```{r}
 data_with_highrr_vsorres <- data |>
@@ -1344,20 +881,6 @@ data_with_scap_rr <- data |>
     )
   )
 
-data_with_scap_rr |>
-  count(str_scap_rr_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-There are 3 missing (NA) records for this variable:
-
-```{r}
 data_with_scap_rr |>
   filter(is.na(str_scap_rr_0)) |>
   select(record_id) |>
@@ -1474,6 +997,15 @@ value carried forward from Day -1 or Day -2:
 **Summary:**
 
 ```{r}
+wrapper_calc_str_scap_bun_0(data) |>
+  display_grand_total(str_scap_bun_0)
+```
+
+### Unknown/Missing Values
+
+These records were missing (NA). Most of these are due to valid branching logic (daily_bun was 'Not Collected'), but a few records were missing all `daily_bun_nc_*`/`daily_bun_8a_*` pairs, which violates the branching logic (should be mutually exclusive). These should be queried.
+
+```{r}
 data_with_scap_bun <- data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
   mutate(
@@ -1484,20 +1016,6 @@ data_with_scap_bun <- data |>
     )
   )
 
-data_with_scap_bun |>
-  count(str_scap_bun_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were missing (NA). Most of these are due to valid branching logic (daily_bun was 'Not Collected'), but a few records were missing all `daily_bun_nc_*`/`daily_bun_8a_*` pairs, which violates the branching logic (should be mutually exclusive). These should be queried.
-
-```{r}
 data_with_scap_bun |>
   filter(is.na(str_scap_bun_0)) |>
   select(
@@ -1528,23 +1046,8 @@ value carried forward from Day -1 or Day -2:
 **Summary:**
 
 ```{r}
-data_with_scap_acidosis <- data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(
-    str_scap_acidosis_0 = calc_str_scap_acidosis_0(
-      daily_ph_lowest_0,
-      daily_ph_lowest_m1,
-      daily_ph_lowest_m2
-    )
-  )
-
-data_with_scap_acidosis |>
-  count(str_scap_acidosis_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_str_scap_acidosis_0(data) |>
+  display_grand_total(str_scap_acidosis_0)
 ```
 
 ### Unknown/Missing Values
@@ -1561,6 +1064,15 @@ Binary variable:
 - 1 = (any) `*_opacity == 2`
 
 **Summary:**
+
+```{r}
+wrapper_calc_str_scap_bilateral_opacities_0(data, dictionary) |>
+  display_grand_total(str_scap_bilateral_opacities_0)
+```
+
+### Unknown/Missing Values
+
+These records were missing (NA) imaging data for one or more days and should be queried.
 
 ```{r}
 data_with_scap_bilat_opac <- data |>
@@ -1607,20 +1119,6 @@ data_with_scap_bilat_opac <- data |>
   )
 
 data_with_scap_bilat_opac |>
-  count(str_scap_bilateral_opacities_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were missing (NA) imaging data for one or more days and should be queried.
-
-```{r}
-data_with_scap_bilat_opac |>
   filter(is.na(str_scap_bilateral_opacities_0)) |>
   select(
     record_id,
@@ -1653,6 +1151,15 @@ available, use last value carried forward from Day -1 or Day -2:
 **Summary:**
 
 ```{r}
+wrapper_calc_str_scap_leukopenia_0(data) |>
+  display_grand_total(str_scap_leukopenia_0)
+```
+
+### Unknown/Missing Values
+
+These records were missing (NA) because they are missing all `daily_wbc_nc_*`/`daily_wbc_8a_*` pairs. This is invalid branching logic, because each pair is supposed to be mutually exclusive.
+
+```{r}
 data_with_scap_leukopenia <- data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
   mutate(
@@ -1663,20 +1170,6 @@ data_with_scap_leukopenia <- data |>
     )
   )
 
-data_with_scap_leukopenia |>
-  count(str_scap_leukopenia_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were missing (NA) because they are missing all `daily_wbc_nc_*`/`daily_wbc_8a_*` pairs. This is invalid branching logic, because each pair is supposed to be mutually exclusive.
-
-```{r}
 data_with_scap_leukopenia |>
   filter(is.na(str_scap_leukopenia_0)) |>
   select(
@@ -1706,6 +1199,15 @@ available, use last value carried forward from Day -1 or Day -2:
 **Summary:**
 
 ```{r}
+wrapper_calc_str_scap_thrombocytopenia_0(data) |>
+  display_grand_total(str_scap_thrombocytopenia_0)
+```
+
+### Unknown/Missing Values
+
+These records were missing (NA) because they are missing all `daily_platelet_nc_*`/`daily_platelet_8a_*` pairs. This is invalid branching logic, because each pair is supposed to be mutually exclusive.
+
+```{r}
 data_with_scap_thrombocyt <- data |>
   filter(event_label == 'Daily In-Hospital Forms') |>
   mutate(
@@ -1716,20 +1218,6 @@ data_with_scap_thrombocyt <- data |>
     )
   )
 
-data_with_scap_thrombocyt |>
-  count(str_scap_thrombocytopenia_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were missing (NA) because they are missing all `daily_platelet_nc_*`/`daily_platelet_8a_*` pairs. This is invalid branching logic, because each pair is supposed to be mutually exclusive.
-
-```{r}
 data_with_scap_thrombocyt |>
   filter(is.na(str_scap_thrombocytopenia_0)) |>
   select(
@@ -1759,6 +1247,15 @@ use last value carried forward from Day -1 or Day -2:
 **Summary:**
 
 ```{r}
+wrapper_calc_str_scap_hypothermia_0(data) |>
+  display_grand_total(str_scap_hypothermia_0)
+```
+
+### Unknown/Missing Values
+
+This record was missing (NA) `lowtemp_vsorres`. It has `vs_perf == 'No'`, so the missing `lowtemp_vsorres` is valid branching logic, but since all patients should have their Day 0 vital signs, this should be queried.
+
+```{r}
 data_with_scap_hypothermia <- data |>
   filter(event_label == 'Day 0') |>
   mutate(
@@ -1767,20 +1264,6 @@ data_with_scap_hypothermia <- data |>
     )
   )
 
-data_with_scap_hypothermia |>
-  count(str_scap_hypothermia_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were missing (NA) `lowtemp_vsorres`. One record is the one missing from the N=500 dataset (`52-0023`) and doesn't need to be queried. The other has `vs_perf == 'No'` so the missing `lowtemp_vsorres` is valid branching logic, but since all patients should have their Day 0 vital signs, this should be queried.
-
-```{r}
 data_with_scap_hypothermia |>
   filter(is.na(str_scap_hypothermia_0)) |>
   select(
@@ -1804,6 +1287,15 @@ Binary variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_str_neuromuscular_disease_0(data) |>
+  display_grand_total(str_neuromuscular_disease_0)
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because `m_neurologic == 'Unknown'`:
+
+```{r}
 data_with_neuromuscular <- data |>
   filter(event_label == 'Day 0') |>
   mutate(
@@ -1814,20 +1306,6 @@ data_with_neuromuscular <- data |>
   )
 
 data_with_neuromuscular |>
-  count(str_neuromuscular_disease_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were classified as `99 (Unknown)` because `m_neurologic == 'Unknown'`:
-
-```{r}
-data_with_neuromuscular |>
   filter(str_neuromuscular_disease_0 == 99) |>
   select(
     record_id,
@@ -1836,8 +1314,6 @@ data_with_neuromuscular |>
   ) |>
   gt()
 ```
-
-The only missing (NA) record is the same one missing from the N=500 dataset and doesn't need to be queried further.
 
 ## (NEW) PSI Score -- Streamlined DAG
 
@@ -1879,90 +1355,12 @@ Inputs to PSI score:
 **Summary:**
 
 ```{r}
-data_with_psi <- data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  # Remove variables from other events and merge them back in
-  select(-c(age, sex, prssrc,
-            m_cv_conditions___2, m_neurologic_conditions___2, m_neurologic_conditions___3,
-            m_cancer, m_kid_liver_conditions___1, m_kid_liver_conditions___2,
-            highhr_vsorres, highrr_vsorres, lowsysbp_vsorres, lowtemp_vsorres, hightemp_vsorres,
-            pna_effusion)) |>
-  # Join Day 0 variables (demographics, coexisting illnesses, physical exam)
-  left_join(data |>
-    filter(event_label == 'Day 0') |>
-    select(record_id, age, sex, prssrc,
-           m_cv_conditions___2, m_neurologic_conditions___2, m_neurologic_conditions___3,
-           m_cancer, m_kid_liver_conditions___1, m_kid_liver_conditions___2,
-           highhr_vsorres, highrr_vsorres, lowsysbp_vsorres, lowtemp_vsorres, hightemp_vsorres),
-    by = 'record_id') |>
-  # Join Syndrome Adjudication variables (pleural effusion)
-  left_join(data |>
-    filter(event_label == 'Syndrome Adjudication') |>
-    select(record_id, pna_effusion),
-    by = 'record_id') |>
-  mutate(
-    str_psi_score_0 = calc_str_psi_score_0(
-      # Demographics (Day 0)
-      age,
-      sex,
-      prssrc,
-      # Coexisting Illnesses (Day 0)
-      m_cv_conditions___2,
-      m_neurologic_conditions___2,
-      m_neurologic_conditions___3,
-      m_cancer,
-      m_kid_liver_conditions___1,
-      m_kid_liver_conditions___2,
-      # Altered Mental Status (Daily In-Hospital Forms)
-      cam_0,
-      cam_m1,
-      cam_m2,
-      # Physical Examination Findings (Day 0)
-      highhr_vsorres,
-      highrr_vsorres,
-      lowsysbp_vsorres,
-      lowtemp_vsorres,
-      hightemp_vsorres,
-      # Laboratory Findings - BUN (Daily In-Hospital Forms)
-      daily_bun_8a_0,
-      daily_bun_8a_m1,
-      daily_bun_8a_m2,
-      # Laboratory Findings - Glucose (Daily In-Hospital Forms)
-      daily_gluc_8a_0,
-      daily_gluc_8a_m1,
-      daily_gluc_8a_m2,
-      # Laboratory Findings - Hematocrit (Daily In-Hospital Forms)
-      daily_hct_8a_0,
-      daily_hct_8a_m1,
-      daily_hct_8a_m2,
-      # Laboratory Findings - Sodium (Daily In-Hospital Forms)
-      daily_na_8a_0,
-      daily_na_8a_m1,
-      daily_na_8a_m2,
-      # Laboratory Findings - PaO2 (Daily In-Hospital Forms)
-      daily_pa02_lowest_0,
-      daily_pa02_lowest_m1,
-      daily_pa02_lowest_m2,
-      # Laboratory Findings - pH (Daily In-Hospital Forms)
-      daily_ph_lowest_0,
-      daily_ph_lowest_m1,
-      daily_ph_lowest_m2,
-      # Radiographic Findings - Pleural Effusion (Syndrome Adjudication)
-      pna_effusion
-    )
-  )
-
-data_with_psi |>
+wrapper_calc_str_psi_score_0(data) |>
   select(str_psi_score_0) |>
   filter(!is.na(str_psi_score_0) & str_psi_score_0 > -1) |>
   ggplot(aes(str_psi_score_0)) +
     geom_histogram(bins = 40)
 ```
-
-### Unknown/Missing Values
-
-No missing records for this variable.
-
 
 ## Active Vasculitis -- Streamlined DAG
 
@@ -1977,6 +1375,15 @@ Binary variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_str_vasculitis_0(data) |>
+  display_grand_total(str_vasculitis_0)
+```
+
+### Unknown/Missing Values
+
+These records were classified as `99 (Unknown)` because `mhrheumd`, `m_immunosuppression`, and/or `mhccster` are "Unknown".
+
+```{r}
 data_with_vasculitis <- data |>
   filter(event_label == 'Day 0') |>
   mutate(
@@ -1989,20 +1396,6 @@ data_with_vasculitis <- data |>
     )
   )
 
-data_with_vasculitis |>
-  count(str_vasculitis_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown/Missing Values
-
-These records were classified as `99 (Unknown)` because `mhrheumd`, `m_immunosuppression`, and/or `mhccster` are "Unknown".
-
-```{r}
 data_with_vasculitis |>
   filter(str_vasculitis_0 == 99) |>
   select(
@@ -2627,6 +2020,17 @@ No records missing GCS.
 ### Full Variable Summary
 
 ```{r}
+wrapper_calc_sys_global_phys_sev_0(data, dictionary) |>
+  display_grand_total(sys_global_phys_sev_0)
+```
+
+### Full Variable Unknown/Missing Values
+
+In the final calculation of the full variable, we impute normal (0 points) for any missing component score. This is consistent with how the APS score is calculated for APACHE II. However, since we still want the capability of flagging records that are missing a component score due to missing data that must be queried, we impute normal for all components during the final calculation step.
+
+Below, we highlight the records that were otherwise missing their component score. Three component scores have no associated missing records: Oxygenation, Arterial pH, and GCS. Only one record (`52-0023`, excluded from the dataset) is missing all other components of the APS score. (this is the one record that is set to value of `0` in the Global Physiology Severity DAG). The others are missing several components, often with a given record missing several related components. All of these records should be queried for the missing data (e.g., `vs_perf == 0`, `nc/8a` mutual exclusivity, key labs labeled as 'Not Collected', etc.).
+
+```{r}
 data_aps_var <- data_aps_component_vars |>
   mutate(
     aps_score = calc_aps_score(
@@ -2645,22 +2049,6 @@ data_aps_var <- data_aps_component_vars |>
     )
   )
 
-data_aps_var |>
-  count(aps_score) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Full Variable Unknown/Missing Values
-
-In the final calculation of the full variable, we impute normal (0 points) for any missing component score. This is consistent with how the APS score is calculated for APACHE II. However, since we still want the capability of flagging records that are missing a component score due to missing data that must be queried, we impute normal for all components during the final calculation step.
-
-Below, we highlight the records that were otherwise missing their component score. Three component scores have no associated missing records: Oxygenation, Arterial pH, and GCS. Only one record (`52-0023`, excluded from the dataset) is missing all other components of the APS score. (this is the one record that is set to value of `0` in the Global Physiology Severity DAG). The others are missing several components, often with a given record missing several related components. All of these records should be queried for the missing data (e.g., `vs_perf == 0`, `nc/8a` mutual exclusivity, key labs labeled as 'Not Collected', etc.).
-
-```{r}
 data_aps_var |>
   filter(
     is.na(aps_temp_score) |
@@ -2697,27 +2085,7 @@ data_aps_var |>
 
 ## QUERIED VARIABLES BELOW HERE
 
-## Missing Record Data
-
-There should be records for 500 patients in the dataset. However, for certain events appear to be missing data for one patient. When I filter the data for `event_label == "Daily In-Hospital Forms"`, which has values for the variables we are using, the result has 499 rows, not 500. Other events, such as `event_label == "Day 0"` have 500 rows, so the patient is included in some events but not this one. There may be other events that are missing as well that I didn't check.
-
-Here is the patient record missing the "Daily In-Hospital Forms" event:
-
-```{r}
-ihf_data <- filter(data, event_label == 'Daily In-Hospital Forms')
-d0_data <- filter(data, event_label == 'Day 0')
-anti_join(d0_data, ihf_data, by="record_id") |>
-  select(record_id) |>
-  gt()
-```
-
-Given that this patient is missing, the totals for the derived variables below come to 499 instead of 500.
-
-### Query Response
-> When there is no record for a record id-event pair, it means that no data had been entered for that pair (and no such record exists). However, all participants should have the "Daily In-Hospital Forms" event. I believe this participant was the one we identified as being erroneously included in the N=500 data set and will be omitted in the final N=500 data set. Of course, this participant will appear in subsequent data sets assuming they do not withdraw by the withdrawal cut-off.
-
-
-## Neuromuscular Blockade -- Systematic DAG
+## Neuromuscular Blockade -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -2727,18 +2095,8 @@ Given that this patient is missing, the totals for the derived variables below c
 **Summary:**
 
 ```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(sys_nmblockade_0 = calc_sys_nmblockade_0(
-    daily_paralysis_0 = daily_paralysis_0,
-    trx_0 = trx_0
-  )) |>
-  count(sys_nmblockade_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_nmblockade_0(data) |>
+  display_grand_total(sys_nmblockade_0)
 ```
 
 ### Missingness Report
@@ -2779,11 +2137,6 @@ data |>
 > Agree it seems suspicious that no in-hospital treatments would be available on day 0, even if the participant died shortly after enrollment.
 
 
-## Neuromuscular Blockade -- Streamlined DAG
-
-Currently calculated the same as the Systematic DAG Neuromuscular Blockade (see above).
-
-
 ## Inflammatory Profile -- Systematic DAG
 
 **Variable Definition:**
@@ -2810,6 +2163,35 @@ Four variables, one for each element:
 For each variable, if Day 0 lab results are missing, prior lab values (Day -1 or Day -2) are used.
 
 **Summary:**
+
+```{r}
+wrapper_calc_sys_inflamprofile_0(data) |>
+  pivot_longer(
+    cols = c(crp_0, ferritin_0, fibrinogen_0, ddimer_0),
+    names_to = "variable",
+    values_to = "level"
+  ) |>
+  count(variable, level) |>
+  pivot_wider(
+    names_from = level,
+    values_from = n
+  ) |>
+  mutate(Total = rowSums(across(where(is.numeric)))) |>
+  gt() |>
+  tab_style(
+    style = list(cell_text(weight = "bold")),
+    locations = list(
+      cells_body(columns = Total),
+      cells_column_labels(columns = Total)
+    )
+  )
+```
+
+### Missing Values
+
+Each variable is computed from thee pairs (Days 0, -1, -2) of variables `daily_<element_name>_8a_<day_num>` and `daily_<element_name>_nc_<day_num>` (e.g., `daily_crp_8a_0` and `daily_crp_nc_0` for Day 0). The `*_nc_*` suffix indicates "not collected", while the `*_8a_*` suffix contains the value of the measurement. The branching logic makes each pair mutually exclusive. Thus, if one variable in the pair is present, the other should be missing (NA).
+
+According to the branching logic, these records were missing all three pairs (all days) for all four variables:
 
 ```{r}
 data_with_sys_inflamprofile_0 <- data |>
@@ -2847,35 +2229,6 @@ data_with_sys_inflamprofile_0 <- data |>
     daily_ddimer_nc_m2
     ))
 
-data_with_sys_inflamprofile_0 |>
-  pivot_longer(
-    cols = c(crp_0, ferritin_0, fibrinogen_0, ddimer_0),
-    names_to = "variable",
-    values_to = "level"
-  ) |>
-  count(variable, level) |>
-  pivot_wider(
-    names_from = level,
-    values_from = n
-  ) |>
-  mutate(Total = rowSums(across(where(is.numeric)))) |>
-  gt() |>
-  tab_style(
-    style = list(cell_text(weight = "bold")),
-    locations = list(
-      cells_body(columns = Total),
-      cells_column_labels(columns = Total)
-    )
-  )
-```
-
-### Missing Values
-
-Each variable is computed from thee pairs (Days 0, -1, -2) of variables `daily_<element_name>_8a_<day_num>` and `daily_<element_name>_nc_<day_num>` (e.g., `daily_crp_8a_0` and `daily_crp_nc_0` for Day 0). The `*_nc_*` suffix indicates "not collected", while the `*_8a_*` suffix contains the value of the measurement. The branching logic makes each pair mutually exclusive. Thus, if one variable in the pair is present, the other should be missing (NA).
-
-According to the branching logic, these records were missing all three pairs (all days) for all four variables:
-
-```{r}
 data_with_sys_inflamprofile_0 |>
   filter(is.na(crp_0) | is.na(ferritin_0) | is.na(fibrinogen_0) | is.na(ddimer_0)) |>
   select(
@@ -2929,29 +2282,15 @@ If Day 0 lab results are missing, prior lab values (Day -1 or Day -2) are used.
 **Summary:**
 
 ```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(str_inflamprofile_0 = calc_str_inflamprofile_0(
-    daily_crp_8a_0,
-    daily_crp_nc_0,
-    daily_crp_8a_m1,
-    daily_crp_nc_m1,
-    daily_crp_8a_m2,
-    daily_crp_nc_m2
-  )) |>
-  count(str_inflamprofile_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_str_inflamprofile_0(data) |>
+  display_grand_total(str_inflamprofile_0)
 ```
 
 ### Missing Values
 
-The records missing (NA) for the `crp` component variable of "Inflammatory Profile" (Systematic DAG) above is also missing for this variable.
+The records missing (NA) for the `crp` component variable of "Inflammatory Profile" (Systematic DAG) above are also missing for this variable.
 
-## Respiratory Failure Severity -- Systematic DAG
+## Respiratory Failure Severity -- Systematic & Streamlined DAG
 
 ### Variable 1: Type of support
 
@@ -2966,6 +2305,15 @@ The records missing (NA) for the `crp` component variable of "Inflammatory Profi
 - 99 = Unknown
 
 **Summary:**
+
+```{r}
+wrapper_calc_sys_resp_failure_sev_0(data, dictionary) |>
+  display_grand_total(resp_support_type_0)
+```
+
+#### Unknown Values
+
+These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" - "6" and having "Unknown" for either `daily_resp_8a_0`:
 
 ```{r}
 data_with_sysrespfail_var1 <- data |>
@@ -2984,20 +2332,6 @@ data_with_sysrespfail_var1 <- data |>
     daily_epap_8a = daily_epap_8a_0
   ))
 
-data_with_sysrespfail_var1 |>
-  count(resp_support_type_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-#### Unknown Values
-
-These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" - "6" and having "Unknown" for either `daily_resp_8a_0`:
-
-```{r}
 data_with_sysrespfail_var1 |>
   filter(resp_support_type_0 == 99) |>
   select(
@@ -3083,17 +2417,7 @@ Note, if the patient is on ECMO but NOT on IMV, the S/F ratio cannot be calculat
 **Summary:**
 
 ```{r}
-data_with_sysrespfail_var2 <- data_with_sysrespfail_var1 |>
-  mutate(sfratio_8a_0 = calc_sfratio_8a_0(
-    resp_support_type_0 = resp_support_type_0,
-    daily_spo2_8a_0 = daily_spo2_8a_0,
-    daily_standard_flow_8a_0 = daily_standard_flow_8a_0,
-    daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_0,
-    daily_niv_fi02_8a_0 = daily_niv_fi02_8a_0,
-    daily_imv_fio2_8a_0 = daily_imv_fio2_8a_0
-  ))
-
-data_with_sysrespfail_var2 |>
+wrapper_calc_sys_resp_failure_sev_0(data, dictionary) |>
   filter(!is.na(sfratio_8a_0)) |>
   select(resp_support_type_0, sfratio_8a_0) |>
   ggplot(aes(sfratio_8a_0)) +
@@ -3117,6 +2441,16 @@ The histograms above show the distribution of S/F ratios for each support type.
 The records missing under Variable 1 (`resp_support_type_0`) are also missing for Variable 2 (`sfratio_8a_0`):
 
 ```{r}
+data_with_sysrespfail_var2 <- data_with_sysrespfail_var1 |>
+  mutate(sfratio_8a_0 = calc_sfratio_8a_0(
+    resp_support_type_0 = resp_support_type_0,
+    daily_spo2_8a_0 = daily_spo2_8a_0,
+    daily_standard_flow_8a_0 = daily_standard_flow_8a_0,
+    daily_hfnc_fi02_8a_0 = daily_hfnc_fi02_8a_0,
+    daily_niv_fi02_8a_0 = daily_niv_fi02_8a_0,
+    daily_imv_fio2_8a_0 = daily_imv_fio2_8a_0
+  ))
+
 data_with_sysrespfail_var2 |>
   filter(is.na(sfratio_8a_0) & is.na(resp_support_type_0)) |>
   select(record_id, sfratio_8a_0, resp_support_type_0) |>
@@ -3136,9 +2470,7 @@ data_with_sysrespfail_var2 |>
   gt()
 ```
 
-## Respiratory Failure Severity -- Streamlined DAG
 
-Currently calculated the same as Variable 2 from the Systematic DAG Respiratory Failure Severity (see above).
 
 
 
@@ -3155,6 +2487,15 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_sys_chron_steroid_moddose_0(data) |>
+  display_grand_total(sys_chron_steroid_moddose_0)
+```
+
+### Unknown Values
+
+These records were marked "Unknown" for one of the fields required to assess this variable:
+
+```{r}
 data_with_sys_chron_steroid_moddose_0 <- data|>
   filter(event_label == 'Day 0') |>
   mutate(sys_chron_steroid_moddose_0 = calc_sys_chron_steroid_moddose_0(
@@ -3165,20 +2506,6 @@ data_with_sys_chron_steroid_moddose_0 <- data|>
     m_immunosuppression = m_immunosuppression
   ))
 
-data_with_sys_chron_steroid_moddose_0 |>
-  count(sys_chron_steroid_moddose_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown Values
-
-These records were marked "Unknown" for one of the fields required to assess this variable:
-
-```{r}
 data_with_sys_chron_steroid_moddose_0 |>
   filter(sys_chron_steroid_moddose_0 == 99) |>
   select(record_id, mhccster, m_endocrine, m_endo_conditions___2, m_immunosuppression, m_immunosup_conditions___1) |>
@@ -3221,6 +2548,15 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_str_chron_steroid_moddose_0(data) |>
+  display_grand_total(str_chron_steroid_moddose_0)
+```
+
+### Unknown Values
+
+These records were marked "Unknown" for one of the fields required to assess this variable:
+
+```{r}
 data_with_str_chron_steroid_moddose_0 <- data |>
   filter(event_label == 'Day 0') |>
   mutate(str_chron_steroid_moddose_0 = calc_str_chron_steroid_moddose_0(
@@ -3229,20 +2565,6 @@ data_with_str_chron_steroid_moddose_0 <- data |>
     m_endocrine = m_endocrine
   ))
 
-data_with_str_chron_steroid_moddose_0 |>
-  count(str_chron_steroid_moddose_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown Values
-
-These records were marked "Unknown" for one of the fields required to assess this variable:
-
-```{r}
 data_with_str_chron_steroid_moddose_0 |>
   filter(str_chron_steroid_moddose_0 == 99) |>
   select(record_id, mhccster, m_endocrine, m_endo_conditions___2) |>
@@ -3286,20 +2608,8 @@ Binary indicator variable (used to exclude patients if yes)
 **Summary:**
 
 ```{r}
-data |>
-  filter(event_label == 'Day 0') |>
-  mutate(sys_def_adrenal_insufficiency_0 = calc_sys_def_adrenal_insufficiency_0(
-    m_endocrine = m_endocrine,
-    m_endo_conditions___2 = m_endo_conditions___2,
-    m_immunosuppression = m_immunosuppression,
-    m_immunosup_conditions___1 = m_immunosup_conditions___1
-  )) |>
-  count(sys_def_adrenal_insufficiency_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_def_adrenal_insufficiency_0(data) |>
+  display_grand_total(sys_def_adrenal_insufficiency_0)
 ```
 
 ### Unknown Values
@@ -3335,18 +2645,8 @@ Binary indicator variable (used to exclude patients if yes)
 **Summary:**
 
 ```{r}
-data |>
-  filter(event_label == 'Day 0') |>
-  mutate(str_def_adrenal_insufficiency_0 = calc_str_adrenal_insufficiency_0(
-    m_endocrine,
-    m_endo_conditions___2 = m_endo_conditions___2
-  )) |>
-  count(str_def_adrenal_insufficiency_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_str_adrenal_insufficiency_0(data) |>
+  display_grand_total(str_adrenal_insufficiency_0)
 ```
 
 ### Unknown and Missing Values
@@ -3368,18 +2668,8 @@ Binary indicator variable (used to exclude patients if yes):
 **Summary:**
 
 ```{r}
-data |>
-  filter(event_label == 'Day 0') |>
-  mutate(str_chron_steroid_highdose_0 = calc_str_chron_steroid_highdose_0(
-    m_immunosuppression = m_immunosuppression,
-    m_immunosup_conditions___1 = m_immunosup_conditions___1
-  )) |>
-  count(str_chron_steroid_highdose_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_str_chron_steroid_highdose_0(data) |>
+  display_grand_total(str_chron_steroid_highdose_0)
 ```
 
 ### Unknown and Missing Values
@@ -3402,6 +2692,15 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_sys_steroid_comorb_0(data) |>
+  display_grand_total(sys_steroid_comorb_0)
+```
+
+### Unknown Values
+
+These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" or "0" and having "Unknown" for `mhrheumd` or `m_pulmonary`:
+
+```{r}
 data_with_sys_steroid_comorb_0 <- data |>
   filter(event_label == 'Day 0') |>
   mutate(sys_steroid_comorb_0 = calc_sys_steroid_comorb_0(
@@ -3419,20 +2718,6 @@ data_with_sys_steroid_comorb_0 <- data |>
     m_pulm_conditions___6 = m_pulm_conditions___6
   ))
 
-data_with_sys_steroid_comorb_0 |>
-  count(sys_steroid_comorb_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown Values
-
-These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" or "0" and having "Unknown" for `mhrheumd` or `m_pulmonary`:
-
-```{r}
 data_with_sys_steroid_comorb_0 |>
   filter(sys_steroid_comorb_0 == 99) |>
   select(
@@ -3460,6 +2745,15 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
+wrapper_calc_str_steroid_comorb_0(data) |>
+  display_grand_total(str_steroid_comorb_0)
+```
+
+### Unknown
+
+These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" or "0" and having "Unknown" for `mhrheumd` or `m_immunosuppression` or `mhccster`:
+
+```{r}
 data_with_str_steroid_comorb_0 <- data |>
   filter(event_label == 'Day 0') |>
   mutate(str_steroid_comorb_0 = calc_str_steroid_comorb_0(
@@ -3478,20 +2772,6 @@ data_with_str_steroid_comorb_0 <- data |>
   ))
 
 data_with_str_steroid_comorb_0 |>
-  count(str_steroid_comorb_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown
-
-These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" or "0" and having "Unknown" for `mhrheumd` or `m_immunosuppression` or `mhccster`:
-
-```{r}
-data_with_str_steroid_comorb_0 |>
   filter(str_steroid_comorb_0 == 99) |>
   select(
     record_id,
@@ -3507,7 +2787,7 @@ data_with_str_steroid_comorb_0 |>
 The record missing (NA) for the variable "Steroid Responsive Comorbidity" (Systematic DAG) above is also missing for this variable.
 
 
-## Obstructive Lung Disease -- Systematic DAG
+## Obstructive Lung Disease -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -3520,19 +2800,8 @@ Binary indicator variable
 **Summary:**
 
 ```{r}
-data |>
-  filter(event_label == 'Day 0') |>
-  mutate(sys_obstruct_lung_0 = calc_sys_obstruct_lung_0(
-    m_pulmonary = m_pulmonary,
-    m_pulm_conditions___1 = m_pulm_conditions___1,
-    m_pulm_conditions___3 = m_pulm_conditions___3
-  )) |>
-  count(sys_obstruct_lung_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_obstruct_lung_0(data) |>
+  display_grand_total(sys_obstruct_lung_0)
 ```
 
 ### Unknown and Missing Values
@@ -3542,9 +2811,7 @@ Those with "Unknown" for `m_pulmonary` listed under the variable "Steroid Respon
 The record missing (NA) for the variable "Steroid Responsive Comorbidity" (Systematic DAG) above is also missing for this variable.
 
 
-## Obstructive Lung Disease -- Streamlined DAG
 
-Currently calculated the same as Systematic DAG: Obstructive Lung Disease (see above).
 
 
 ## Chronic Immunocompromise -- Systematic DAG
@@ -3560,24 +2827,8 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
-data |>
-  filter(event_label == 'Day 0') |>
-  mutate(sys_chron_immunocomp_0 = calc_sys_chron_immunocomp_0(
-    m_immunosuppression = m_immunosuppression,
-    m_immunosup_conditions___2 = m_immunosup_conditions___2,
-    m_immunosup_conditions___3 = m_immunosup_conditions___3,
-    m_immunosup_conditions___4 = m_immunosup_conditions___4,
-    m_immunosup_conditions___5 = m_immunosup_conditions___5,
-    m_immunosup_conditions___6 = m_immunosup_conditions___6,
-    m_immunosup_conditions___7 = m_immunosup_conditions___7,
-    m_immunosup_conditions___88 = m_immunosup_conditions___88
-  )) |>
-  count(sys_chron_immunocomp_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_chron_immunocomp_0(data) |>
+  display_grand_total(sys_chron_immunocomp_0)
 ```
 
 ### Unknown and Missing Values
@@ -3601,18 +2852,8 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
-data |>
-  filter(event_label == 'Day 0') |>
-  mutate(sys_hyperglyc_hist_0 = calc_sys_hyperglyc_hist_0(
-    m_endocrine = m_endocrine,
-    m_endo_conditions___1 = m_endo_conditions___1
-  )) |>
-  count(sys_hyperglyc_hist_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_hyperglycemia_0(data) |>
+  display_grand_total(sys_hyperglyc_hist_0)
 ```
 
 #### Unknown and Missing Values
@@ -3630,14 +2871,7 @@ Continuous variable: Day 0 glucose measurement (`daily_gluc_8a_0`)
 **Summary:**
 
 ```{r}
-data_with_sys_hyperglyc_gluc_0 <- data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(sys_hyperglyc_gluc_0 = calc_sys_hyperglyc_gluc_0(
-    daily_gluc_8a_0 = daily_gluc_8a_0,
-    daily_gluc_nc_0 = daily_gluc_nc_0
-  ))
-
-data_with_sys_hyperglyc_gluc_0 |>
+wrapper_calc_sys_hyperglycemia_0(data) |>
   select(sys_hyperglyc_gluc_0) |>
   filter(!is.na(sys_hyperglyc_gluc_0) & sys_hyperglyc_gluc_0 > -1) |>
   ggplot(aes(sys_hyperglyc_gluc_0)) +
@@ -3651,6 +2885,13 @@ The branching logic for `daily_gluc_nc_0` and `daily_gluc_8a_0` states that if `
 Thus, according to the branching logic, these records were incorrectly missing `daily_gluc_8a_0` or `daily_gluc_nc_0`:
 
 ```{r}
+data_with_sys_hyperglyc_gluc_0 <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  mutate(sys_hyperglyc_gluc_0 = calc_sys_hyperglyc_gluc_0(
+    daily_gluc_8a_0 = daily_gluc_8a_0,
+    daily_gluc_nc_0 = daily_gluc_nc_0
+  ))
+
 data_with_sys_hyperglyc_gluc_0 |>
   filter(is.na(sys_hyperglyc_gluc_0)) |>
   select(
@@ -3690,18 +2931,8 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
-data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  mutate(str_hyperglyc_hist_0 = calc_str_hyperglyc_hist_0(
-    daily_gluc_8a_0 = daily_gluc_8a_0,
-    daily_gluc_nc_0 = daily_gluc_nc_0
-  )) |>
-  count(str_hyperglyc_hist_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_str_hyperglyc_hist_0(data) |>
+  display_grand_total(str_hyperglyc_hist_0)
 ```
 
 ### Missingness Report
@@ -3723,7 +2954,7 @@ data |>
 According to the variable definition, they were assigned `0` for `str_hyperglyc_hist_0`, but they should be looked at more closely.
 
 
-## Active Fungal Infection -- Systematic DAG
+## Active Fungal Infection -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -3734,6 +2965,15 @@ Binary indicator variable:
 - 99 (Unknown) = `(mhantifungals == "Unknown")` OR `(daily_antifungal_0 == "UNK")` (and first two conditions not met)
 
 **Summary:**
+
+```{r}
+wrapper_calc_sys_active_fungal_0(data) |>
+  display_grand_total(sys_active_fungal_0)
+```
+
+### Unknown Values
+
+These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" or "0" and having "Unknown" for `mhantifungals` or `daily_antifungal_0`:
 
 ```{r}
 data_with_daily_fungal_0 <- data |>
@@ -3757,20 +2997,6 @@ data_with_active_fungal_0 <- data_fungal_joined |>
     trx_0 = trx_0
   ))
 
-data_with_active_fungal_0 |>
-  count(sys_active_fungal_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
-```
-
-### Unknown Values
-
-These records were assigned "99 (Unknown)" due to not fitting the variable definition for "1" or "0" and having "Unknown" for `mhantifungals` or `daily_antifungal_0`:
-
-```{r}
 data_with_active_fungal_0 |>
   filter(sys_active_fungal_0 == 99) |>
   select(
@@ -3797,9 +3023,6 @@ data_with_active_fungal_0 |>
   gt()
 ```
 
-## Active Fungal Infection -- Streamlined DAG
-
-Currently calculated the same as Systematic DAG: Active Fungal Infection (see above).
 
 ## Age -- Streamlined DAG
 
@@ -3810,19 +3033,13 @@ Age at enrollment (continuous variable)
 **Summary:**
 
 ```{r}
-data |>
-  filter(event_label == 'Day 0') |>
-  mutate(str_age_0 = calc_str_age_0(
-    age = age
-  )) |>
+wrapper_calc_str_age_0(data)  |>
   ggplot(aes(str_age_0)) +
     geom_histogram(bins = 10) +
     ggtitle("Age at Enrollment")
 ```
 
-There are no records missing `age_0`.
-
-## Active SARS-CoV-2 Infection -- Systematic DAG
+## Active SARS-CoV-2 Infection -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -3834,60 +3051,11 @@ Binary indicator variable
 **Summary:**
 
 ```{r}
-# Get enrollment times
-data_enrollment <- data |>
-  filter(event_label == 'Day 0') |>
-  select(record_id, enrollment_time)
-
-# Get all positive COVID-19 tests on or before enrollment
-data_positive_covid <- data |>
-  filter(event_label == 'Hospital Discharge and Summary') |>
-  left_join(
-    get_code_label_map('cxpos', dictionary),
-    by = 'cxpos'
-  ) |>
-  left_join(
-    get_code_label_map('resp_pathogen', dictionary),
-    by = 'resp_pathogen'
-  ) |>
-  filter(cxpos_code == 3 & resp_pathogen_code == 6) |>
-  select(record_id, pathogen_date) |>
-  left_join(data_enrollment, by = 'record_id') |>
-  # Calculate if positive test was on or before enrollment
-  mutate(positive_before_enrollment = pathogen_date <= enrollment_time) |>
-  # Keep only tests on or before enrollment
-  filter(positive_before_enrollment) |>
-  # Group by patient and check if ANY test was positive before enrollment
-  group_by(record_id) |>
-  summarise(has_pos_covid_0 = 1, .groups = 'drop')
-
-# Create final classification for variable
-data_active_covid19 <- data_enrollment |>
-  left_join(data_positive_covid, by = 'record_id') |>
-  mutate(sys_active_covid19_0 = calc_sys_active_covid19_0(
-    has_pos_covid_0 = has_pos_covid_0
-  )) |>
-  select(record_id, sys_active_covid19_0)
-
-data_active_covid19 |>
-  count(sys_active_covid19_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_active_covid19_0(data, dictionary) |>
+  display_grand_total(sys_active_covid19_0)
 ```
 
-
-### Unknown/Missing Values
-
-After checking the branching logic, it appears there are no unknown or missing values for this variable.
-
-## Active SARS-CoV-2 Infection -- Streamlined DAG
-
-Currently calculated the same as Systematic DAG: Active SARS-CoV-2 Infection (see above).
-
-## Active Influenza Infection -- Systematic DAG
+## Active Influenza Infection -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -3899,59 +3067,8 @@ Binary indicator variable
 **Summary:**
 
 ```{r}
-# Get enrollment times
-data_enrollment <- data |>
-  filter(event_label == 'Day 0') |>
-  select(record_id, enrollment_time)
-
-# Get all positive influenza tests on or before enrollment
-data_positive_influenza <- data |>
-  filter(event_label == 'Hospital Discharge and Summary') |>
-  left_join(
-    get_code_label_map('cxpos', dictionary),
-    by = 'cxpos'
-  ) |>
-  left_join(
-    get_code_label_map('resp_pathogen', dictionary),
-    by = 'resp_pathogen'
-  ) |>
-  filter(cxpos_code == 3 & resp_pathogen_code %in% c(15, 16)) |>
-  select(record_id, pathogen_date) |>
-  left_join(data_enrollment, by = 'record_id') |>
-  # Calculate if positive test was on or before enrollment
-  mutate(positive_before_enrollment = pathogen_date <= enrollment_time) |>
-  # Keep only tests on or before enrollment
-  filter(positive_before_enrollment) |>
-  # Group by patient and check if ANY test was positive before enrollment
-  group_by(record_id) |>
-  summarise(has_pos_influenza_0 = 1, .groups = 'drop')
-
-# Create final classification for variable
-data_active_influenza <- data_enrollment |>
-  left_join(data_positive_influenza, by = 'record_id') |>
-  mutate(sys_active_influenza_0 = calc_sys_active_influenza_0(
-    has_pos_influenza_0 = has_pos_influenza_0
-  )) |>
-  select(record_id, sys_active_influenza_0)
-
-data_active_influenza |>
-  count(sys_active_influenza_0) |>
-  gt() |>
-  grand_summary_rows(
-    columns = n,
-    fns = list(label = md("**TOTAL**"), id = "totals") ~ sum(.)
-  )
+wrapper_calc_sys_active_influenza_0(data, dictionary) |>
+  display_grand_total(sys_active_influenza_0)
 ```
-
-### Unknown/Missing Values
-
-After checking the branching logic, it appears there are no unknown or missing values for this variable.
-
-## Active Influenza Infection -- Streamlined DAG
-
-Currently calculated the same as Systematic DAG: Active Influenza Infection (see above).
-
-
-
 
 ## END

@@ -160,3 +160,44 @@ wrapper_calc_sys_hypotension_sev_0 <- function(data) {
     distinct(record_id) |>
     left_join(data_with_hypotension_sev, by = 'record_id')
 }
+
+
+# Missing values function
+# Returns a data frame showing records with missing sys_hypotension_sev_0 and their input values
+missing_sys_hypotension_sev_0 <- function(data) {
+  # Get record_ids with missing values
+  missing_records <- wrapper_calc_sys_hypotension_sev_0(data) |>
+    filter(is.na(sys_hypotension_sev_0)) |>
+    select(record_id)
+
+  # If no missing records, return dataframe indicating no missing values
+  if (nrow(missing_records) == 0) {
+    return(data.frame(none_missing = TRUE))
+  }
+
+  # Get the input values for those records from Daily In-Hospital Forms
+  data_daily_hospital <- data |>
+    filter(event_label == 'Daily In-Hospital Forms') |>
+    select(
+      record_id,
+      dailysofa_perf_0,
+      matches("^daily_vasopressors_0___"),
+
+      daily_sbp_8a_0,
+      daily_dbp_8a_0,
+
+      matches("_units_8a_0$"),
+      daily_vaso_dose_8a_0
+    )
+
+  # Get weight from Day 0
+  data_day0 <- data |>
+    filter(event_label == 'Day 0') |>
+    select(record_id, m_weight_kg)
+
+  # Start with missing_records and left join data from both events
+  # This ensures all missing records appear in the result, even if they're missing from Daily In-Hospital Forms
+  missing_records |>
+    left_join(data_daily_hospital, by = 'record_id') |>
+    left_join(data_day0, by = 'record_id')
+}

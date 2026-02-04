@@ -177,6 +177,7 @@ wrapper_calc_str_psi_score_0 <- function(data) {
                daily_na_8a_0, daily_na_8a_m1, daily_na_8a_m2,
                daily_pa02_lowest_0, daily_pa02_lowest_m1, daily_pa02_lowest_m2,
                daily_ph_lowest_0, daily_ph_lowest_m1, daily_ph_lowest_m2) |>
+        # Join Day 0 variables (demographics, coexisting illnesses, physical exam)
         left_join(
           data |>
             filter(event_label == 'Day 0') |>
@@ -186,6 +187,7 @@ wrapper_calc_str_psi_score_0 <- function(data) {
                    highhr_vsorres, highrr_vsorres, lowsysbp_vsorres, lowtemp_vsorres, hightemp_vsorres),
           by = 'record_id'
         ) |>
+        # Join Syndrome Adjudication variables (pleural effusion)
         left_join(
           data |>
             filter(event_label == 'Syndrome Adjudication') |>
@@ -193,41 +195,52 @@ wrapper_calc_str_psi_score_0 <- function(data) {
           by = 'record_id'
         ) |>
         mutate(str_psi_score_0 = calc_str_psi_score_0(
+          # Demographics (Day 0)
           age = age,
           sex = sex,
           prssrc = prssrc,
+          # Coexisting Illnesses (Day 0)
           m_cv_conditions___2 = m_cv_conditions___2,
           m_neurologic_conditions___2 = m_neurologic_conditions___2,
           m_neurologic_conditions___3 = m_neurologic_conditions___3,
           m_cancer = m_cancer,
           m_kid_liver_conditions___1 = m_kid_liver_conditions___1,
           m_kid_liver_conditions___2 = m_kid_liver_conditions___2,
+          # Altered Mental Status (Daily In-Hospital Forms)
           cam_0 = cam_0,
           cam_m1 = cam_m1,
           cam_m2 = cam_m2,
+          # Physical Examination Findings (Day 0)
           highhr_vsorres = highhr_vsorres,
           highrr_vsorres = highrr_vsorres,
           lowsysbp_vsorres = lowsysbp_vsorres,
           lowtemp_vsorres = lowtemp_vsorres,
           hightemp_vsorres = hightemp_vsorres,
+          # Laboratory Findings - BUN (Daily In-Hospital Forms)
           daily_bun_8a_0 = daily_bun_8a_0,
           daily_bun_8a_m1 = daily_bun_8a_m1,
           daily_bun_8a_m2 = daily_bun_8a_m2,
+          # Laboratory Findings - Glucose (Daily In-Hospital Forms)
           daily_gluc_8a_0 = daily_gluc_8a_0,
           daily_gluc_8a_m1 = daily_gluc_8a_m1,
           daily_gluc_8a_m2 = daily_gluc_8a_m2,
+          # Laboratory Findings - Hematocrit (Daily In-Hospital Forms)
           daily_hct_8a_0 = daily_hct_8a_0,
           daily_hct_8a_m1 = daily_hct_8a_m1,
           daily_hct_8a_m2 = daily_hct_8a_m2,
+          # Laboratory Findings - Sodium (Daily In-Hospital Forms)
           daily_na_8a_0 = daily_na_8a_0,
           daily_na_8a_m1 = daily_na_8a_m1,
           daily_na_8a_m2 = daily_na_8a_m2,
+          # Laboratory Findings - PaO2 (Daily In-Hospital Forms)
           daily_pa02_lowest_0 = daily_pa02_lowest_0,
           daily_pa02_lowest_m1 = daily_pa02_lowest_m1,
           daily_pa02_lowest_m2 = daily_pa02_lowest_m2,
+          # Laboratory Findings - pH (Daily In-Hospital Forms)
           daily_ph_lowest_0 = daily_ph_lowest_0,
           daily_ph_lowest_m1 = daily_ph_lowest_m1,
           daily_ph_lowest_m2 = daily_ph_lowest_m2,
+          # Radiographic Findings - Pleural Effusion (Syndrome Adjudication)
           pna_effusion = pna_effusion
         )) |>
         select(record_id, str_psi_score_0),
