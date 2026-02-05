@@ -40,6 +40,18 @@ view_dict <- function(field, dictionary) {
     unclass()
 }
 
+# Helper function to determine the event lable associated with a given data field
+view_label <- function(data, field) {
+  # Handle both quoted strings and unquoted names
+  field_name <- rlang::as_name(rlang::enquo(field))
+
+  data |>
+    filter(!is.na(.data[[field_name]])) |>
+    count(event_label) |>
+    pull(event_label) |>
+    as.character()
+}
+
 
 #' Helper function to identify "Checked" values
 is_checked <- function(x) {
