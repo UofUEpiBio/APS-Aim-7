@@ -33,6 +33,11 @@
 #' @param mhccster Taking systemic corticosteroids prior to arrival: "Yes"/"No"/"Unknown".
 #' @param mhantifungals Taking systemic anti-fungals prior to hospital arrival: "Yes"/"No"/"Unknown".
 #'
+#' Enrollment and Data Availability Indicators
+#' @param enrollment_time Date/time of patient enrollment.
+#' @param vs_perf Vital signs performed: "Yes"/"No".
+#' @param sofa_unk SOFA baseline information unknown: indicator value.
+#'
 #'
 #' Baseline Chronic Conditions ------------------------------------------------
 #'
@@ -119,6 +124,27 @@
 #' @param m_kid_liver_conditions___1 Chronic kidney disease.
 #' @param m_kid_liver_conditions___2 Cirrhosis.
 #' @param m_kid_liver_conditions___88 Other.
+#' - Severity parameters:
+#' @param mhckdsev Chronic kidney disease severity. Examples: "Baseline (before acute illness) creatinine  ≤3.0 mg/dl"/"Unknown severity"
+#' @param mhhepsev Liver disease severity. Examples: "Mild (chronic hepatitis w/o portal HTN)"/"Unknown cirrhosis severity"
+#' @param mhhepfail Hepatic failure present: "Yes"/"No"/"Unknown".
+#'
+#' Esophageal, Stomach, and Intestinal Conditions
+#' - Specific condition checkboxes (values: 'Checked'/'Unchecked'):
+#' @param m_eso_stom_int_conditions___1 Peptic ulcer disease.
+#' @param m_eso_stom_int_conditions___2 Inflammatory bowel disease (including Crohn's Disease and Ulcerative Colitis).
+#' @param m_eso_stom_int_conditions___3 Chronic enteral tube for feeding.
+#' @param m_eso_stom_int_conditions___88 Other.
+#'
+#' Diabetes Severity
+#' @param mhdmsev Diabetes severity. Examples: "Diet controlled"/"Unknown severity"
+#'
+#' Cancer Metastasis
+#' @param mhsolidmeta Solid tumor metastasis: "Yes"/"No"/"Unknown".
+#'
+#' SOFA Baseline Renal Parameters
+#' @param sofa_base_renal_dysnfx Baseline renal dysfunction present: "Yes"/"No".
+#' @param sofa_base_renal_chronic Chronic renal severity. Examples: "Creatinine 1.2 - 1.9 mg/dL"/"Creatinine 2.0 - 3.4 mg/dL"
 #'
 #' Psychiatric Conditions
 #' @param m_psych Has chronic psychiatric condition: 'Yes'/'No'/'Unknown'.
@@ -187,6 +213,7 @@ NULL
 #'
 #' Respiratory Support and Oxygenation
 #' @param daily_resp_8a_0,daily_resp_8a_m1,daily_resp_8a_m2 Respiratory support at time of SpO2 measurement closest to 8am. Examples: "ECMO and invasive mechanical ventilation"/"Standard flow supplemental oxygen"
+#' @param daily_imv_mode_8a_0,daily_imv_mode_8a_m1,daily_imv_mode_8a_m2 Invasive mechanical ventilation mode at time closest to 8am.
 #' @param daily_spo2_8a_0,daily_spo2_8a_m1,daily_spo2_8a_m2 Numeric. SpO2 measurement (%) closest to 8am, representing stable SpO2 value.
 #' @param daily_imv_fio2_8a_0,daily_imv_fio2_8a_m1,daily_imv_fio2_8a_m2 Numeric. FiO2 during invasive mechanical ventilation at time closest to 8am.
 #' @param daily_epap_8a_0,daily_epap_8a_m1,daily_epap_8a_m2 Numeric. PEEP (positive end-expiratory pressure, also known as EPAP) during invasive mechanical ventilation at time closest to 8am (cm H2O).
@@ -201,6 +228,7 @@ NULL
 #' @param daily_resp_lowest_0,daily_resp_lowest_m1,daily_resp_lowest_m2 Respiratory support type at time of lowest SpO2.
 #' @param daily_fio2_lowest_0,daily_fio2_lowest_m1,daily_fio2_lowest_m2 Numeric. FiO2 at time of lowest SpO2.
 #' @param daily_o2_lowest_0,daily_o2_lowest_m1,daily_o2_lowest_m2 Numeric. Oxygen flow rate (L/min) at time of lowest SpO2.
+#' @param daily_pao2_occur_0,daily_pao2_occur_m1,daily_pao2_occur_m2 PaO2 measurement occurred: indicator for whether arterial blood gas was obtained.
 #' @param daily_pa02_lowest_0,daily_pa02_lowest_m1,daily_pa02_lowest_m2 Numeric. Lowest arterial PaO2 (mmHg).
 #' @param daily_resp_lowest_pao2_0,daily_resp_lowest_pao2_m1,daily_resp_lowest_pao2_m2 Respiratory support type at time of lowest PaO2.
 #' @param daily_fio2_lowest_pao2_0,daily_fio2_lowest_pao2_m1,daily_fio2_lowest_pao2_m2 Numeric. FiO2 at time of lowest PaO2.
@@ -221,6 +249,15 @@ NULL
 #' - Laboratory Measurements for Vasopressor Dosing
 #' @param daily_sbp_8a_0,daily_sbp_8a_m1,daily_sbp_8a_m2 Numeric. Systolic blood pressure (mmHg) closest to 8am.
 #' @param daily_dbp_8a_0,daily_dbp_8a_m1,daily_dbp_8a_m2 Numeric. Diastolic blood pressure (mmHg) closest to 8am.
+#' - Vasopressor dose units (units of measurement for dosing):
+#' @param daily_ne_units_8a_0,daily_ne_units_8a_m1,daily_ne_units_8a_m2 Norepinephrine dose units: "mcg/min"/"mcg/kg/min".
+#' @param daily_epi_units_8a_0,daily_epi_units_8a_m1,daily_epi_units_8a_m2 Epinephrine dose units: "mcg/min"/"mcg/kg/min".
+#' @param daily_phen_units_8a_0,daily_phen_units_8a_m1,daily_phen_units_8a_m2 Phenylephrine dose units: "mcg/min"/"mcg/kg/min".
+#' @param daily_dopa_units_8a_0,daily_dopa_units_8a_m1,daily_dopa_units_8a_m2 Dopamine dose units: "mcg/min"/"mcg/kg/min".
+#' @param daily_dobuta_units_8a_0,daily_dobuta_units_8a_m1,daily_dobuta_units_8a_m2 Dobutamine dose units: "mcg/min"/"mcg/kg/min".
+#' @param daily_ang2_units_8a_0,daily_ang2_units_8a_m1,daily_ang2_units_8a_m2 Angiotensin II dose units: "mcg/min"/"mcg/kg/min".
+#' @param daily_milr_units_8a_0,daily_milr_units_8a_m1,daily_milr_units_8a_m2 Milrinone dose units: "mcg/min"/"mcg/kg/min".
+#' - Vasopressor doses (calculated from units and raw doses):
 #' @param daily_ne_dose_8a_0_mcg,daily_ne_dose_8a_m1_mcg,daily_ne_dose_8a_m2_mcg Numeric. Norepinephrine dose (mcg/min) closest to 8am.
 #' @param daily_ne_dose_8a_0_mcgkg,daily_ne_dose_8a_m1_mcgkg,daily_ne_dose_8a_m2_mcgkg Numeric. Norepinephrine dose (mcg/min/kg) closest to 8am.
 #' @param daily_epi_dose_8a_0_mcg,daily_epi_dose_8a_m1_mcg,daily_epi_dose_8a_m2_mcg Numeric. Epinephrine dose (mcg/min) closest to 8am.
@@ -279,11 +316,10 @@ NULL
 NULL
 
 # =============================================================================
-# Syndrome Clinical Assessments
+# Parameters from `event_label == 'Syndrome Adjudication'`
 # =============================================================================
 
-#' Parameters taken from `event_label == 'Syndrome Adjudication'` forms
-#'
+#' Syndrome Clincial Judgement and Documentation
 #' @param organ_dysfnx_cause Primary cause of acute cardiovascular and/or pulmonary organ dysfunction leading to eligibility for this study: "1, Infection"/"2, Inflammatory condition other than infection"/"3, A non-inflammatory condition"/"99, Unknown".
 #' @param sepsis_present Documentation that sepsis syndrome was present on or before Day 0: "Yes"/"No".
 #' @param sepsis_clinical_judgement Clinical judgement of whether sepsis syndrome was present on or before Day 0: "Yes"/"No"/"Unknown".
@@ -299,6 +335,20 @@ NULL
 #' @param ct_d0_opacity,ct_dm1_opacity,ct_dm2_opacity New or worsening pulmonary opacities on CT compared to pre-illness status: "0, None"/"1, Unilateral"/"2, Bilateral"/"99, Unknown/equivocal".
 #'
 #' @name syndrome_adjudication_params
+#' @keywords internal
+NULL
+
+
+# =============================================================================
+# Parameters from `event_label == 'Hospital Discharge and Summary'`
+# =============================================================================
+
+#' Pathogen Testing and Culture Results
+#' @param cxpos Culture/test result positivity status. Examples: "Positive blood culture"/"Positive respiratory culture"
+#' @param resp_pathogen Respiratory pathogen identified. Examples: "Coronavirus 229E"/"Influenza A virus"
+#' @param pathogen_date Date of positive pathogen test result.
+#'
+#' @name hospital_discharge_summary_params
 #' @keywords internal
 NULL
 
@@ -335,6 +385,8 @@ NULL
 #' @param ct_dm1_opacity_code Derived from `ct_dm1_opacity`.
 #' @param cxr_d0_opacity_code Derived from `cxr_d0_opacity`.
 #' @param ct_d0_opacity_code Derived from `ct_d0_opacity`.
+#' @param cxpos_code Derived from `cxpos`.
+#' @param resp_pathogen_code Derived from `resp_pathogen`.
 #'
 #' @name code_map_derived_params
 #' @keywords internal

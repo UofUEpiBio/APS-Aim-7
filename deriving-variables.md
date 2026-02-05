@@ -14,6 +14,7 @@ This document details the general steps followed in order to derive variables fo
     Unchecked   Checked      NA's
           299       200      7686
     ```
+    - You can also look in `param_docs.R` for brief descriptions of parameters we used in the Steroid DAG. This document is not comprehensive and may drift from the data dictionary, but it can be a helpful reference and quicker than running functions in R console.
 3. Examine the data dictionary entry for each column using `view_dict("<column_name>", dictionary)` from `support_functions.R`.
     - This will show you the field name, description, possible values, and branching logic.
     - For example, here is the dictionary entry for `daily_vasopressors_0___0`:
