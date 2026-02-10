@@ -418,33 +418,14 @@ calc_aps_gcs_score <- function(
   daily_gcs_8a_m1,
   daily_gcs_8a_m2
 ) {
-  # 12. Glasgow Coma Score (use 15 - GCS for points)
-  # - 1. Look back to find the last available value without a T
-  # - 2. If no prior value available without a T, then assume a "normal" GCS/SOFA score for that patient.
-  #      Award 0 GCS/SOFA points. This is consistent with Footnote C from the SOFA 2 paper.
 
-  # - Convert to character from factor for all time points
-  gcs_0 <- as.character(daily_gcs_8a_0)
-  gcs_m1 <- as.character(daily_gcs_8a_m1)
-  gcs_m2 <- as.character(daily_gcs_8a_m2)
+  # Use helper function to get GCS with lookback
+  gcs <- get_gcs_with_lookback(daily_gcs_8a_0, daily_gcs_8a_m1, daily_gcs_8a_m2)
 
-  # - Treat 'not documented' as NA for all time points
-  gcs_0 <- ifelse(gcs_0 == 'not documented', NA, gcs_0)
-  gcs_m1 <- ifelse(gcs_m1 == 'not documented', NA, gcs_m1)
-  gcs_m2 <- ifelse(gcs_m2 == 'not documented', NA, gcs_m2)
-
-  # - Look back to find the last available value without a T
-  gcs <- dplyr::case_when(
-    !is.na(gcs_0) & !grepl('T', gcs_0, fixed = TRUE) ~ gcs_0,
-    !is.na(gcs_m1) & !grepl('T', gcs_m1, fixed = TRUE) ~ gcs_m1,
-    !is.na(gcs_m2) & !grepl('T', gcs_m2, fixed = TRUE) ~ gcs_m2,
-    TRUE ~ "15"  # Default to normal GCS if no value without T is found
-  )
-
-  # - Extract quantitative component of GCS
+  # Extract quantitative component of GCS
   gcs <- as.numeric(gcs)
 
-  # - Calculate points (15 - GCS)
+  # Calculate points (15 - GCS)
   gcs_points <- 15 - gcs
 
   return(gcs_points)

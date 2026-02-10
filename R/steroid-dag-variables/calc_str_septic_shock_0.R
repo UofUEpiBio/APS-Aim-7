@@ -13,7 +13,6 @@ calc_str_septic_shock_0 <- function(
   sepsis_clinical_judgement,
   daily_vasopressors_0___0
 ) {
-  # TODO: If after querying, it is determined that 'Unknown' cannot be fixed, set those to 0 as well
   dplyr::case_when(
     sepsis_present == "No" | sepsis_clinical_judgement == "No" | is_checked(daily_vasopressors_0___0) ~ 0,
     sepsis_present == "Yes" & sepsis_clinical_judgement == "Yes" & is_unchecked(daily_vasopressors_0___0) ~ 1,

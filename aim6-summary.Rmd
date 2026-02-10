@@ -1,5 +1,5 @@
 ---
-title: "APS Aim 7 Derived Variables Summary"
+title: "APS 6 Derived Variables Summary"
 output:
   github_document:
     toc: true
@@ -37,7 +37,7 @@ source("R/steroid-dag-variables.R")
 
 The record `52-0023` was erroneously included in the `N=500` data set. As it will be omitted in the final data set, I have filtered it out of the data before deriving the variables below. Consequently, the total counts for any given variable will sum to 499 not 500. This should be corrected with the final `N=500` data set, assuming a different record is chosen to replace `52-0023`.
 
-## (NEW) Hypotension Severity -- Systematic & Streamlined DAG
+## Hypotension Severity -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -67,7 +67,7 @@ missing_sys_hypotension_sev_0(data) |>
   gt()
 ```
 
-## (NEW) Baseline Performance Status -- Systematic DAG
+## Baseline Performance Status -- Systematic DAG
 
 ### Variable 1: Frailty Status
 
@@ -197,7 +197,9 @@ data_with_sofa_day_m1 <- data |>
       daily_fio2_lowest_m1,
       daily_o2_lowest_m1,
       daily_platelet_8a_m1,
+      daily_platelet_nc_m1,
       daily_tbili_8a_m1,
+      daily_tbili_nc_m1,
       daily_sbp_8a_m1,
       daily_dbp_8a_m1,
       daily_dopa_dose_8a_m1_mcg,
@@ -210,7 +212,8 @@ data_with_sofa_day_m1 <- data |>
       daily_ne_dose_8a_m1_mcgkg,
       m_weight_kg,
       daily_gcs_8a_m1,
-      daily_cr_8a_m1
+      daily_cr_8a_m1,
+      daily_cr_nc_m1
     )
   )
 

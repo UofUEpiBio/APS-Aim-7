@@ -21,12 +21,14 @@ calc_str_gi_bleeding_0 <- function(
 ) {
 
   # Day -2:
-  # QUESTION: Should 'UNK' be treated as 0 units here?
   prbc_m2 <- dplyr::case_when(
     (daily_blood_product_m2 == "Administered" &
       is_checked(blood_product_spec_m2___1)) ~ blood_prbc_units_m2,
 
-    (daily_blood_product_m2 %in% c("Administered", "Not administered", "UNK") &
+    (daily_blood_product_m2 == "UNK" &
+      is_unchecked(blood_product_spec_m2___1)) ~ 1,
+
+    (daily_blood_product_m2 %in% c("Administered", "Not administered") &
       is_unchecked(blood_product_spec_m2___1)) ~ 0,
 
     (trx_m2 == 'Not Available') ~ 0
@@ -37,7 +39,10 @@ calc_str_gi_bleeding_0 <- function(
     (daily_blood_product_m1 == "Administered" &
       is_checked(blood_product_spec_m1___1)) ~ blood_prbc_units_m1,
 
-    (daily_blood_product_m1 %in% c("Administered", "Not administered", "UNK") &
+    (daily_blood_product_m1 == "UNK" &
+      is_unchecked(blood_product_spec_m1___1)) ~ 1,
+
+    (daily_blood_product_m1 %in% c("Administered", "Not administered") &
       is_unchecked(blood_product_spec_m1___1)) ~ 0,
 
     (trx_m1 == 'Not Available') ~ 0
@@ -48,7 +53,10 @@ calc_str_gi_bleeding_0 <- function(
     (daily_blood_product_0 == "Administered" &
       is_checked(blood_product_spec_0___1)) ~ blood_prbc_units_0,
 
-    (daily_blood_product_0 %in% c("Administered", "Not administered", "UNK") &
+    (daily_blood_product_0 == "UNK" &
+      is_unchecked(blood_product_spec_0___1)) ~ 1,
+
+    (daily_blood_product_0 %in% c("Administered", "Not administered") &
       is_unchecked(blood_product_spec_0___1)) ~ 0,
 
     (trx_0 == 'Not Available') ~ 0 # If missing for valid reasons, assume 0 units

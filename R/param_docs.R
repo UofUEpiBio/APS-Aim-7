@@ -3,7 +3,7 @@
 ## -----------------------------------------------------------------------------
 ##
 ## This file provides centralized parameter documentation for all derived
-## variable functions in the APS Aim 7 project.
+## variable functions in the APS Aim 6 project.
 ##
 ## Parameters are organized by REDCap event (`event_label`).
 ##
@@ -37,6 +37,8 @@
 #' @param enrollment_time Date/time of patient enrollment.
 #' @param vs_perf Vital signs performed: "Yes"/"No".
 #' @param sofa_unk SOFA baseline information unknown: indicator value.
+#' @param sofa_base_cns_dysnfx Baseline CNS dysfunction (GCS < 15): "Yes"/"No"
+#' @param sofa_base_gcs_chronic Chronic GCS level: "13-14"/"10-12"/"6-9"/"< 6"
 #'
 #'
 #' Baseline Chronic Conditions ------------------------------------------------

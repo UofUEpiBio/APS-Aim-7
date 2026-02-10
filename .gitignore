@@ -7,15 +7,11 @@
 .DS_Store
 *.Rproj
 
-aim7-summary.md
-aim7-summary_files/*
-aim7-queried-summary.md
-aim7-queried-summary_files/*
-aim7-workbook.Rmd
-aim7-global-phys-sev-0-summary.md
+aim6-summary.md
+aim6-summary_files/*
 
 R/copilot-files/*
 
-20250731_dictionary.csv
+*.csv
 
 copilot-*

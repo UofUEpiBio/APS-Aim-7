@@ -21,6 +21,13 @@ calc_str_psi_score_0 <- function(
   cam_m1,
   cam_m2,
 
+  daily_gcs_8a_0,
+  daily_gcs_8a_m1,
+  daily_gcs_8a_m2,
+
+  sofa_base_cns_dysnfx,
+  sofa_base_gcs_chronic,
+
   highhr_vsorres,
   highrr_vsorres,
   lowsysbp_vsorres,
@@ -65,14 +72,14 @@ calc_str_psi_score_0 <- function(
 
   # Nursing home resident: +10 points
   score <- score + dplyr::if_else(
-    prssrc == 'Nursing home or Skilled Nursing Facility (SNF)', 10,
+    prssrc %in% c(
+      'Rehabilitation facility',
+      'Long term acute care hospital (LTACH)',
+      'Nursing home or Skilled Nursing Facility (SNF)'
+      ), 10,
     0,
     missing = 0
   )
-
-  # QUESTION: DAG sheet includes these variables, but PSI does not use them:
-  # - `su_ivdu`: recreational injection drug use?
-  # - `sualcdosfrq`/`sualcdstxt`/`sualcdosfrqsix`: alcohol use frequency
 
   # Coexisting Illnesses
   # - Neoplastic disease: +30 points
@@ -97,26 +104,42 @@ calc_str_psi_score_0 <- function(
   # Physical examination findings
 
   # - Altered mental status: +20 points
-  # QUESTION: Do we need to look at anything other than delirium CAM?
+
+  # Get GCS with lookback (excluding T values and "not documented")
+  gcs <- get_gcs_with_lookback(daily_gcs_8a_0, daily_gcs_8a_m1, daily_gcs_8a_m2)
+  gcs_numeric <- as.numeric(gcs)
+
+  # Get CAM value with lookback
+  # QUESTION: Do we use lookback for CAM here?
   cam <- get_value_with_lookback(cam_0, cam_m1, cam_m2)
-  score <- score + dplyr::if_else(
-    cam == "Positive for delirium at least once on this day", 20,
-    0,
-    missing = 0
+  cam_positive <- cam == "Positive for delirium at least once on this day"
+
+  # Calculate altered mental status based on the two conditions
+  altered_mental_status <- dplyr::case_when(
+    # Condition 1: No baseline CNS dysfunction (or missing) AND (CAM positive OR GCS < 15)
+    (is.na(sofa_base_cns_dysnfx) | sofa_base_cns_dysnfx == "No") &
+      (cam_positive | gcs_numeric < 15) ~ TRUE,
+
+    # Condition 2: Has baseline CNS dysfunction AND GCS meets chronic threshold
+    sofa_base_cns_dysnfx == "Yes" & (
+      (sofa_base_gcs_chronic == "13-14" & gcs_numeric <= 12) |
+      (sofa_base_gcs_chronic == "10-12" & gcs_numeric <= 9) |
+      (sofa_base_gcs_chronic == "6-9" & gcs_numeric <= 5)
+    ) ~ TRUE,
+
+    # Default: no altered mental status
+    .default = FALSE
   )
 
+  score <- score + dplyr::if_else(altered_mental_status, 20, 0, missing = 0)
+
   # - Respiratory rate >= 30/min: +20 points
-  # QUESTION: How close to the SCAP RR calculation should this be?
-  # - That formula performs aggressive lookback based on respiratory support type,
-  # - but scores on <=30 and >30, so we can't use it directly.
-  # - Currently using highest RR on Day 0, until decided otherwise.
   score <- score + dplyr::if_else(highrr_vsorres >= 30, 20, 0, missing = 0)
 
   # - SBP < 90 mm Hg: +20 points
   score <- score + dplyr::if_else(lowsysbp_vsorres < 90, 20, 0, missing = 0)
 
   # - Temperature < 35°C or >= 40°C: +15 points
-  # QUESTION: Should we check both lowtemp_vsorres and hightemp_vsorres for each value?
   temp_abnormal <- (lowtemp_vsorres < 35) | (lowtemp_vsorres >= 40) |
                    (hightemp_vsorres < 35) | (hightemp_vsorres >= 40)
   score <- score + dplyr::if_else(temp_abnormal, 15, 0, missing = 0)
@@ -171,6 +194,7 @@ wrapper_calc_str_psi_score_0 <- function(data) {
       data |>
         filter(event_label == 'Daily In-Hospital Forms') |>
         select(record_id, cam_0, cam_m1, cam_m2,
+               daily_gcs_8a_0, daily_gcs_8a_m1, daily_gcs_8a_m2,
                daily_bun_8a_0, daily_bun_8a_m1, daily_bun_8a_m2,
                daily_gluc_8a_0, daily_gluc_8a_m1, daily_gluc_8a_m2,
                daily_hct_8a_0, daily_hct_8a_m1, daily_hct_8a_m2,
@@ -184,6 +208,7 @@ wrapper_calc_str_psi_score_0 <- function(data) {
             select(record_id, age, sex, prssrc,
                    m_cv_conditions___2, m_neurologic_conditions___2, m_neurologic_conditions___3,
                    m_cancer, m_kid_liver_conditions___1, m_kid_liver_conditions___2,
+                   sofa_base_cns_dysnfx, sofa_base_gcs_chronic,
                    highhr_vsorres, highrr_vsorres, lowsysbp_vsorres, lowtemp_vsorres, hightemp_vsorres),
           by = 'record_id'
         ) |>
@@ -210,6 +235,12 @@ wrapper_calc_str_psi_score_0 <- function(data) {
           cam_0 = cam_0,
           cam_m1 = cam_m1,
           cam_m2 = cam_m2,
+          daily_gcs_8a_0 = daily_gcs_8a_0,
+          daily_gcs_8a_m1 = daily_gcs_8a_m1,
+          daily_gcs_8a_m2 = daily_gcs_8a_m2,
+          # Altered Mental Status - (Day 0)
+          sofa_base_cns_dysnfx = sofa_base_cns_dysnfx,
+          sofa_base_gcs_chronic = sofa_base_gcs_chronic,
           # Physical Examination Findings (Day 0)
           highhr_vsorres = highhr_vsorres,
           highrr_vsorres = highrr_vsorres,

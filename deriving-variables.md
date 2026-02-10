@@ -1,6 +1,6 @@
 # Instructions for Deriving Variables
 
-This document details the general steps followed in order to derive variables for the APS Aim 7 project. Following this process will ensure consistency with the data dictionary and the variable definition.
+This document details the general steps followed in order to derive variables for the APS Aim 6 project. Following this process will ensure consistency with the data dictionary and the variable definition.
 
 ## Steps
 1. Identify the required columns from the dataset based on the variable definition.

@@ -131,8 +131,7 @@ calc_sys_comorbid_burden_0 <- function(
   # (has diabetes AND (mild/uncomplicated severity OR unknown severity))
   # Note: Only count if NOT complicated (checked later)
   has_diabetes_uncomplicated <- is_checked(m_endo_conditions___1) &
-                                (mhdmsev == "Diet controlled" |
-                                mhdmsev == "Uncomplicated: treated with insulin or oral diabetic medication, no end organ damage" |
+                                (mhdmsev == "Uncomplicated: treated with insulin or oral diabetic medication, no end organ damage" |
                                 mhdmsev == "Unknown severity")
   diabetes_uncomplicated_points <- dplyr::if_else(has_diabetes_uncomplicated, 1, 0)
 
@@ -154,14 +153,11 @@ calc_sys_comorbid_burden_0 <- function(
 
   # Diabetes with end organ damage: +2
   # (has diabetes AND complicated/severe)
-  # Note: Only count if NOT uncomplicated (replaces uncomplicated score)
-  # QUESTION: You set this to == 2 instead of == 3 (also missed 2 for uncomplicated
-  # above). I adjusted, but was that correct?
   has_diabetes_complicated <- is_checked(m_endo_conditions___1) &
                               (mhdmsev == "Complicated: treated with insulin or oral diabetic medication, end-organ damage present")
   diabetes_complicated_points <- dplyr::if_else(has_diabetes_complicated, 2, 0)
 
-  # Add diabetes points (only one or the other, not both)
+  # Add diabetes points (only one or the other, not both, preference to complicated if both checked)
   score <- score + dplyr::if_else(
     has_diabetes_complicated,
     diabetes_complicated_points,

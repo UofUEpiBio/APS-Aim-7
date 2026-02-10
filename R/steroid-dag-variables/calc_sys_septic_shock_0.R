@@ -48,7 +48,6 @@ calc_sys_septic_shock_0 <- function(
     m_weight_kg = m_weight_kg
   )
 
-  # TODO: If after querying, it is determined that 'Unknown' cannot be fixed, set those to 0 as well
   dplyr::case_when(
     (sepsis_present == "No") |
       (sepsis_clinical_judgement == "No") |

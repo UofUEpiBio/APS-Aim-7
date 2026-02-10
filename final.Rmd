@@ -1,5 +1,5 @@
 ---
-title: "Final Aim 7 Report"
+title: "Final Aim 6 Report"
 output:
   github_document:
     toc: true
@@ -24,6 +24,8 @@ source('support_functions.R')
 ## Load data from N=500 APS cohortcolli
 ## provides "data", "dictionary" and "codebook" in the working environment
 load(file = '../aps-data/20250731_data.RData')
+## Filter the excluded record to not muddy the variable summaries
+data <- data |> filter(record_id != '52-0023')
 ```
 
 ```{r, echo = FALSE}
@@ -84,4 +86,144 @@ steroid_dag_data <- data |>
   left_join(wrapper_calc_sys_pneumonia_0(data), by = "record_id") |>
   left_join(wrapper_calc_sys_sepsis_0(data), by = "record_id") |>
   left_join(wrapper_calc_sys_septic_shock_0(data), by = "record_id")
+```
+
+## Missing Records
+
+```{r}
+get_records_with_missing_values <- function(data) {
+  # For each row, find columns with NA values
+  missing_list <- lapply(1:nrow(data), function(i) {
+    row <- data[i, ]
+    missing_cols <- names(row)[sapply(row, is.na)]
+
+    if (length(missing_cols) > 0) {
+      tibble(
+        record_id = data$record_id[i],
+        missing_cols = list(missing_cols)
+      )
+    } else {
+      NULL
+    }
+  })
+
+  # Combine all non-NULL results
+  bind_rows(missing_list) |>
+    arrange(record_id)
+}
+
+# Get records with missing values
+records_with_missing <- get_records_with_missing_values(steroid_dag_data)
+
+# Display summary
+if (nrow(records_with_missing) > 0) {
+  cat("Found", nrow(records_with_missing), "records with missing values\n\n")
+
+  # Show first few records
+  head(records_with_missing, 10)
+
+  # Write to CSV (one row per record_id with missing columns concatenated)
+  records_with_missing |>
+    mutate(missing_cols = sapply(missing_cols, paste, collapse = "; ")) |>
+    write.csv("missing_values_report.csv", row.names = FALSE)
+
+  cat("\nMissing values report written to missing_values_report.csv\n")
+
+  # Create abbreviated report excluding sofa_total_day_0 and sofa_total_day_m1
+  records_with_missing_abbrv <- records_with_missing |>
+    mutate(
+      missing_cols = lapply(missing_cols, function(cols) {
+        cols[!cols %in% c("sofa_total_day_0", "sofa_total_day_m1")]
+      })
+    ) |>
+    filter(lengths(missing_cols) > 0)
+
+  if (nrow(records_with_missing_abbrv) > 0) {
+    records_with_missing_abbrv |>
+      mutate(missing_cols = sapply(missing_cols, paste, collapse = "; ")) |>
+      write.csv("missing_values_report_abbrv.csv", row.names = FALSE)
+
+    cat("Abbreviated report (excluding SOFA columns) written to missing_values_report_abbrv.csv\n")
+    cat("Found", nrow(records_with_missing_abbrv), "records with other missing values\n")
+  }
+
+} else {
+  cat("No records with missing values found\n")
+}
+
+# To view missing columns for a specific row:
+# - For first row: records_with_missing$missing_cols[[1]]
+# - For specific record_id: records_with_missing |> filter(record_id == "your_id") |> pull(missing_cols) |> unlist()
+# - To expand all into long format: records_with_missing |> unnest(missing_cols)
+```
+
+## Unknown Records
+
+```{r}
+get_records_with_unknown_values <- function(data) {
+  # For each row, find columns with unknown values (99 or -1)
+  unknown_list <- lapply(1:nrow(data), function(i) {
+    row <- data[i, ]
+    unknown_cols <- names(row)[sapply(row, function(val) {
+      !is.na(val) && (val == 99 || val == -1)
+    })]
+
+    if (length(unknown_cols) > 0) {
+      tibble(
+        record_id = data$record_id[i],
+        unknown_cols = list(unknown_cols)
+      )
+    } else {
+      NULL
+    }
+  })
+
+  # Combine all non-NULL results
+  bind_rows(unknown_list) |>
+    arrange(record_id)
+}
+
+# Get records with unknown values
+records_with_unknown <- get_records_with_unknown_values(steroid_dag_data)
+
+# Display summary
+if (nrow(records_with_unknown) > 0) {
+  cat("Found", nrow(records_with_unknown), "records with unknown values (99 or -1)\n\n")
+
+  # Show first few records
+  head(records_with_unknown, 10)
+
+  # Write to CSV (one row per record_id with unknown columns concatenated)
+  records_with_unknown |>
+    mutate(unknown_cols = sapply(unknown_cols, paste, collapse = "; ")) |>
+    write.csv("unknown_values_report.csv", row.names = FALSE)
+
+  cat("\nUnknown values report written to unknown_values_report.csv\n")
+
+  # Create abbreviated report excluding sofa_total_day_0 and sofa_total_day_m1
+  records_with_unknown_abbrv <- records_with_unknown |>
+    mutate(
+      unknown_cols = lapply(unknown_cols, function(cols) {
+        cols[!cols %in% c("sofa_total_day_0", "sofa_total_day_m1")]
+      })
+    ) |>
+    filter(lengths(unknown_cols) > 0)
+
+  if (nrow(records_with_unknown_abbrv) > 0) {
+    records_with_unknown_abbrv |>
+      mutate(unknown_cols = sapply(unknown_cols, paste, collapse = "; ")) |>
+      write.csv("unknown_values_report_abbrv.csv", row.names = FALSE)
+
+    cat("Abbreviated report (excluding SOFA columns) written to unknown_values_report_abbrv.csv\n")
+    cat("Found", nrow(records_with_unknown_abbrv), "records with other unknown values\n")
+  }
+
+} else {
+  cat("No records with unknown values found\n")
+}
+
+# To view unknown columns for a specific row:
+# - For first row: records_with_unknown$unknown_cols[[1]]
+# - For specific record_id: records_with_unknown |> filter(record_id == "your_id") |> pull(unknown_cols) |> unlist()
+# - To expand all into long format: records_with_unknown |> unnest(unknown_cols)
 ```

@@ -15,7 +15,9 @@ calc_sofa_total_helper <- function(
   daily_fio2_lowest,
   daily_o2_lowest,
   daily_platelet_8a,
+  daily_platelet_nc,
   daily_tbili_8a,
+  daily_tbili_nc,
   daily_sbp_8a,
   daily_dbp_8a,
   daily_dopa_dose_8a_mcg,
@@ -28,7 +30,8 @@ calc_sofa_total_helper <- function(
   daily_ne_dose_8a_mcgkg,
   m_weight_kg,
   daily_gcs_8a,
-  daily_cr_8a
+  daily_cr_8a,
+  daily_cr_nc
 ) {
 
   ## Calculate P/F and S/F ratios for respiratory component
@@ -48,9 +51,9 @@ calc_sofa_total_helper <- function(
 
   ## Calculate individual SOFA component scores
   sofa_resp <- calc_sofa_resp(pf_ratio = pf_ratio, sf_ratio = sf_ratio)
-  sofa_coag <- calc_sofa_coag(platelets = daily_platelet_8a)
-  sofa_livr <- calc_sofa_livr(bilirubin = daily_tbili_8a)
-  sofa_card <- calc_sofa_card(
+  sofa_coag <- wrapper_calc_sofa_coag(platelets = daily_platelet_8a, daily_platelet_nc = daily_platelet_nc)
+  sofa_livr <- wrapper_calc_sofa_livr(bilirubin = daily_tbili_8a, daily_tbili_nc = daily_tbili_nc)
+  sofa_card <- wrapper_calc_sofa_card(
     sbp = daily_sbp_8a,
     dbp = daily_dbp_8a,
     dopa_mcg = daily_dopa_dose_8a_mcg,
@@ -63,13 +66,13 @@ calc_sofa_total_helper <- function(
     nore_mcgkg = daily_ne_dose_8a_mcgkg,
     weight_kg = m_weight_kg
   )
-  sofa_cns <- calc_sofa_cns(gcs = daily_gcs_8a)
-  sofa_rena <- calc_sofa_rena(cr = daily_cr_8a)
+  sofa_cns <- wrapper_calc_sofa_cns(daily_gcs_8a = daily_gcs_8a)
+  sofa_rena <- wrapper_calc_sofa_rena(cr = daily_cr_8a, daily_cr_nc = daily_cr_nc)
 
-  ## Sum all components to get total SOFA score
+  ## Sum all components to get total SOFA score, treating NA as 0
   total_sofa <- rowSums(
     cbind(sofa_resp, sofa_coag, sofa_livr, sofa_card, sofa_cns, sofa_rena),
-    na.rm = FALSE
+    na.rm = TRUE
   )
 
   return(total_sofa)
@@ -89,7 +92,9 @@ calc_sys_sofa_total_0 <- function(
   daily_fio2_lowest_0,
   daily_o2_lowest_0,
   daily_platelet_8a_0,
+  daily_platelet_nc_0,
   daily_tbili_8a_0,
+  daily_tbili_nc_0,
   daily_sbp_8a_0,
   daily_dbp_8a_0,
   daily_dopa_dose_8a_0_mcg,
@@ -102,7 +107,8 @@ calc_sys_sofa_total_0 <- function(
   daily_ne_dose_8a_0_mcgkg,
   m_weight_kg,
   daily_gcs_8a_0,
-  daily_cr_8a_0
+  daily_cr_8a_0,
+  daily_cr_nc_0
 ) {
 
   ## Use helper function to calculate SOFA score
@@ -116,7 +122,9 @@ calc_sys_sofa_total_0 <- function(
     daily_fio2_lowest = daily_fio2_lowest_0,
     daily_o2_lowest = daily_o2_lowest_0,
     daily_platelet_8a = daily_platelet_8a_0,
+    daily_platelet_nc = daily_platelet_nc_0,
     daily_tbili_8a = daily_tbili_8a_0,
+    daily_tbili_nc = daily_tbili_nc_0,
     daily_sbp_8a = daily_sbp_8a_0,
     daily_dbp_8a = daily_dbp_8a_0,
     daily_dopa_dose_8a_mcg = daily_dopa_dose_8a_0_mcg,
@@ -129,7 +137,8 @@ calc_sys_sofa_total_0 <- function(
     daily_ne_dose_8a_mcgkg = daily_ne_dose_8a_0_mcgkg,
     m_weight_kg = m_weight_kg,
     daily_gcs_8a = daily_gcs_8a_0,
-    daily_cr_8a = daily_cr_8a_0
+    daily_cr_8a = daily_cr_8a_0,
+    daily_cr_nc = daily_cr_nc_0
   )
 }
 
@@ -148,7 +157,9 @@ calc_sys_sofa_total_m1 <- function(
   daily_fio2_lowest_m1,
   daily_o2_lowest_m1,
   daily_platelet_8a_m1,
+  daily_platelet_nc_m1,
   daily_tbili_8a_m1,
+  daily_tbili_nc_m1,
   daily_sbp_8a_m1,
   daily_dbp_8a_m1,
   daily_dopa_dose_8a_m1_mcg,
@@ -161,7 +172,8 @@ calc_sys_sofa_total_m1 <- function(
   daily_ne_dose_8a_m1_mcgkg,
   m_weight_kg,
   daily_gcs_8a_m1,
-  daily_cr_8a_m1
+  daily_cr_8a_m1,
+  daily_cr_nc_m1
 ) {
 
   ## Check if patient was not in hospital on Day -1
@@ -179,7 +191,9 @@ calc_sys_sofa_total_m1 <- function(
     daily_fio2_lowest = daily_fio2_lowest_m1,
     daily_o2_lowest = daily_o2_lowest_m1,
     daily_platelet_8a = daily_platelet_8a_m1,
+    daily_platelet_nc = daily_platelet_nc_m1,
     daily_tbili_8a = daily_tbili_8a_m1,
+    daily_tbili_nc = daily_tbili_nc_m1,
     daily_sbp_8a = daily_sbp_8a_m1,
     daily_dbp_8a = daily_dbp_8a_m1,
     daily_dopa_dose_8a_mcg = daily_dopa_dose_8a_m1_mcg,
@@ -192,7 +206,8 @@ calc_sys_sofa_total_m1 <- function(
     daily_ne_dose_8a_mcgkg = daily_ne_dose_8a_m1_mcgkg,
     m_weight_kg = m_weight_kg,
     daily_gcs_8a = daily_gcs_8a_m1,
-    daily_cr_8a = daily_cr_8a_m1
+    daily_cr_8a = daily_cr_8a_m1,
+    daily_cr_nc = daily_cr_nc_m1
   )
 
   ## Return 99 if not applicable, otherwise return total SOFA
@@ -223,7 +238,9 @@ wrapper_calc_sys_organ_failure_trajectory <- function(data) {
         daily_fio2_lowest_0,
         daily_o2_lowest_0,
         daily_platelet_8a_0,
+        daily_platelet_nc_0,
         daily_tbili_8a_0,
+        daily_tbili_nc_0,
         daily_sbp_8a_0,
         daily_dbp_8a_0,
         daily_dopa_dose_8a_0_mcg,
@@ -236,7 +253,8 @@ wrapper_calc_sys_organ_failure_trajectory <- function(data) {
         daily_ne_dose_8a_0_mcgkg,
         m_weight_kg,
         daily_gcs_8a_0,
-        daily_cr_8a_0
+        daily_cr_8a_0,
+        daily_cr_nc_0
       ),
       sofa_total_day_m1 = calc_sys_sofa_total_m1(
         dailysofa_perf_m1,
@@ -249,7 +267,9 @@ wrapper_calc_sys_organ_failure_trajectory <- function(data) {
         daily_fio2_lowest_m1,
         daily_o2_lowest_m1,
         daily_platelet_8a_m1,
+        daily_platelet_nc_m1,
         daily_tbili_8a_m1,
+        daily_tbili_nc_m1,
         daily_sbp_8a_m1,
         daily_dbp_8a_m1,
         daily_dopa_dose_8a_m1_mcg,
@@ -262,7 +282,8 @@ wrapper_calc_sys_organ_failure_trajectory <- function(data) {
         daily_ne_dose_8a_m1_mcgkg,
         m_weight_kg,
         daily_gcs_8a_m1,
-        daily_cr_8a_m1
+        daily_cr_8a_m1,
+        daily_cr_nc_m1
       )
     ) |>
     select(record_id, sofa_total_day_0, sofa_total_day_m1)
@@ -392,4 +413,78 @@ missing_sofa_total_day_m1 <- function(data) {
   missing_records |>
     left_join(data_daily_hospital, by = 'record_id') |>
     left_join(data_day0, by = 'record_id')
+}
+
+
+## =============================================================================
+## Wrapper Functions for SOFA Component Scores
+## =============================================================================
+
+## Wrapper for calc_sofa_coag that checks for 'Not Collected' status
+## If daily_platelet_nc == 'Not Collected', returns 0 points
+## Otherwise calls calc_sofa_coag with the platelet value
+wrapper_calc_sofa_coag <- function(platelets, daily_platelet_nc) {
+  dplyr::if_else(
+    daily_platelet_nc == 'Not Collected',
+    0,
+    calc_sofa_coag(platelets = platelets)
+  )
+}
+
+
+## Wrapper for calc_sofa_livr that checks for 'Not Collected' status
+## If daily_tbili_nc == 'Not Collected', returns 0 points
+## Otherwise calls calc_sofa_livr with the bilirubin value
+wrapper_calc_sofa_livr <- function(bilirubin, daily_tbili_nc) {
+  dplyr::if_else(
+    daily_tbili_nc == 'Not Collected',
+    0,
+    calc_sofa_livr(bilirubin = bilirubin)
+  )
+}
+
+## Wrapper for calc_sofa_rena that checks for 'Not Collected' status
+## If daily_cr_nc == 'Not Collected', returns 0 points
+## Otherwise calls calc_sofa_rena with the creatinine value
+wrapper_calc_sofa_rena <- function(cr, daily_cr_nc) {
+  dplyr::if_else(
+    daily_cr_nc == 'Not Collected',
+    0,
+    calc_sofa_rena(cr = cr)
+  )
+}
+
+## Wrapper for calc_sofa_card that sets NA to 0 points
+wrapper_calc_sofa_card <- function(sbp, dbp, dopa_mcg, dopa_mcgkg, dobu_mcg, dobu_mcgkg,
+                                   epin_mcg, epin_mcgkg, nore_mcg, nore_mcgkg, weight_kg) {
+  result <- calc_sofa_card(
+    sbp = sbp,
+    dbp = dbp,
+    dopa_mcg = dopa_mcg,
+    dopa_mcgkg = dopa_mcgkg,
+    dobu_mcg = dobu_mcg,
+    dobu_mcgkg = dobu_mcgkg,
+    epin_mcg = epin_mcg,
+    epin_mcgkg = epin_mcgkg,
+    nore_mcg = nore_mcg,
+    nore_mcgkg = nore_mcgkg,
+    weight_kg = weight_kg
+  )
+
+  # If result is NA, return 0 points; otherwise return the calculated SOFA card score
+  dplyr::coalesce(result, 0)
+}
+
+## Wrapper for calc_sofa_cns that processes GCS for a single day
+## Treats T values and 'not documented' as 15 (normal GCS, 0 SOFA points)
+## Then calls calc_sofa_cns with the processed GCS value
+wrapper_calc_sofa_cns <- function(daily_gcs_8a) {
+  # Process GCS for this day only (no lookback)
+  # - Treats T values and 'not documented' as 15 (normal GCS)
+  # - Note: using this helper instead of just `calc_sofa_cns()` to keep usage consistent
+  # between steroid DAG variables.
+  gcs <- process_gcs_value(daily_gcs_8a)
+
+  # Call calc_sofa_cns with the processed GCS value
+  calc_sofa_cns(gcs = gcs)
 }

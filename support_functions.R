@@ -73,6 +73,50 @@ get_value_with_lookback <- function(val_0, val_m1, val_m2) {
   dplyr::coalesce(val_0, val_m1, val_m2)
 }
 
+# Helper function: Process single GCS value, treating T and 'not documented' as 15
+# - If GCS contains 'T' or is 'not documented', return "15" (normal GCS, 0 SOFA points)
+# - Otherwise return the GCS value
+# - This is consistent with Footnote C from the SOFA 2 paper
+process_gcs_value <- function(daily_gcs_8a) {
+  # Convert to character from factor
+  gcs <- as.character(daily_gcs_8a)
+
+  # Treat 'not documented' as 15
+  gcs <- ifelse(gcs == 'not documented', "15", gcs)
+
+  # Treat any value with 'T' as 15 (normal GCS)
+  gcs <- ifelse(grepl('T', gcs, fixed = TRUE), "15", gcs)
+
+  return(gcs)
+}
+
+# Helper function: Get GCS with lookback, excluding T values and 'not documented'
+# - 1. Look back to find the last available value without a T
+# - 2. If no prior value available without a T, then assume a "normal" GCS/SOFA score for
+#      that patient. Award 0 GCS/SOFA points (return "15" which corresponds to 0 points for
+#      both measures). This is consistent with Footnote C from the SOFA 2 paper.
+get_gcs_with_lookback <- function(daily_gcs_8a_0, daily_gcs_8a_m1, daily_gcs_8a_m2) {
+  # Convert to character from factor for all time points
+  gcs_0 <- as.character(daily_gcs_8a_0)
+  gcs_m1 <- as.character(daily_gcs_8a_m1)
+  gcs_m2 <- as.character(daily_gcs_8a_m2)
+
+  # Treat 'not documented' as NA for all time points
+  gcs_0 <- ifelse(gcs_0 == 'not documented', NA, gcs_0)
+  gcs_m1 <- ifelse(gcs_m1 == 'not documented', NA, gcs_m1)
+  gcs_m2 <- ifelse(gcs_m2 == 'not documented', NA, gcs_m2)
+
+  # Look back to find the last available value without a T
+  gcs <- dplyr::case_when(
+    !is.na(gcs_0) & !grepl('T', gcs_0, fixed = TRUE) ~ gcs_0,
+    !is.na(gcs_m1) & !grepl('T', gcs_m1, fixed = TRUE) ~ gcs_m1,
+    !is.na(gcs_m2) & !grepl('T', gcs_m2, fixed = TRUE) ~ gcs_m2,
+    TRUE ~ "15"  # Default to normal GCS if no value without T is found
+  )
+
+  return(gcs)
+}
+
 # Helper function: Display count table with grand total row
 # Usage: data |> display_count_with_total(column_name)
 display_grand_total <- function(data, col) {
