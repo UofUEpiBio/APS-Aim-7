@@ -20,7 +20,7 @@ calc_str_scap_acidosis_0 <- function(
   dplyr::case_when(
     ph < 7.30 ~ 1,
     # ph >= 7.30 or missing
-    TRUE ~ 0
+    .default = 0
   )
 }
 

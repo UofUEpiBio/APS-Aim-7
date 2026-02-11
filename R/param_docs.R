@@ -198,7 +198,25 @@ NULL
 #'
 #' Treatments and Procedures
 #' @param daily_paralysis_0,daily_paralysis_m1,daily_paralysis_m2 Chemical paralysis (other than during intubation) administered: "Administered"/"Not administered"/"UNK".
-#' @param daily_antifungal_0,daily_antifungal_m1,daily_antifungal_m2 Systemic antifungal agent(s) administered: "Administered"/"Not administered"/"UNK".
+#' @param daily_antibiotics_0,daily_antibiotics_m1,daily_antibiotics_m2 Systemic antibiotics: "Administered"/"Not administered"/"UNK".
+#' @param daily_antiviral_0,daily_antiviral_m1,daily_antiviral_m2 Systemic antiviral agents: "Administered"/"Not administered"/"UNK".
+#' @param daily_antifungal_0,daily_antifungal_m1,daily_antifungal_m2 Systemic antifungal agents: "Administered"/"Not administered"/"UNK".
+#' - Specific antifungal agent checkboxes (values: "Checked"/"Unchecked"):
+#' @param antifungal_agents_0___1,antifungal_agents_m1___1,antifungal_agents_m2___1 Amphotericin B.
+#' @param antifungal_agents_0___2,antifungal_agents_m1___2,antifungal_agents_m2___2 Anidulafungin.
+#' @param antifungal_agents_0___3,antifungal_agents_m1___3,antifungal_agents_m2___3 Caspofungin.
+#' @param antifungal_agents_0___4,antifungal_agents_m1___4,antifungal_agents_m2___4 Clotrimazole.
+#' @param antifungal_agents_0___5,antifungal_agents_m1___5,antifungal_agents_m2___5 Econazole.
+#' @param antifungal_agents_0___6,antifungal_agents_m1___6,antifungal_agents_m2___6 Fluconazole.
+#' @param antifungal_agents_0___7,antifungal_agents_m1___7,antifungal_agents_m2___7 Itraconazole.
+#' @param antifungal_agents_0___8,antifungal_agents_m1___8,antifungal_agents_m2___8 Ketoconazole.
+#' @param antifungal_agents_0___9,antifungal_agents_m1___9,antifungal_agents_m2___9 Micafungin.
+#' @param antifungal_agents_0___10,antifungal_agents_m1___10,antifungal_agents_m2___10 Miconazole.
+#' @param antifungal_agents_0___11,antifungal_agents_m1___11,antifungal_agents_m2___11 Nystatin.
+#' @param antifungal_agents_0___12,antifungal_agents_m1___12,antifungal_agents_m2___12 Terbinafine.
+#' @param antifungal_agents_0___13,antifungal_agents_m1___13,antifungal_agents_m2___13 Voriconazole.
+#' @param antifungal_agents_0___88,antifungal_agents_m1___88,antifungal_agents_m2___88 Other antifungal(s).
+#' @param antifungal_agents_0___99,antifungal_agents_m1___99,antifungal_agents_m2___99 Unknown (antifungals being taken, specific agent unknown).
 #' @param daily_surgery_0,daily_surgery_m1,daily_surgery_m2 Surgery in operating room occurred: "Administered"/"Not administered"/"UNK".
 #'
 #' Blood Product Transfusions
@@ -323,8 +341,6 @@ NULL
 
 #' Syndrome Clincial Judgement and Documentation
 #' @param organ_dysfnx_cause Primary cause of acute cardiovascular and/or pulmonary organ dysfunction leading to eligibility for this study: "1, Infection"/"2, Inflammatory condition other than infection"/"3, A non-inflammatory condition"/"99, Unknown".
-#' @param sepsis_present Documentation that sepsis syndrome was present on or before Day 0: "Yes"/"No".
-#' @param sepsis_clinical_judgement Clinical judgement of whether sepsis syndrome was present on or before Day 0: "Yes"/"No"/"Unknown".
 #' @param ards_present Documentation that ARDS syndrome was present on or before Day 0: "Yes"/"No".
 #' @param ards_clinical_judgement Clinical judgement of whether ARDS syndrome was present on or before Day 0: "Yes"/"No"/"Unknown".
 #' @param pna_clinical_judgement Clinical judgement of whether pneumonia syndrome was present on or before Day 0: "Yes"/"No"/"Unknown".

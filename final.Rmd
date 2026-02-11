@@ -21,7 +21,7 @@ library('gt')
 ## Get support functions
 source('support_functions.R')
 
-## Load data from N=500 APS cohortcolli
+## Load data from N=500 APS cohort
 ## provides "data", "dictionary" and "codebook" in the working environment
 load(file = '../aps-data/20250731_data.RData')
 ## Filter the excluded record to not muddy the variable summaries
@@ -70,7 +70,7 @@ steroid_dag_data <- data |>
   left_join(wrapper_calc_str_scap_leukopenia_0(data), by = "record_id") |>
   left_join(wrapper_calc_str_scap_rr_0(data, dictionary), by = "record_id") |>
   left_join(wrapper_calc_str_scap_thrombocytopenia_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_septic_shock_0(data), by = "record_id") |>
+  left_join(wrapper_calc_str_septic_shock_0(data, dictionary), by = "record_id") |>
   left_join(wrapper_calc_str_vasculitis_0(data), by = "record_id") |>
   left_join(wrapper_calc_sys_active_covid19_0(data, dictionary), by = "record_id") |>
   left_join(wrapper_calc_sys_active_fungal_0(data), by = "record_id") |>
@@ -84,8 +84,8 @@ steroid_dag_data <- data |>
   left_join(wrapper_calc_sys_obstruct_lung_0(data), by = "record_id") |>
   left_join(wrapper_calc_sys_organ_failure_trajectory(data), by = "record_id") |>
   left_join(wrapper_calc_sys_pneumonia_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_sepsis_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_septic_shock_0(data), by = "record_id")
+  left_join(wrapper_calc_sys_sepsis_0(data, dictionary), by = "record_id") |>
+  left_join(wrapper_calc_sys_septic_shock_0(data, dictionary), by = "record_id")
 ```
 
 ## Missing Records

@@ -218,7 +218,7 @@ calc_aps_oxy_score <- function(
     !is.na(pao2) & pao2 >= 55 ~ 3,
     !is.na(pao2) & pao2 < 55 ~ 4,
     # Impute normal (0 points) if measurement is missing
-    TRUE ~ 0
+    .default = 0
   )
 
   return(oxy_points)
@@ -246,7 +246,7 @@ calc_aps_ph_score <- function(
     ph >= 7.15 ~ 3,
     ph < 7.15 ~ 4,
     # Impute normal (0 points) if measurement is missing
-    TRUE ~ 0
+    .default = 0
   )
 
   return(ph_points)
@@ -498,8 +498,7 @@ calc_fio2_from_resp_support <- function(
     resp_support_type == 2 ~ 0.21 + (0.03 * standard_flow),
     resp_support_type == 3 ~ hfnc_fio2,
     resp_support_type == 4 ~ niv_fio2,
-    resp_support_type %in% c(5, 6) ~ imv_fio2,
-    TRUE ~ NA_real_
+    resp_support_type %in% c(5, 6) ~ imv_fio2
   )
 }
 

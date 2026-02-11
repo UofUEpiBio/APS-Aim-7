@@ -111,7 +111,7 @@ get_gcs_with_lookback <- function(daily_gcs_8a_0, daily_gcs_8a_m1, daily_gcs_8a_
     !is.na(gcs_0) & !grepl('T', gcs_0, fixed = TRUE) ~ gcs_0,
     !is.na(gcs_m1) & !grepl('T', gcs_m1, fixed = TRUE) ~ gcs_m1,
     !is.na(gcs_m2) & !grepl('T', gcs_m2, fixed = TRUE) ~ gcs_m2,
-    TRUE ~ "15"  # Default to normal GCS if no value without T is found
+    .default = "15"  # Default to normal GCS if no value without T is found
   )
 
   return(gcs)

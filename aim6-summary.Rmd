@@ -274,58 +274,67 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
-wrapper_calc_sys_sepsis_0(data) |>
+wrapper_calc_sys_sepsis_0(data, dictionary) |>
   display_grand_total(sys_sepsis_0)
 ```
 
 ### Unknown/Missing Values
 
-These records were classified as `99 (Unknown)` because they were missing (NA) `sepsis_present` and have `sepsis_clinical_judgement == 'Unknown'`. These should be queried.
+These records have missing antimicrobial or pathogen data. These should be queried.
 
 ```{r}
-data_with_sepsis <- data |>
-  filter(event_label == 'Syndrome Adjudication') |>
-  mutate(
-    sys_sepsis_0 = calc_sys_sepsis_0(
-      sepsis_present,
-      sepsis_clinical_judgement
-    )
-  )
+data_with_sepsis <- wrapper_calc_sys_sepsis_0(data, dictionary)
 
-data_with_sepsis |>
-  filter(sys_sepsis_0 == 99) |>
+data_missing_antimicrobials <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
   select(
     record_id,
-    sepsis_present,
-    sepsis_clinical_judgement
+    daily_antibiotics_0,
+    daily_antiviral_0,
+    daily_antifungal_0,
+    antifungal_agents_0___1,
+    antifungal_agents_0___2,
+    antifungal_agents_0___3,
+    antifungal_agents_0___6,
+    antifungal_agents_0___7,
+    antifungal_agents_0___9,
+    antifungal_agents_0___13
+  ) |>
+  left_join(data_with_sepsis, by = 'record_id')
+
+data_missing_antimicrobials |>
+  filter(
+    is.na(daily_antibiotics_0) |
+    is.na(daily_antiviral_0) |
+    (daily_antifungal_0 == 'Administered' &
+      is.na(antifungal_agents_0___1) &
+      is.na(antifungal_agents_0___2) &
+      is.na(antifungal_agents_0___3) &
+      is.na(antifungal_agents_0___6) &
+      is.na(antifungal_agents_0___7) &
+      is.na(antifungal_agents_0___9) &
+      is.na(antifungal_agents_0___13))
+  ) |>
+  select(
+    record_id,
+    daily_antibiotics_0,
+    daily_antiviral_0,
+    daily_antifungal_0
   ) |>
   gt()
 ```
 
-This record was missing (NA) `sepsis_present` but had `sepsis_clinical_judgement == 'Yes'`. This should be queried.
-
-```{r}
-data_with_sepsis |>
-  filter(is.na(sys_sepsis_0)) |>
-  select(
-    record_id,
-    sepsis_present,
-    sepsis_clinical_judgement
-  ) |>
-  gt()
-```
-
-This record is missing from the 'Syndrome Adjudication' event entirely:
+These records are missing from the 'Daily In-Hospital Forms' event entirely:
 ```{r}
 data |>
   distinct(record_id) |>
-  left_join(data_with_sepsis, by = 'record_id') |>
-  filter(is.na(sys_sepsis_0) & is.na(sepsis_present) & is.na(sepsis_clinical_judgement)) |>
-  select(
-    record_id,
-    sepsis_present,
-    sepsis_clinical_judgement
+  left_join(data_missing_antimicrobials, by = 'record_id') |>
+  filter(
+    is.na(daily_antibiotics_0) &
+    is.na(daily_antiviral_0) &
+    is.na(daily_antifungal_0)
   ) |>
+  select(record_id) |>
   gt()
 ```
 
@@ -392,50 +401,6 @@ data_with_pneumonia |>
 
 The missing (NA) record is `13-0016`, which is missing from the 'Syndrome Adjudication' event entirely (see Presence of Sepsis Syndrome DAGs above).
 
-## Septic Shock Variables (Systematic and Streamlined)
-```{r}
-# Get weight data
-data_with_weight <- data |>
-  filter(event_label == 'Day 0') |>
-  select(
-    record_id,
-    m_weight_kg
-  )
-
-# Get vasopressor data
-data_with_vasopressors <- data |>
-  filter(event_label == 'Daily In-Hospital Forms') |>
-  select(
-    record_id,
-    daily_vasopressors_0___0,
-    daily_sbp_8a_0,
-    daily_dbp_8a_0,
-    daily_ne_dose_8a_0_mcg,
-    daily_ne_dose_8a_0_mcgkg,
-    daily_epi_dose_8a_0_mcg,
-    daily_epi_dose_8a_0_mcgkg,
-    daily_phen_dose_8a_0_mcg,
-    daily_phen_dos_8a_0_mcgkg,
-    daily_vaso_dose_8a_0,
-    daily_dopa_dose_8a_0_mcg,
-    daily_dopa_dos_8a_0_mcgkg,
-    daily_dobuta_8a_0_mcg,
-    daily_dobuta_8a_0_mcgkg,
-    daily_ang2_8a_0_mcg,
-    daily_ang2_8a_0_mcgkg,
-    daily_milr_8a_0_mcg,
-    daily_milr_8a_0_mcgkg
-  )
-
-# Get sepsis data
-data_with_sepsis <- data |>
-  filter(event_label == 'Syndrome Adjudication') |>
-  select(
-    record_id,
-    sepsis_present,
-    sepsis_clinical_judgement
-  )
-```
 ## Septic Shock -- Systematic DAG
 
 **Variable Definition:**
@@ -449,73 +414,8 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
-wrapper_calc_sys_septic_shock_0(data) |>
+wrapper_calc_sys_septic_shock_0(data, dictionary) |>
   display_grand_total(sys_septic_shock_0)
-```
-
-### Unknown/Missing Values
-
-These records were classified as `99 (Unknown)` because they have `sepsis_clinical_judgement == 'Unknown'` and are missing `sepsis_present`. They are all also recorded as Unknown in "Presence of Sepsis Syndrome Systematic DAG" (above). These should be queried.
-
-```{r}
-data_with_sys_septic_shock <- data_with_weight |>
-  left_join(data_with_vasopressors, by = 'record_id') |>
-  left_join(data_with_sepsis, by = 'record_id') |>
-  mutate(
-    sys_septic_shock_0 = calc_sys_septic_shock_0(
-      sepsis_present = sepsis_present,
-      sepsis_clinical_judgement = sepsis_clinical_judgement,
-
-      daily_vasopressors_0___0 = daily_vasopressors_0___0,
-      daily_sbp_8a_0 = daily_sbp_8a_0,
-      daily_dbp_8a_0 = daily_dbp_8a_0,
-      daily_ne_dose_8a_0_mcg = daily_ne_dose_8a_0_mcg,
-      daily_ne_dose_8a_0_mcgkg = daily_ne_dose_8a_0_mcgkg,
-      daily_epi_dose_8a_0_mcg = daily_epi_dose_8a_0_mcg,
-      daily_epi_dose_8a_0_mcgkg = daily_epi_dose_8a_0_mcgkg,
-      daily_phen_dose_8a_0_mcg = daily_phen_dose_8a_0_mcg,
-      daily_phen_dos_8a_0_mcgkg = daily_phen_dos_8a_0_mcgkg,
-      daily_vaso_dose_8a_0 = daily_vaso_dose_8a_0,
-      daily_dopa_dose_8a_0_mcg = daily_dopa_dose_8a_0_mcg,
-      daily_dopa_dos_8a_0_mcgkg = daily_dopa_dos_8a_0_mcgkg,
-      daily_dobuta_8a_0_mcg = daily_dobuta_8a_0_mcg,
-      daily_dobuta_8a_0_mcgkg = daily_dobuta_8a_0_mcgkg,
-      daily_ang2_8a_0_mcg = daily_ang2_8a_0_mcg,
-      daily_ang2_8a_0_mcgkg = daily_ang2_8a_0_mcgkg,
-      daily_milr_8a_0_mcg = daily_milr_8a_0_mcg,
-      daily_milr_8a_0_mcgkg = daily_milr_8a_0_mcgkg,
-
-      m_weight_kg = m_weight_kg
-    )
-  )
-
-data_with_sys_septic_shock |>
-  filter(sys_septic_shock_0 == 99) |>
-  select(
-    record_id,
-    sepsis_present,
-    sepsis_clinical_judgement,
-    daily_vasopressors_0___0,
-    daily_sbp_8a_0,
-    daily_dbp_8a_0,
-    daily_ne_dose_8a_0_mcg,
-    daily_ne_dose_8a_0_mcgkg,
-    daily_epi_dose_8a_0_mcg,
-    daily_epi_dose_8a_0_mcgkg,
-    daily_phen_dose_8a_0_mcg,
-    daily_phen_dos_8a_0_mcgkg,
-    daily_vaso_dose_8a_0,
-    daily_dopa_dose_8a_0_mcg,
-    daily_dopa_dos_8a_0_mcgkg,
-    daily_dobuta_8a_0_mcg,
-    daily_dobuta_8a_0_mcgkg,
-    daily_ang2_8a_0_mcg,
-    daily_ang2_8a_0_mcgkg,
-    daily_milr_8a_0_mcg,
-    daily_milr_8a_0_mcgkg,
-    m_weight_kg
-  ) |>
-  gt()
 ```
 
 ## Septic Shock -- Streamlined DAG
@@ -531,37 +431,9 @@ Binary indicator variable:
 **Summary:**
 
 ```{r}
-wrapper_calc_str_septic_shock_0(data) |>
+wrapper_calc_str_septic_shock_0(data, dictionary) |>
   display_grand_total(str_septic_shock_0)
 ```
-
-### Unknown/Missing Values
-
-These records were classified as `99 (Unknown)` because they have `sepsis_clinical_judgement == 'Unknown'` and are missing `sepsis_present`. They are all also recorded as Unknown in "Presence of Sepsis Syndrome Systematic DAG" (above). These should be queried.
-
-```{r}
-data_with_str_septic_shock <- data_with_vasopressors |>
-  left_join(data_with_sepsis, by = 'record_id') |>
-  mutate(
-    str_septic_shock_0 = calc_str_septic_shock_0(
-      sepsis_present = sepsis_present,
-      sepsis_clinical_judgement = sepsis_clinical_judgement,
-      daily_vasopressors_0___0 = daily_vasopressors_0___0
-    )
-  )
-
-data_with_str_septic_shock |>
-  filter(str_septic_shock_0 == 99) |>
-  select(
-    record_id,
-    sepsis_present,
-    sepsis_clinical_judgement,
-    daily_vasopressors_0___0
-  ) |>
-  gt()
-```
-
-The missing (NA) record is `13-0016`, which is missing from the 'Syndrome Adjudication' event entirely (see Presence of Sepsis Syndrome DAGs above).
 
 ## Gastrointestinal Bleeding -- Streamlined DAG
 

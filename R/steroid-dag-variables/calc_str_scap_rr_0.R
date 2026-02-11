@@ -41,8 +41,7 @@ calc_str_scap_rr_0 <- function(
       resp_code == 5 ~ hfnc_rr,      # High-flow nasal oxygen (HFNC)
       resp_code == 6 ~ standard_rr,  # Standard flow supplemental oxygen
       resp_code == 7 ~ high_rr,      # No respiratory support (room air)
-      resp_code == 99 ~ high_rr,     # Unknown
-      TRUE ~ NA_real_
+      resp_code == 99 ~ high_rr      # Unknown
     )
   }
 

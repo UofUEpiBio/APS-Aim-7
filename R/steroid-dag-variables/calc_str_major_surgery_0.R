@@ -23,7 +23,7 @@ calc_str_major_surgery_0 <- function(
   ## Return binary indicator
   dplyr::case_when(
     had_surgery ~ 1,
-    TRUE ~ 0
+    .default = 0
   )
 }
 
