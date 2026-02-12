@@ -164,16 +164,19 @@ calc_pf_ratio <- function(low_pao2, resp_low_pao2, fio2_low_pao2, o2_low_pao2) {
 calc_sf_ratio <- function(low_spo2, resp_low_spo2, fio2_low_spo2, o2_low_spo2) {
   case_when(
 
+    ## low SpO2 >97; S/F ratio invalid
+    !is.na(low_spo2) & low_spo2 > 97 ~ NA,
+
     ## patient on ECMO without invasive mechanical ventilation (FiO2 is nonsense)
     resp_low_spo2 == 'ECMO without invasive mechanical ventilation' ~ NA,
 
-    ## lowest SaO2 available and patient on IMV, NIV, or HFNC
+    ## lowest SpO2 available and patient on IMV, NIV, or HFNC
     !is.na(low_spo2) & !is.na(fio2_low_spo2) ~ low_spo2/fio2_low_spo2,
 
-    ## lowest SaO2 available and patient on supplemental oxygen (0.21 + 0.03 * L/min)
+    ## lowest SpO2 available and patient on supplemental oxygen (0.21 + 0.03 * L/min)
     !is.na(low_spo2) & !is.na(o2_low_spo2) ~ low_spo2/pmin(0.21 + 0.03*o2_low_spo2, 1),
 
-    ## lowest SaO2 available and patient on room air
+    ## lowest SpO2 available and patient on room air
     !is.na(low_spo2) & grepl('^No respiratory support', resp_low_spo2) ~ low_spo2/0.21,
 
     TRUE ~ NA
@@ -185,10 +188,10 @@ calc_sf_ratio <- function(low_spo2, resp_low_spo2, fio2_low_spo2, o2_low_spo2) {
 ## sf_ratio - worst SpO2/FiO2 ratio
 calc_sofa_resp <- function(pf_ratio, sf_ratio) {
   case_when(
-    pf_ratio  < 100 | sf_ratio < 67 ~ 4,
-    pf_ratio  < 200 | sf_ratio < 142 ~ 3,
-    pf_ratio  < 300 | sf_ratio < 221 ~ 2,
-    pf_ratio  < 400 | sf_ratio < 302 ~ 1,
+    pf_ratio  < 100 | sf_ratio <  67  ~ 4,
+    pf_ratio  < 200 | sf_ratio <  142 ~ 3,
+    pf_ratio  < 300 | sf_ratio <  221 ~ 2,
+    pf_ratio  < 400 | sf_ratio <  302 ~ 1,
     pf_ratio >= 400 | sf_ratio >= 302 ~ 0,
     TRUE ~ NA
   )
@@ -263,7 +266,6 @@ calc_sofa_cns <- function(gcs) {
 
   ## imputed GCS
   gcs_imput <- case_when(
-    gcs_intub ~ gcs_quant + 5.0, ## impute normal verbal score
     TRUE ~ gcs_quant
   )
 
@@ -281,6 +283,134 @@ calc_sofa_cns <- function(gcs) {
 ## calculate renal SOFA score
 ## cr - creatinine concentration (mg/dL)
 calc_sofa_rena <- function(cr) {
+  case_when(
+    cr > 5.0 ~ 4,
+    cr > 3.5 ~ 3,
+    cr > 2.0 ~ 2,
+    cr > 1.2 ~ 1,
+    cr > 0.0 ~ 0,
+    TRUE ~ NA
+  )
+}
+
+## calculate respiratory SOFA-2 score
+## pf_ratio - worst PaO2/FiO2 ratio
+## sf_ratio - worst SpO2/FiO2 ratio
+calc_sofa_2_resp <- function(pf_ratio, sf_ratio) {
+  case_when(
+    pf_ratio <= 75  | sf_ratio <= 120 ~ 4,
+    pf_ratio <= 150 | sf_ratio <= 200 ~ 3,
+    pf_ratio <= 225 | sf_ratio <= 249 ~ 2,
+    pf_ratio <  300 | sf_ratio <  300 ~ 1,
+    pf_ratio >= 300 | sf_ratio >= 300 ~ 0,
+    TRUE ~ NA
+  )
+}
+
+## calculate coagulation SOFA-2 score
+## platelets - platelets (10^3/mm^3)
+calc_sofa_2_coag <- function(platelets) {
+  case_when(
+    platelets <= 50  ~ 4,
+    platelets <= 80  ~ 3,
+    platelets <= 100 ~ 2,
+    platelets <= 150 ~ 1,
+    platelets >  150 ~ 0,
+    TRUE ~ NA
+  )
+}
+
+## calculate liver SOFA-2 score
+## bilirubin - bilirubin (mg/dL)
+calc_sofa_2_livr <- function(bilirubin) {
+  case_when(
+    bilirubin >= 12  ~ 4,
+    bilirubin >  6   ~ 3,
+    bilirubin >  3   ~ 2,
+    bilirubin >  1.2 ~ 1,
+    bilirubin <= 1.2 ~ 0,
+    TRUE ~ NA
+  )
+}
+
+## calculate cardiovascular SOFA-2 score
+## sbp        - SBP (mmHg)
+## dbp        - DBP (mmHg)
+## dopa_mcg   - dopamine dose (mcg/min)
+## dopa_mcgkg - dopamine dose (mcg/min/kg)
+## dobu_mcg   - dobutamine dose (mcg/min)
+## dobu_mcgkg - dobutamine dose (mcg/min/kg)
+## epin_mcg   - epinephrine dose (mcg/min)
+## epin_mcgkg - epinephrine dose (mcg/min/kg)
+## nore_mcg   - norepinephrine dose (mcg/min)
+## nore_mcgkg - norepinephrine dose (mcg/min/kg)
+## phen_mcg   - phenylephrine dose (mcg/min)
+## phen_mcgkg - phenylephrine dose (mcg/min/kg)
+## vaso_dose  - vasopressin dose (units/min)
+## ang2_mcg   - angiotensin II dose (mcg/min)
+## ang2_mcgkg - angiotensin II dose (mcg/min/kg)
+## weight_kg  - weight (kg)
+calc_sofa_2_card <- function(sbp, dbp, dopa_mcg, dopa_mcgkg, dobu_mcg, dobu_mcgkg,
+                             epin_mcg, epin_mcgkg, nore_mcg, nore_mcgkg,
+                             phen_mcg, phen_mcgkg, vaso_dose,ang2_mcg, ang2_mcgkg,
+                             weight_kg) {
+  map <- 1/3*sbp + 2/3*dbp
+  case_when(
+    epin_mcgkg + nore_mcgkg > 0.4 |
+      ((epin_mcgkg + nore_mcgkg > 0.2) &
+         (dopa_mcgkg > 0.0 | dopa_mcg > 0.0 |
+            dobu_mcgkg > 0.0 | dobu_mcg > 0.0 |
+            phen_mcg > 0.0 | phen_mcgkg > 0.0 |
+            vaso_dose  > 0.0 | ang2_mcg  > 0.0 |
+            ang2_mcgkg  > 0.0))    ~ 4,
+    epin_mcgkg + nore_mcgkg > 0.2 |
+      ((epin_mcgkg + nore_mcgkg > 0) &
+         (dopa_mcgkg > 0.0 | dopa_mcg > 0.0 |
+            dobu_mcgkg > 0.0 | dobu_mcg > 0.0 |
+            phen_mcg > 0.0 | phen_mcgkg > 0.0 |
+            vaso_dose  > 0.0 | ang2_mcg  > 0.0 |
+            ang2_mcgkg  > 0.0))   ~ 3,
+    epin_mcgkg + nore_mcgkg <= 0.2 |
+      dopa_mcgkg > 0.0 | dopa_mcg > 0.0 |
+      dobu_mcgkg > 0.0 | dobu_mcg > 0.0 |
+      phen_mcg > 0.0 | phen_mcgkg > 0.0 |
+      vaso_dose  > 0.0 | ang2_mcg  > 0.0 |
+      ang2_mcgkg  > 0.0 ~ 2,
+    map < 70  ~ 1,
+    map >= 70 ~ 0,
+    TRUE ~ NA
+  )
+}
+
+## calculate CNS SOFA-2 score
+## gcs - Glasgow Coma Score
+calc_sofa_2_cns <- function(gcs) {
+
+  ## treat 'not documented' as missing
+  gcs <- ifelse(gcs == 'not documented', NA, gcs)
+
+  ## GCS contains T/patient was intubated/no verbal score:
+  gcs_imput <- ifelse(grepl('T$', gcs),
+    ## extract quantitative component of GCS and add 4
+    as.numeric(sub('T', '', gcs))+4,
+    ## otherwise take gcs value as is
+    gcs)
+
+  ## convert to SOFA CNS score
+  case_when(
+    gcs_imput <= 5  ~ 4,
+    gcs_imput <= 8  ~ 3,
+    gcs_imput <= 12 ~ 2,
+    gcs_imput <= 14 ~ 1,
+    gcs_imput == 15 ~ 0,
+    TRUE ~ NA
+  )
+}
+
+## calculate renal SOFA-2 score
+## cr - creatinine concentration (mg/dL)
+## uop - urine output (mL)
+calc_sofa_2_rena <- function(cr, uop) {
   case_when(
     cr > 5.0 ~ 4,
     cr > 3.5 ~ 3,
