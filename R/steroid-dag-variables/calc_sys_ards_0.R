@@ -41,3 +41,22 @@ wrapper_calc_sys_ards_0 <- function(data) {
       by = 'record_id'
     )
 }
+
+
+# Check for missing input parameters
+check_missing_sys_ards_0 <- function(data, record_ids) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Syndrome Adjudication') |>
+    select(record_id, ards_present, ards_clinical_judgement) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(ards_present)) missing <- c(missing, "ards_present")
+      if (is.na(ards_clinical_judgement)) missing <- c(missing, "ards_clinical_judgement")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}

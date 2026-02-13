@@ -125,27 +125,9 @@ if (nrow(records_with_missing) > 0) {
   # Write to CSV (one row per record_id with missing columns concatenated)
   records_with_missing |>
     mutate(missing_cols = sapply(missing_cols, paste, collapse = "; ")) |>
-    write.csv("missing_values_report.csv", row.names = FALSE)
+    write.csv("generated-csvs/missing_values_report.csv", row.names = FALSE)
 
   cat("\nMissing values report written to missing_values_report.csv\n")
-
-  # Create abbreviated report excluding sofa_total_day_0 and sofa_total_day_m1
-  records_with_missing_abbrv <- records_with_missing |>
-    mutate(
-      missing_cols = lapply(missing_cols, function(cols) {
-        cols[!cols %in% c("sofa_total_day_0", "sofa_total_day_m1")]
-      })
-    ) |>
-    filter(lengths(missing_cols) > 0)
-
-  if (nrow(records_with_missing_abbrv) > 0) {
-    records_with_missing_abbrv |>
-      mutate(missing_cols = sapply(missing_cols, paste, collapse = "; ")) |>
-      write.csv("missing_values_report_abbrv.csv", row.names = FALSE)
-
-    cat("Abbreviated report (excluding SOFA columns) written to missing_values_report_abbrv.csv\n")
-    cat("Found", nrow(records_with_missing_abbrv), "records with other missing values\n")
-  }
 
 } else {
   cat("No records with missing values found\n")
@@ -196,27 +178,9 @@ if (nrow(records_with_unknown) > 0) {
   # Write to CSV (one row per record_id with unknown columns concatenated)
   records_with_unknown |>
     mutate(unknown_cols = sapply(unknown_cols, paste, collapse = "; ")) |>
-    write.csv("unknown_values_report.csv", row.names = FALSE)
+    write.csv("generated-csvs/unknown_values_report.csv", row.names = FALSE)
 
   cat("\nUnknown values report written to unknown_values_report.csv\n")
-
-  # Create abbreviated report excluding sofa_total_day_0 and sofa_total_day_m1
-  records_with_unknown_abbrv <- records_with_unknown |>
-    mutate(
-      unknown_cols = lapply(unknown_cols, function(cols) {
-        cols[!cols %in% c("sofa_total_day_0", "sofa_total_day_m1")]
-      })
-    ) |>
-    filter(lengths(unknown_cols) > 0)
-
-  if (nrow(records_with_unknown_abbrv) > 0) {
-    records_with_unknown_abbrv |>
-      mutate(unknown_cols = sapply(unknown_cols, paste, collapse = "; ")) |>
-      write.csv("unknown_values_report_abbrv.csv", row.names = FALSE)
-
-    cat("Abbreviated report (excluding SOFA columns) written to unknown_values_report_abbrv.csv\n")
-    cat("Found", nrow(records_with_unknown_abbrv), "records with other unknown values\n")
-  }
 
 } else {
   cat("No records with unknown values found\n")

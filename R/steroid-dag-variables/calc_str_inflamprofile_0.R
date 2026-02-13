@@ -230,3 +230,69 @@ wrapper_calc_str_inflamprofile_0 <- function(data) {
       by = 'record_id'
     )
 }
+
+
+# Check for missing input parameters (SYS)
+check_missing_sys_inflamprofile_0 <- function(data, record_ids) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
+    select(record_id, daily_crp_8a_0, daily_crp_nc_0, daily_crp_8a_m1, daily_crp_nc_m1, daily_crp_8a_m2, daily_crp_nc_m2,
+           daily_ferritin_8a_0, daily_ferritin_nc_0, daily_ferritin_8a_m1, daily_ferritin_nc_m1, daily_ferritin_8a_m2, daily_ferritin_nc_m2,
+           daily_fibrinogen_8a_0, daily_fibrinogen_nc_0, daily_fibrinogen_8a_m1, daily_fibrinogen_nc_m1, daily_fibrinogen_8a_m2, daily_fibrinogen_nc_m2,
+           daily_ddimer_8a_0, daily_ddimer_nc_0, daily_ddimer_8a_m1, daily_ddimer_nc_m1, daily_ddimer_8a_m2, daily_ddimer_nc_m2) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(daily_crp_8a_0)) missing <- c(missing, "daily_crp_8a_0")
+      if (is.na(daily_crp_nc_0)) missing <- c(missing, "daily_crp_nc_0")
+      if (is.na(daily_crp_8a_m1)) missing <- c(missing, "daily_crp_8a_m1")
+      if (is.na(daily_crp_nc_m1)) missing <- c(missing, "daily_crp_nc_m1")
+      if (is.na(daily_crp_8a_m2)) missing <- c(missing, "daily_crp_8a_m2")
+      if (is.na(daily_crp_nc_m2)) missing <- c(missing, "daily_crp_nc_m2")
+      if (is.na(daily_ferritin_8a_0)) missing <- c(missing, "daily_ferritin_8a_0")
+      if (is.na(daily_ferritin_nc_0)) missing <- c(missing, "daily_ferritin_nc_0")
+      if (is.na(daily_ferritin_8a_m1)) missing <- c(missing, "daily_ferritin_8a_m1")
+      if (is.na(daily_ferritin_nc_m1)) missing <- c(missing, "daily_ferritin_nc_m1")
+      if (is.na(daily_ferritin_8a_m2)) missing <- c(missing, "daily_ferritin_8a_m2")
+      if (is.na(daily_ferritin_nc_m2)) missing <- c(missing, "daily_ferritin_nc_m2")
+      if (is.na(daily_fibrinogen_8a_0)) missing <- c(missing, "daily_fibrinogen_8a_0")
+      if (is.na(daily_fibrinogen_nc_0)) missing <- c(missing, "daily_fibrinogen_nc_0")
+      if (is.na(daily_fibrinogen_8a_m1)) missing <- c(missing, "daily_fibrinogen_8a_m1")
+      if (is.na(daily_fibrinogen_nc_m1)) missing <- c(missing, "daily_fibrinogen_nc_m1")
+      if (is.na(daily_fibrinogen_8a_m2)) missing <- c(missing, "daily_fibrinogen_8a_m2")
+      if (is.na(daily_fibrinogen_nc_m2)) missing <- c(missing, "daily_fibrinogen_nc_m2")
+      if (is.na(daily_ddimer_8a_0)) missing <- c(missing, "daily_ddimer_8a_0")
+      if (is.na(daily_ddimer_nc_0)) missing <- c(missing, "daily_ddimer_nc_0")
+      if (is.na(daily_ddimer_8a_m1)) missing <- c(missing, "daily_ddimer_8a_m1")
+      if (is.na(daily_ddimer_nc_m1)) missing <- c(missing, "daily_ddimer_nc_m1")
+      if (is.na(daily_ddimer_8a_m2)) missing <- c(missing, "daily_ddimer_8a_m2")
+      if (is.na(daily_ddimer_nc_m2)) missing <- c(missing, "daily_ddimer_nc_m2")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}
+
+# Check for missing input parameters (STR)
+check_missing_str_inflamprofile_0 <- function(data, record_ids) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
+    select(record_id, daily_crp_8a_0, daily_crp_nc_0, daily_crp_8a_m1, daily_crp_nc_m1, daily_crp_8a_m2, daily_crp_nc_m2) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(daily_crp_8a_0)) missing <- c(missing, "daily_crp_8a_0")
+      if (is.na(daily_crp_nc_0)) missing <- c(missing, "daily_crp_nc_0")
+      if (is.na(daily_crp_8a_m1)) missing <- c(missing, "daily_crp_8a_m1")
+      if (is.na(daily_crp_nc_m1)) missing <- c(missing, "daily_crp_nc_m1")
+      if (is.na(daily_crp_8a_m2)) missing <- c(missing, "daily_crp_8a_m2")
+      if (is.na(daily_crp_nc_m2)) missing <- c(missing, "daily_crp_nc_m2")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}

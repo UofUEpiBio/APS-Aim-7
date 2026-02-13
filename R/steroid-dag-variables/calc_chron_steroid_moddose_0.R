@@ -96,3 +96,44 @@ wrapper_calc_str_chron_steroid_moddose_0 <- function(data) {
       by = 'record_id'
     )
 }
+
+
+# Check for missing input parameters (SYS)
+check_missing_sys_chron_steroid_moddose_0 <- function(data, record_ids) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Day 0') |>
+    select(record_id, mhccster, m_endo_conditions___2, m_immunosup_conditions___1, m_endocrine, m_immunosuppression) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(mhccster)) missing <- c(missing, "mhccster")
+      if (is.na(m_endo_conditions___2)) missing <- c(missing, "m_endo_conditions___2")
+      if (is.na(m_immunosup_conditions___1)) missing <- c(missing, "m_immunosup_conditions___1")
+      if (is.na(m_endocrine)) missing <- c(missing, "m_endocrine")
+      if (is.na(m_immunosuppression)) missing <- c(missing, "m_immunosuppression")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}
+
+# Check for missing input parameters (STR)
+check_missing_str_chron_steroid_moddose_0 <- function(data, record_ids) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Day 0') |>
+    select(record_id, mhccster, m_endo_conditions___2, m_endocrine) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(mhccster)) missing <- c(missing, "mhccster")
+      if (is.na(m_endo_conditions___2)) missing <- c(missing, "m_endo_conditions___2")
+      if (is.na(m_endocrine)) missing <- c(missing, "m_endocrine")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}

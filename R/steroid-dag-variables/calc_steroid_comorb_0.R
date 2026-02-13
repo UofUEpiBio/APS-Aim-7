@@ -169,3 +169,64 @@ wrapper_calc_str_steroid_comorb_0 <- function(data) {
       by = 'record_id'
     )
 }
+
+
+# Check for missing input parameters (SYS)
+check_missing_sys_steroid_comorb_0 <- function(data, record_ids) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Day 0') |>
+    select(record_id, mhrheumd, m_rheum_conditions___1, m_rheum_conditions___2, m_rheum_conditions___3,
+           m_rheum_conditions___4, m_rheum_conditions___5, m_rheum_conditions___6, m_rheum_conditions___7,
+           m_rheum_conditions___8, m_rheum_conditions___88, m_pulmonary, m_pulm_conditions___6) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(mhrheumd)) missing <- c(missing, "mhrheumd")
+      if (is.na(m_rheum_conditions___1)) missing <- c(missing, "m_rheum_conditions___1")
+      if (is.na(m_rheum_conditions___2)) missing <- c(missing, "m_rheum_conditions___2")
+      if (is.na(m_rheum_conditions___3)) missing <- c(missing, "m_rheum_conditions___3")
+      if (is.na(m_rheum_conditions___4)) missing <- c(missing, "m_rheum_conditions___4")
+      if (is.na(m_rheum_conditions___5)) missing <- c(missing, "m_rheum_conditions___5")
+      if (is.na(m_rheum_conditions___6)) missing <- c(missing, "m_rheum_conditions___6")
+      if (is.na(m_rheum_conditions___7)) missing <- c(missing, "m_rheum_conditions___7")
+      if (is.na(m_rheum_conditions___8)) missing <- c(missing, "m_rheum_conditions___8")
+      if (is.na(m_rheum_conditions___88)) missing <- c(missing, "m_rheum_conditions___88")
+      if (is.na(m_pulmonary)) missing <- c(missing, "m_pulmonary")
+      if (is.na(m_pulm_conditions___6)) missing <- c(missing, "m_pulm_conditions___6")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}
+
+# Check for missing input parameters (STR)
+check_missing_str_steroid_comorb_0 <- function(data, record_ids) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Day 0') |>
+    select(record_id, mhrheumd, m_rheum_conditions___1, m_rheum_conditions___2, m_rheum_conditions___3,
+           m_rheum_conditions___4, m_rheum_conditions___5, m_rheum_conditions___6, m_rheum_conditions___7,
+           m_rheum_conditions___88, m_immunosuppression, m_immunosup_conditions___4, mhccster) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(mhrheumd)) missing <- c(missing, "mhrheumd")
+      if (is.na(m_rheum_conditions___1)) missing <- c(missing, "m_rheum_conditions___1")
+      if (is.na(m_rheum_conditions___2)) missing <- c(missing, "m_rheum_conditions___2")
+      if (is.na(m_rheum_conditions___3)) missing <- c(missing, "m_rheum_conditions___3")
+      if (is.na(m_rheum_conditions___4)) missing <- c(missing, "m_rheum_conditions___4")
+      if (is.na(m_rheum_conditions___5)) missing <- c(missing, "m_rheum_conditions___5")
+      if (is.na(m_rheum_conditions___6)) missing <- c(missing, "m_rheum_conditions___6")
+      if (is.na(m_rheum_conditions___7)) missing <- c(missing, "m_rheum_conditions___7")
+      if (is.na(m_rheum_conditions___88)) missing <- c(missing, "m_rheum_conditions___88")
+      if (is.na(m_immunosuppression)) missing <- c(missing, "m_immunosuppression")
+      if (is.na(m_immunosup_conditions___4)) missing <- c(missing, "m_immunosup_conditions___4")
+      if (is.na(mhccster)) missing <- c(missing, "mhccster")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}

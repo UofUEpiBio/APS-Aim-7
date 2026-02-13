@@ -109,3 +109,30 @@ wrapper_calc_sys_delirium_0 <- function(data) {
     distinct(record_id) |>
     left_join(data_with_delirium, by = 'record_id')
 }
+
+
+# Check for missing input parameters
+check_missing_sys_delirium_0 <- function(data, record_ids) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
+    select(record_id, cam_0, cam_m1, cam_m2, lowrass_orres_0, lowrass_orres_m1, lowrass_orres_m2,
+           highestrass_orres_0, highestrass_orres_m1, highestrass_orres_m2) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(cam_0)) missing <- c(missing, "cam_0")
+      if (is.na(cam_m1)) missing <- c(missing, "cam_m1")
+      if (is.na(cam_m2)) missing <- c(missing, "cam_m2")
+      if (is.na(lowrass_orres_0)) missing <- c(missing, "lowrass_orres_0")
+      if (is.na(lowrass_orres_m1)) missing <- c(missing, "lowrass_orres_m1")
+      if (is.na(lowrass_orres_m2)) missing <- c(missing, "lowrass_orres_m2")
+      if (is.na(highestrass_orres_0)) missing <- c(missing, "highestrass_orres_0")
+      if (is.na(highestrass_orres_m1)) missing <- c(missing, "highestrass_orres_m1")
+      if (is.na(highestrass_orres_m2)) missing <- c(missing, "highestrass_orres_m2")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}

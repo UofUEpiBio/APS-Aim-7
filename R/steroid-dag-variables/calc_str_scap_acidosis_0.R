@@ -45,3 +45,23 @@ wrapper_calc_str_scap_acidosis_0 <- function(data) {
       by = 'record_id'
     )
 }
+
+
+# Check for missing input parameters
+check_missing_str_scap_acidosis_0 <- function(data, record_ids) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
+    select(record_id, daily_ph_lowest_0, daily_ph_lowest_m1, daily_ph_lowest_m2) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(daily_ph_lowest_0)) missing <- c(missing, "daily_ph_lowest_0")
+      if (is.na(daily_ph_lowest_m1)) missing <- c(missing, "daily_ph_lowest_m1")
+      if (is.na(daily_ph_lowest_m2)) missing <- c(missing, "daily_ph_lowest_m2")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}

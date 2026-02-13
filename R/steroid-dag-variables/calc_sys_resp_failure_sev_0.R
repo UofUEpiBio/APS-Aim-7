@@ -105,3 +105,30 @@ wrapper_calc_sys_resp_failure_sev_0 <- function(data, dictionary) {
       by = 'record_id'
     )
 }
+
+
+# Check for missing input parameters
+check_missing_sys_resp_failure_sev_0 <- function(data, record_ids, dictionary) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
+    select(record_id, daily_resp_8a_0, dailysofa_perf_0, daily_standard_flow_8a_0,
+           daily_hfnc_fi02_8a_0, daily_niv_fi02_8a_0, daily_imv_fio2_8a_0, daily_epap_8a_0,
+           daily_spo2_8a_0) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(daily_resp_8a_0)) missing <- c(missing, "daily_resp_8a_0")
+      if (is.na(dailysofa_perf_0)) missing <- c(missing, "dailysofa_perf_0")
+      if (is.na(daily_standard_flow_8a_0)) missing <- c(missing, "daily_standard_flow_8a_0")
+      if (is.na(daily_hfnc_fi02_8a_0)) missing <- c(missing, "daily_hfnc_fi02_8a_0")
+      if (is.na(daily_niv_fi02_8a_0)) missing <- c(missing, "daily_niv_fi02_8a_0")
+      if (is.na(daily_imv_fio2_8a_0)) missing <- c(missing, "daily_imv_fio2_8a_0")
+      if (is.na(daily_epap_8a_0)) missing <- c(missing, "daily_epap_8a_0")
+      if (is.na(daily_spo2_8a_0)) missing <- c(missing, "daily_spo2_8a_0")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}

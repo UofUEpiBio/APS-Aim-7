@@ -97,3 +97,62 @@ wrapper_calc_str_hyperglyc_hist_0 <- function(data) {
       by = 'record_id'
     )
 }
+
+
+# Check for missing input parameters (SYS)
+check_missing_sys_hyperglycemia_0 <- function(data, record_ids) {
+  # Check Day 0 parameters
+  day0_missing <- data |>
+    filter(record_id %in% record_ids, event_label == 'Day 0') |>
+    select(record_id, m_endocrine, m_endo_conditions___1) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(m_endocrine)) missing <- c(missing, "m_endocrine")
+      if (is.na(m_endo_conditions___1)) missing <- c(missing, "m_endo_conditions___1")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+
+  # Check Daily In-Hospital Forms parameters
+  daily_missing <- data |>
+    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
+    select(record_id, daily_gluc_8a_0, daily_gluc_nc_0) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(daily_gluc_8a_0)) missing <- c(missing, "daily_gluc_8a_0")
+      if (is.na(daily_gluc_nc_0)) missing <- c(missing, "daily_gluc_nc_0")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+
+  # Combine both
+  bind_rows(day0_missing, daily_missing) |>
+    group_by(record_id) |>
+    summarize(missing_params = paste(unique(unlist(strsplit(missing_params, "; "))), collapse = "; "), .groups = "drop")
+}
+
+# Check for missing input parameters (STR)
+check_missing_str_hyperglyc_hist_0 <- function(data, record_ids) {
+  data |>
+    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
+    select(record_id, daily_gluc_8a_0, daily_gluc_nc_0) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(daily_gluc_8a_0)) missing <- c(missing, "daily_gluc_8a_0")
+      if (is.na(daily_gluc_nc_0)) missing <- c(missing, "daily_gluc_nc_0")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+}

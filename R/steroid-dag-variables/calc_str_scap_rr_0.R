@@ -167,3 +167,60 @@ wrapper_calc_str_scap_rr_0 <- function(data, dictionary) {
     distinct(record_id) |>
     left_join(data_with_scap_rr, by = 'record_id')
 }
+
+
+# Check for missing input parameters
+check_missing_str_scap_rr_0 <- function(data, record_ids) {
+  # Check Day 0 parameters
+  day0_missing <- data |>
+    filter(record_id %in% record_ids, event_label == 'Day 0') |>
+    select(record_id, highrr_vsorres) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(highrr_vsorres)) missing <- c(missing, "highrr_vsorres")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+
+  # Check Daily In-Hospital Forms parameters
+  daily_missing <- data |>
+    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
+    select(record_id, daily_resp_8a_0, daily_resp_8a_m1, daily_resp_8a_m2,
+           daily_hfnc_rr_8a_0, daily_hfnc_rr_8a_m1, daily_hfnc_rr_8a_m2,
+           daily_niv_rr_8a_0, daily_niv_rr_8a_m1, daily_niv_rr_8a_m2,
+           daily_standard_rr_8a_0, daily_standard_rr_8a_m1, daily_standard_rr_8a_m2,
+           daily_resp_rate_8a_0, daily_resp_rate_8a_m1, daily_resp_rate_8a_m2) |>
+    distinct() |>
+    rowwise() |>
+    mutate(missing_params = {
+      missing <- c()
+      if (is.na(daily_resp_8a_0)) missing <- c(missing, "daily_resp_8a_0")
+      if (is.na(daily_resp_8a_m1)) missing <- c(missing, "daily_resp_8a_m1")
+      if (is.na(daily_resp_8a_m2)) missing <- c(missing, "daily_resp_8a_m2")
+      if (is.na(daily_hfnc_rr_8a_0)) missing <- c(missing, "daily_hfnc_rr_8a_0")
+      if (is.na(daily_hfnc_rr_8a_m1)) missing <- c(missing, "daily_hfnc_rr_8a_m1")
+      if (is.na(daily_hfnc_rr_8a_m2)) missing <- c(missing, "daily_hfnc_rr_8a_m2")
+      if (is.na(daily_niv_rr_8a_0)) missing <- c(missing, "daily_niv_rr_8a_0")
+      if (is.na(daily_niv_rr_8a_m1)) missing <- c(missing, "daily_niv_rr_8a_m1")
+      if (is.na(daily_niv_rr_8a_m2)) missing <- c(missing, "daily_niv_rr_8a_m2")
+      if (is.na(daily_standard_rr_8a_0)) missing <- c(missing, "daily_standard_rr_8a_0")
+      if (is.na(daily_standard_rr_8a_m1)) missing <- c(missing, "daily_standard_rr_8a_m1")
+      if (is.na(daily_standard_rr_8a_m2)) missing <- c(missing, "daily_standard_rr_8a_m2")
+      if (is.na(daily_resp_rate_8a_0)) missing <- c(missing, "daily_resp_rate_8a_0")
+      if (is.na(daily_resp_rate_8a_m1)) missing <- c(missing, "daily_resp_rate_8a_m1")
+      if (is.na(daily_resp_rate_8a_m2)) missing <- c(missing, "daily_resp_rate_8a_m2")
+      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
+    }) |>
+    ungroup() |>
+    filter(!is.na(missing_params)) |>
+    select(record_id, missing_params)
+
+  # Combine both
+  bind_rows(day0_missing, daily_missing) |>
+    group_by(record_id) |>
+    summarize(missing_params = paste(unique(unlist(strsplit(missing_params, "; "))), collapse = "; "), .groups = "drop")
+}
