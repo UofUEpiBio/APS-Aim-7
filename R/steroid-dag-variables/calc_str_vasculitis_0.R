@@ -57,25 +57,3 @@ wrapper_calc_str_vasculitis_0 <- function(data) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_str_vasculitis_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Day 0') |>
-    select(record_id, mhrheumd, m_rheum_conditions___8, m_immunosuppression, m_immunosup_conditions___4, mhccster) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(mhrheumd)) missing <- c(missing, "mhrheumd")
-      if (is.na(m_rheum_conditions___8)) missing <- c(missing, "m_rheum_conditions___8")
-      if (is.na(m_immunosuppression)) missing <- c(missing, "m_immunosuppression")
-      if (is.na(m_immunosup_conditions___4)) missing <- c(missing, "m_immunosup_conditions___4")
-      if (is.na(mhccster)) missing <- c(missing, "mhccster")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

@@ -40,21 +40,3 @@ wrapper_calc_str_drug_toxicity_0 <- function(data, dictionary) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_str_drug_toxicity_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Syndrome Adjudication') |>
-    select(record_id, organ_dysfnx_cause) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(organ_dysfnx_cause)) missing <- c(missing, "organ_dysfnx_cause")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

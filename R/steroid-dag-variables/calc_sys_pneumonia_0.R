@@ -37,21 +37,3 @@ wrapper_calc_sys_pneumonia_0 <- function(data) {
     distinct(record_id) |>
     left_join(data_with_pneumonia, by = 'record_id')
 }
-
-
-# Check for missing input parameters
-check_missing_sys_pneumonia_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Syndrome Adjudication') |>
-    select(record_id, pna_clinical_judgement) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(pna_clinical_judgement)) missing <- c(missing, "pna_clinical_judgement")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

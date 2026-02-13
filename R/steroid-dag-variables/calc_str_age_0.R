@@ -32,21 +32,3 @@ wrapper_calc_str_age_0 <- function(data) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_str_age_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Day 0') |>
-    select(record_id, age) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(age)) missing <- c(missing, "age")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

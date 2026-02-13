@@ -48,23 +48,3 @@ wrapper_calc_str_major_surgery_0 <- function(data) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_str_major_surgery_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
-    select(record_id, daily_surgery_m2, daily_surgery_m1, daily_surgery_0) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(daily_surgery_m2)) missing <- c(missing, "daily_surgery_m2")
-      if (is.na(daily_surgery_m1)) missing <- c(missing, "daily_surgery_m1")
-      if (is.na(daily_surgery_0)) missing <- c(missing, "daily_surgery_0")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

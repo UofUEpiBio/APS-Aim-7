@@ -39,22 +39,3 @@ wrapper_calc_str_chron_steroid_highdose_0 <- function(data) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_str_chron_steroid_highdose_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Day 0') |>
-    select(record_id, m_immunosuppression, m_immunosup_conditions___1) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(m_immunosuppression)) missing <- c(missing, "m_immunosuppression")
-      if (is.na(m_immunosup_conditions___1)) missing <- c(missing, "m_immunosup_conditions___1")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

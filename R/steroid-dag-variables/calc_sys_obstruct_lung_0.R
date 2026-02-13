@@ -41,23 +41,3 @@ wrapper_calc_sys_obstruct_lung_0 <- function(data) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_sys_obstruct_lung_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Day 0') |>
-    select(record_id, m_pulmonary, m_pulm_conditions___1, m_pulm_conditions___3) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(m_pulmonary)) missing <- c(missing, "m_pulmonary")
-      if (is.na(m_pulm_conditions___1)) missing <- c(missing, "m_pulm_conditions___1")
-      if (is.na(m_pulm_conditions___3)) missing <- c(missing, "m_pulm_conditions___3")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

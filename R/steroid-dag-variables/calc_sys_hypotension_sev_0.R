@@ -161,59 +161,6 @@ wrapper_calc_sys_hypotension_sev_0 <- function(data) {
     left_join(data_with_hypotension_sev, by = 'record_id')
 }
 
-
-# Check for missing input parameters
-check_missing_sys_hypotension_sev_0 <- function(data, record_ids) {
-  # Check Day 0 parameters
-  day0_missing <- data |>
-    filter(record_id %in% record_ids, event_label == 'Day 0') |>
-    select(record_id, m_weight_kg) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(m_weight_kg)) missing <- c(missing, "m_weight_kg")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-
-  # Check Daily In-Hospital Forms parameters (many vasopressor and dose variables)
-  daily_missing <- data |>
-    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
-    select(record_id, starts_with("daily_vasopressors_0___"), daily_sbp_8a_0, daily_dbp_8a_0,
-           daily_ne_dose_8a_0_mcg, daily_ne_dose_8a_0_mcgkg, daily_epi_dose_8a_0_mcg, daily_epi_dose_8a_0_mcgkg,
-           daily_phen_dose_8a_0_mcg, daily_phen_dos_8a_0_mcgkg, daily_vaso_dose_8a_0,
-           daily_dopa_dose_8a_0_mcg, daily_dopa_dos_8a_0_mcgkg, daily_dobuta_8a_0_mcg, daily_dobuta_8a_0_mcgkg,
-           daily_ang2_8a_0_mcg, daily_ang2_8a_0_mcgkg, daily_milr_8a_0_mcg, daily_milr_8a_0_mcgkg) |>
-    distinct() |>
-    # Check for any missing across all these many columns dynamically
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      cols <- c("daily_vasopressors_0___0", "daily_vasopressors_0___1", "daily_vasopressors_0___2",
-                "daily_vasopressors_0___3", "daily_vasopressors_0___4", "daily_vasopressors_0___5",
-                "daily_vasopressors_0___6", "daily_vasopressors_0___7", "daily_vasopressors_0___8",
-                "daily_vasopressors_0___88", "daily_sbp_8a_0", "daily_dbp_8a_0")
-      for (col in cols) {
-        if (col %in% names(cur_data()) && is.na(cur_data()[[col]])) {
-          missing <- c(missing, col)
-        }
-      }
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-
-  # Combine both
-  bind_rows(day0_missing, daily_missing) |>
-    group_by(record_id) |>
-    summarize(missing_params = paste(unique(unlist(strsplit(missing_params, "; "))), collapse = "; "), .groups = "drop")
-}
-
-
 # Missing values function
 # Returns a data frame showing records with missing sys_hypotension_sev_0 and their input values
 missing_sys_hypotension_sev_0 <- function(data) {

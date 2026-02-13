@@ -103,34 +103,3 @@ wrapper_calc_str_gi_bleeding_0 <- function(data) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_str_gi_bleeding_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
-    select(record_id, trx_0, trx_m1, trx_m2, blood_prbc_units_m2, blood_prbc_units_m1, blood_prbc_units_0,
-           daily_blood_product_m2, daily_blood_product_m1, daily_blood_product_0,
-           blood_product_spec_m2___1, blood_product_spec_m1___1, blood_product_spec_0___1) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(trx_0)) missing <- c(missing, "trx_0")
-      if (is.na(trx_m1)) missing <- c(missing, "trx_m1")
-      if (is.na(trx_m2)) missing <- c(missing, "trx_m2")
-      if (is.na(blood_prbc_units_m2)) missing <- c(missing, "blood_prbc_units_m2")
-      if (is.na(blood_prbc_units_m1)) missing <- c(missing, "blood_prbc_units_m1")
-      if (is.na(blood_prbc_units_0)) missing <- c(missing, "blood_prbc_units_0")
-      if (is.na(daily_blood_product_m2)) missing <- c(missing, "daily_blood_product_m2")
-      if (is.na(daily_blood_product_m1)) missing <- c(missing, "daily_blood_product_m1")
-      if (is.na(daily_blood_product_0)) missing <- c(missing, "daily_blood_product_0")
-      if (is.na(blood_product_spec_m2___1)) missing <- c(missing, "blood_product_spec_m2___1")
-      if (is.na(blood_product_spec_m1___1)) missing <- c(missing, "blood_product_spec_m1___1")
-      if (is.na(blood_product_spec_0___1)) missing <- c(missing, "blood_product_spec_0___1")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

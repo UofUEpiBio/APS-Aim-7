@@ -44,23 +44,3 @@ wrapper_calc_str_scap_leukopenia_0 <- function(data) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_str_scap_leukopenia_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
-    select(record_id, daily_wbc_8a_0, daily_wbc_8a_m1, daily_wbc_8a_m2) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(daily_wbc_8a_0)) missing <- c(missing, "daily_wbc_8a_0")
-      if (is.na(daily_wbc_8a_m1)) missing <- c(missing, "daily_wbc_8a_m1")
-      if (is.na(daily_wbc_8a_m2)) missing <- c(missing, "daily_wbc_8a_m2")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

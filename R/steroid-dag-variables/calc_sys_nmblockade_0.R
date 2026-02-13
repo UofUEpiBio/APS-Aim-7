@@ -35,23 +35,3 @@ wrapper_calc_sys_nmblockade_0 <- function(data) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-# Returns a data frame with record_id and missing_params columns
-check_missing_sys_nmblockade_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
-    select(record_id, daily_paralysis_0, trx_0) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(daily_paralysis_0)) missing <- c(missing, "daily_paralysis_0")
-      if (is.na(trx_0)) missing <- c(missing, "trx_0")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

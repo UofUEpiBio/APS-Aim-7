@@ -66,30 +66,3 @@ wrapper_calc_sys_chron_immunocomp_0 <- function(data) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_sys_chron_immunocomp_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Day 0') |>
-    select(record_id, m_immunosuppression, m_immunosup_conditions___2, m_immunosup_conditions___3,
-           m_immunosup_conditions___4, m_immunosup_conditions___5, m_immunosup_conditions___6,
-           m_immunosup_conditions___7, m_immunosup_conditions___88) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(m_immunosuppression)) missing <- c(missing, "m_immunosuppression")
-      if (is.na(m_immunosup_conditions___2)) missing <- c(missing, "m_immunosup_conditions___2")
-      if (is.na(m_immunosup_conditions___3)) missing <- c(missing, "m_immunosup_conditions___3")
-      if (is.na(m_immunosup_conditions___4)) missing <- c(missing, "m_immunosup_conditions___4")
-      if (is.na(m_immunosup_conditions___5)) missing <- c(missing, "m_immunosup_conditions___5")
-      if (is.na(m_immunosup_conditions___6)) missing <- c(missing, "m_immunosup_conditions___6")
-      if (is.na(m_immunosup_conditions___7)) missing <- c(missing, "m_immunosup_conditions___7")
-      if (is.na(m_immunosup_conditions___88)) missing <- c(missing, "m_immunosup_conditions___88")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

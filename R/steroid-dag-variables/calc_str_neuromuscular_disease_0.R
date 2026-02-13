@@ -41,22 +41,3 @@ wrapper_calc_str_neuromuscular_disease_0 <- function(data) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_str_neuromuscular_disease_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Day 0') |>
-    select(record_id, m_neurologic_conditions___6, m_neurologic) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(m_neurologic_conditions___6)) missing <- c(missing, "m_neurologic_conditions___6")
-      if (is.na(m_neurologic)) missing <- c(missing, "m_neurologic")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}

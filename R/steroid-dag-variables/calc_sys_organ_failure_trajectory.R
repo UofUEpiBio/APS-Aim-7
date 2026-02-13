@@ -293,64 +293,6 @@ wrapper_calc_sys_organ_failure_trajectory <- function(data) {
     left_join(data_with_sofa, by = 'record_id')
 }
 
-
-# Check for missing input parameters
-check_missing_sys_organ_failure_trajectory <- function(data, record_ids) {
-  # Check Day 0 parameters
-  day0_missing <- data |>
-    filter(record_id %in% record_ids, event_label == 'Day 0') |>
-    select(record_id, m_weight_kg) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(m_weight_kg)) missing <- c(missing, "m_weight_kg")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-
-  # Check Daily In-Hospital Forms parameters (SOFA variables for day 0 and m1)
-  daily_missing <- data |>
-    filter(record_id %in% record_ids, event_label == 'Daily In-Hospital Forms') |>
-    select(record_id, starts_with("daily_pa02_lowest_"), starts_with("daily_resp_lowest_pao2_"),
-           starts_with("daily_fio2_lowest_pao2_"), starts_with("daily_o2_lowest_pao2_"),
-           starts_with("daily_spo2_lowest_"), starts_with("daily_resp_lowest_"),
-           starts_with("daily_fio2_lowest_"), starts_with("daily_o2_lowest_"),
-           starts_with("daily_platelet_8a_"), starts_with("daily_platelet_nc_"),
-           starts_with("daily_tbili_8a_"), starts_with("daily_tbili_nc_"),
-           starts_with("daily_sbp_8a_"), starts_with("daily_dbp_8a_"),
-           starts_with("daily_dopa_dose_8a_"), starts_with("daily_dopa_dos_8a_"),
-           starts_with("daily_dobuta_8a_"), starts_with("daily_dobuta_"),
-           starts_with("daily_epi_dose_8a_"), starts_with("daily_ne_dose_8a_"),
-           starts_with("daily_gcs_8a_"), starts_with("daily_cr_8a_"), starts_with("daily_cr_nc_"),
-           dailysofa_perf_m1) |>
-    distinct() |>
-    # Too many columns to check individually - use simplified approach
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      # Check key day 0 variables
-      for (col in c("daily_pa02_lowest_0", "daily_platelet_8a_0", "daily_tbili_8a_0",
-                    "daily_sbp_8a_0", "daily_gcs_8a_0", "daily_cr_8a_0")) {
-        if (col %in% names(cur_data()) && is.na(cur_data()[[col]])) {
-          missing <- c(missing, col)
-        }
-      }
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-
-  # Combine both
-  bind_rows(day0_missing, daily_missing) |>
-    group_by(record_id) |>
-    summarize(missing_params = paste(unique(unlist(strsplit(missing_params, "; "))), collapse = "; "), .groups = "drop")
-}
-
-
 # Missing values function for Day 0 SOFA
 # Returns a data frame showing records with missing sofa_total_day_0 and their input values
 missing_sofa_total_day_0 <- function(data) {

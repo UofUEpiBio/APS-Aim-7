@@ -121,34 +121,3 @@ wrapper_calc_str_scap_bilateral_opacities_0 <- function(data, dictionary) {
       by = 'record_id'
     )
 }
-
-
-# Check for missing input parameters
-check_missing_str_scap_bilateral_opacities_0 <- function(data, record_ids) {
-  data |>
-    filter(record_id %in% record_ids, event_label == 'Syndrome Adjudication') |>
-    select(record_id, cxr_dm2_available, cxr_dm2_opacity, ct_dm2_available, ct_dm2_opacity,
-           cxr_dm1_available, cxr_dm1_opacity, ct_dm1_available, ct_dm1_opacity,
-           cxr_d0_available, cxr_d0_opacity, ct_d0_available, ct_d0_opacity) |>
-    distinct() |>
-    rowwise() |>
-    mutate(missing_params = {
-      missing <- c()
-      if (is.na(cxr_dm2_available)) missing <- c(missing, "cxr_dm2_available")
-      if (is.na(cxr_dm2_opacity)) missing <- c(missing, "cxr_dm2_opacity")
-      if (is.na(ct_dm2_available)) missing <- c(missing, "ct_dm2_available")
-      if (is.na(ct_dm2_opacity)) missing <- c(missing, "ct_dm2_opacity")
-      if (is.na(cxr_dm1_available)) missing <- c(missing, "cxr_dm1_available")
-      if (is.na(cxr_dm1_opacity)) missing <- c(missing, "cxr_dm1_opacity")
-      if (is.na(ct_dm1_available)) missing <- c(missing, "ct_dm1_available")
-      if (is.na(ct_dm1_opacity)) missing <- c(missing, "ct_dm1_opacity")
-      if (is.na(cxr_d0_available)) missing <- c(missing, "cxr_d0_available")
-      if (is.na(cxr_d0_opacity)) missing <- c(missing, "cxr_d0_opacity")
-      if (is.na(ct_d0_available)) missing <- c(missing, "ct_d0_available")
-      if (is.na(ct_d0_opacity)) missing <- c(missing, "ct_d0_opacity")
-      if (length(missing) > 0) paste(missing, collapse = "; ") else NA_character_
-    }) |>
-    ungroup() |>
-    filter(!is.na(missing_params)) |>
-    select(record_id, missing_params)
-}
