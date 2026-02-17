@@ -2,8 +2,11 @@
 ## Master Parameter Documentation
 ## -----------------------------------------------------------------------------
 ##
-## This file provides centralized parameter documentation for all derived
-## variable functions in the APS Aim 6 project.
+## This file provides centralized parameter documentation for all steroid DAG
+## derived variable functions in the APS Aim 6 project. This is not comprehensive
+## and may drift from the data dictionary, but it may be helpful as a quick
+## reference without needing to open the data dictionary or run the `view_dict()`
+## helper function in the R console.
 ##
 ## Parameters are organized by REDCap event (`event_label`).
 ##
