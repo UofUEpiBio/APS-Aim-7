@@ -31,87 +31,12 @@ data <- data |> filter(record_id != '52-0023')
 ```{r, echo = FALSE}
 # Source variable derivation code
 source("R/steroid-dag-variables.R")
-```
-
-Steroid DAG Variables are defined as follows:
-
-```{r}
-steroid_dag_data <- data |>
-  # Get unique record IDs
-  distinct(record_id) |>
-  # DAG Variables
-  left_join(wrapper_calc_sys_nmblockade_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_chron_steroid_moddose_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_chron_steroid_moddose_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_def_adrenal_insufficiency_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_adrenal_insufficiency_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_hyperglycemia_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_hyperglyc_hist_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_resp_failure_sev_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_sys_steroid_comorb_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_steroid_comorb_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_acute_allergic_reaction_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_str_age_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_chron_steroid_highdose_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_cop_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_str_dah_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_str_dementia_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_drug_toxicity_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_str_gi_bleeding_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_inflamprofile_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_inflamprofile_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_major_surgery_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_neuromuscular_disease_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_psi_score_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_scap_acidosis_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_scap_bilateral_opacities_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_str_scap_bun_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_scap_hypothermia_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_scap_leukopenia_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_scap_rr_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_str_scap_thrombocytopenia_0(data), by = "record_id") |>
-  left_join(wrapper_calc_str_septic_shock_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_str_vasculitis_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_active_covid19_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_sys_active_fungal_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_active_influenza_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_sys_ards_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_baseline_performance_status_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_sys_chron_immunocomp_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_delirium_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_global_phys_sev_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_sys_hypotension_sev_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_obstruct_lung_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_organ_failure_trajectory(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_pneumonia_0(data), by = "record_id") |>
-  left_join(wrapper_calc_sys_sepsis_0(data, dictionary), by = "record_id") |>
-  left_join(wrapper_calc_sys_septic_shock_0(data, dictionary), by = "record_id")
+steroid_dag_data <- get_all_steroid_dag_variables(data, dictionary)
 ```
 
 ## Missing Records
 
 ```{r}
-get_records_with_missing_values <- function(data) {
-  # For each row, find columns with NA values
-  missing_list <- lapply(1:nrow(data), function(i) {
-    row <- data[i, ]
-    missing_cols <- names(row)[sapply(row, is.na)]
-
-    if (length(missing_cols) > 0) {
-      tibble(
-        record_id = data$record_id[i],
-        missing_cols = list(missing_cols)
-      )
-    } else {
-      NULL
-    }
-  })
-
-  # Combine all non-NULL results
-  bind_rows(missing_list) |>
-    arrange(record_id)
-}
-
 # Get records with missing values
 records_with_missing <- get_records_with_missing_values(steroid_dag_data)
 
@@ -137,6 +62,96 @@ if (nrow(records_with_missing) > 0) {
 # - For first row: records_with_missing$missing_cols[[1]]
 # - For specific record_id: records_with_missing |> filter(record_id == "your_id") |> pull(missing_cols) |> unlist()
 # - To expand all into long format: records_with_missing |> unnest(missing_cols)
+```
+
+## Missing Input Parameters
+
+```{r}
+# For records with missing derived variables, identify which input parameters are missing
+get_missing_input_params_all <- function(records_with_missing, data, dictionary) {
+  if (nrow(records_with_missing) == 0) {
+    return(tibble(record_id = character(), missing_params = character()))
+  }
+
+  record_ids <- records_with_missing$record_id
+
+  # Call each check function and combine results
+  all_missing <- bind_rows(
+    check_missing_sys_nmblockade_0(data, record_ids),
+    check_missing_sys_chron_steroid_moddose_0(data, record_ids),
+    check_missing_str_chron_steroid_moddose_0(data, record_ids),
+    check_missing_sys_def_adrenal_insufficiency_0(data, record_ids),
+    check_missing_str_adrenal_insufficiency_0(data, record_ids),
+    check_missing_sys_hyperglycemia_0(data, record_ids),
+    check_missing_str_hyperglyc_hist_0(data, record_ids),
+    check_missing_sys_steroid_comorb_0(data, record_ids),
+    check_missing_str_steroid_comorb_0(data, record_ids),
+    check_missing_str_acute_allergic_reaction_0(data, record_ids),
+    check_missing_str_age_0(data, record_ids),
+    check_missing_str_chron_steroid_highdose_0(data, record_ids),
+    check_missing_str_cop_0(data, record_ids),
+    check_missing_str_dah_0(data, record_ids),
+    check_missing_str_dementia_0(data, record_ids),
+    check_missing_str_drug_toxicity_0(data, record_ids),
+    check_missing_str_gi_bleeding_0(data, record_ids),
+    check_missing_sys_inflamprofile_0(data, record_ids),
+    check_missing_str_inflamprofile_0(data, record_ids),
+    check_missing_str_major_surgery_0(data, record_ids),
+    check_missing_str_neuromuscular_disease_0(data, record_ids),
+    check_missing_str_psi_score_0(data, record_ids),
+    check_missing_str_scap_acidosis_0(data, record_ids),
+    check_missing_str_scap_bilateral_opacities_0(data, record_ids),
+    check_missing_str_scap_bun_0(data, record_ids),
+    check_missing_str_scap_hypothermia_0(data, record_ids),
+    check_missing_str_scap_leukopenia_0(data, record_ids),
+    check_missing_str_scap_rr_0(data, record_ids),
+    check_missing_str_scap_thrombocytopenia_0(data, record_ids),
+    check_missing_str_septic_shock_0(data, record_ids),
+    check_missing_str_vasculitis_0(data, record_ids),
+    check_missing_sys_active_covid19_0(data, record_ids),
+    check_missing_sys_active_fungal_0(data, record_ids),
+    check_missing_sys_active_influenza_0(data, record_ids),
+    check_missing_sys_ards_0(data, record_ids),
+    check_missing_sys_baseline_performance_status_0(data, record_ids),
+    check_missing_sys_chron_immunocomp_0(data, record_ids),
+    check_missing_sys_delirium_0(data, record_ids),
+    check_missing_sys_hypotension_sev_0(data, record_ids),
+    check_missing_sys_obstruct_lung_0(data, record_ids),
+    check_missing_sys_pneumonia_0(data, record_ids),
+    check_missing_sys_sepsis_0(data, record_ids, dictionary),
+    check_missing_sys_septic_shock_0(data, record_ids, dictionary),
+    check_missing_sys_resp_failure_sev_0(data, record_ids, dictionary),
+    check_missing_sys_organ_failure_trajectory(data, record_ids),
+    check_missing_sys_global_phys_sev_0(data, record_ids)
+  )
+
+  # Combine all missing parameters for each record_id
+  all_missing |>
+    group_by(record_id) |>
+    summarize(
+      missing_params = paste(unique(unlist(strsplit(missing_params, "; "))), collapse = "; "),
+      .groups = "drop"
+    )
+}
+
+# Get missing input parameters for records with missing derived variables
+records_with_missing_params <- get_missing_input_params_all(records_with_missing, data, dictionary)
+
+# Display summary
+if (nrow(records_with_missing_params) > 0) {
+  cat("Found", nrow(records_with_missing_params), "records with missing input parameters\n\n")
+
+  # Show first few records
+  print(head(records_with_missing_params, 10))
+
+  # Write to CSV
+  records_with_missing_params |>
+    write.csv("generated-csvs/missing_params_report.csv", row.names = FALSE)
+
+  cat("\nMissing input parameters report written to missing_params_report.csv\n")
+} else {
+  cat("No records with missing input parameters found\n")
+}
 ```
 
 ## Unknown Records
