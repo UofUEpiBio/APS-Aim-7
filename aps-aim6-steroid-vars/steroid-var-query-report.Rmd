@@ -38,27 +38,47 @@ steroid_dag_data <- get_all_steroid_dag_variables(data, dictionary)
 
 ## Overview
 
-In deriving the steroid DAG variables for APS Aim 6, several records could not be properly classified for one or more variables because key values were either missing or unknown. This report lists the records that should be queried along with the specific data values that need to be queried for each record.
+In deriving the steroid DAG variables for APS Aim 6, several records could not be properly classified for one or more variables due to missing (NA) or unknown values. This report lists the records that should be queried and the specific data values that need to be queried for each record.
 
-## Excluded Record
+I've organized the report into four general categories:
+
+1. **Missing with Invalid Branching Logic:** The missing data for these records violate branching logic rules. For example, a record might have `trx_0 == 'Available'`, but be missing `daily_paralysis_0` even though the branching logic states it should be present.
+2. **Missing Critical Values:** The missing data for these records technically satisfy branching logic rules (i.e., they contain "valid" responses), however, the data in question is considered so integral to the APS project, that it should be present for *every* record included in the N=500 dataset.
+3. **Unknown Values:** The data for these records also typically satisfies the branching logic (i.e., "Unknown" was a valid option), however we may want to query some of these values, such as those associated with particularly important DAG variables. For those that cannot be corrected, the steroid variable functions may need to be updated to properly assign "Unknown" a variable value.
+4. **Additional Queries:** Queries that don't fall under one of the above three options.
+
+Alongside the records and data values to query, I've included a list of impacted DAG variables. In most cases, if a record was missing or unknown for a relevant value, that record was likewise assigned missing or unknown for the associated variable. However, some variable definitions instead impute "normal" for missing/unknown values (e.g., SOFA scores), which means a record we want to query might instead be classified incorrectly. Further, some data points can be handled in the variable definition, but seem to indicate error during data collection that should be corrected.
+
+### Excluded Record
 
 The record `52-0023` is missing almost all data values because it was erroneously included in the `N=500` data set. As this is a known problem and the record will be omitted from the final dataset, this record does not need to be queried. Instead, it should be filtered out before deriving steroid DAG variables: `data <- data |> filter(record_id != '52-0023')`. This will mean total counts for any given variable will sum to 499 not 500.
 
-We performed this filtering before compiling this query report.
+We perform this filtering before compiling reports on the Steroid DAG Variables, including this query report.
 
 ## Missing Values to Query
 
-These records couldn't be assigned any
+These records are missing (NA) for one or more DAG variables:
 
-```{r}
+```{r, echo = FALSE}
 records_with_missing <- get_records_with_missing_values(steroid_dag_data)
+records_with_missing |>
+  gt() |>
+  cols_label(missing_cols = "Missing DAG Variables")
 ```
 
-### Missing Due to Invalid Branching Logic
+This list is not a 1:1 match for the records detailed in this report, since some records were likely incorrectly classified, but I included it here to demonstrate that there are a relatively low number of records to query, with several "repeat offenders" in the list.
+
+### Missing with Invalid Branching Logic
 
 These records are missing values in violation of the branching logic. The missing values to query are listed with the violated branching logic and impact on steroid DAG variable derivation.
 
-Query:
+- 11-0059:
+  - `cxr_dm1_available`, `cxr_dm1_opacity`, `ct_dm1_available`, `ct_dm1_opacity`
+    - **Violated Branching Logic:**: All are missing, when at least one should be present. The minimum is `cxr_dm1_opacity == 'No relevant imaging completed on this day'`.
+    - **Impacted DAG Variables:** Cannot calculate SCAP Criterion Bilateral Opacities DAG
+  - `cxr_d0_available`, `ct_d0_available`, `ct_d0_opacity`
+    - **Violated Branching Logic:**: `cxr_d0_opacity == 'None'` but all others are missing for that day. If Day 0 imaging data is not available, then `cxr_d0_opacity` should be `'No relevant imaging completed on this day'` instead.
+    - **Impacted DAG Variables:** Cannot calculate SCAP Criterion Bilateral Opacities DAG
 - 13-0016 and 63-0008:
   - Paired values (`nc` means "Not Collected", `8a` means 8am value):
     - `daily_na_nc_0`/`daily_na_8a_0`, `daily_na_nc_m1`/`daily_na_8a_m1`, `daily_na_nc_m2`/`daily_na_8a_m2`
@@ -74,80 +94,75 @@ Query:
     - `daily_bun_nc_0`/`daily_bun_8a_0`, `daily_bun_nc_m1`/`daily_bun_8a_m1`, `daily_bun_nc_m2`/`daily_bun_8a_m2`
     - `daily_platelet_nc_0`/`daily_platelet_8a_0`, `daily_platelet_nc_m1`/`daily_platelet_8a_m1`, `daily_platelet_nc_m2`/`daily_platelet_8a_m2`
     - **Violated Branching Logic:** Each pair is mutually exclusive, if one is NA, the other isn't.
-    - **Impact:** Cannot calculate Serum Sodium, Serum Potassium, Serum Creatinine, Hematocrit, White Blood Cell Count components of APS score for APACHE II (Global Physiology Severity DAG); cannot calculate Inflammatory Profile DAGs; cannot calculate SYSTEMATIC Hyperglycemia DAG Variable 2; possibly incorrect value for STREAMLINED Hyperglycemia DAG; cannot calculate SCAP Criterion BUN Value DAG; cannot calculate SCAP Criterion Leukopenia DAG; cannot calculate SCAP Criterion Thrombocytopenia DAG;
+    - **Impacted DAG Variables:** Cannot calculate Serum Sodium, Serum Potassium, Serum Creatinine, Hematocrit, White Blood Cell Count components of APS score for APACHE II (Global Physiology Severity DAG); cannot calculate Inflammatory Profile DAGs; cannot calculate SYSTEMATIC Hyperglycemia DAG Variable 2; possibly incorrect value for STREAMLINED Hyperglycemia DAG; cannot calculate SCAP Criterion BUN Value DAG; cannot calculate SCAP Criterion Leukopenia DAG; cannot calculate SCAP Criterion Thrombocytopenia DAG;
 - 13-0016:
   - `daily_vasopressors_0___* == 'Unchecked'` (all vasopressor variables for Day 0)
     - **Violated Branching Logic:** `daily_vasopressors_0___0` corresponds to `none (no vasopressors)` while the other checkboxes are for specific vasopressors. If the other vasopressors are truly unchecked, than this one should be checked.
-    - **Impact:** Cannot calculate Hypotension Severity DAGs
+    - **Impacted DAG Variables:** Cannot calculate Hypotension Severity DAGs
   - `daily_sbp_8a_0`, `daily_dbp_8a_0`
     - **Violated Branching Logic:** `dailysofa_perf_0 == 'Available'` for this record means values should be present
-    - **Impact:** Cannot calculate Hypotension Severity DAGs
+    - **Impacted DAG Variables:** Cannot calculate Hypotension Severity DAGs
 - 31-0027:
   - `daily_paralysis_0`, `daily_antifungal_0`, `daily_antiviral_0`, `daily_antibiotics_0`
-    - **Violated Branching Logic:** `trx_0 == 'Available'` for this record means value should be present
-    - **Impact:** Cannot calculate Neuromuscular Blockade DAGs, Active Fungal Infections DAGs, Presence of Sepsis Syndrome DAG, Septic Shock DAGs
+    - **Violated Branching Logic:** `trx_0 == 'Available'` for this record means values should be present
+    - **Impacted DAG Variables:** Cannot calculate Neuromuscular Blockade DAGs, Active Fungal Infections DAGs, Presence of Sepsis Syndrome DAG, Septic Shock DAGs
 - 33-0018:
   - `lowsysbp_vsorres`, `lowdbp_vsorres`
     - **Violated Branching Logic:** `vs_perf == 'Yes'` for this record means values should be present
-    - **Impact:** Cannot calculate MAP component of APS score for APACHE II (Global Physiology Severity DAG)
+    - **Impacted DAG Variables:** Cannot calculate MAP component of APS score for APACHE II (Global Physiology Severity DAG)
 - 45-0003
   - `trx_0`, `daily_paralysis_0`, `daily_antifungal_0`, `daily_antiviral_0`, `daily_antibiotics_0`, `daily_blood_product_0`, `blood_prbc_units_0`
-    - **Violated Branching Logic:** `trx_0` should never be missing (also patient has `trx_m1 == 'Available'`, indicating patient was in hospital at Day -1)
-    - **Impact:** Cannot calculate Neuromuscular Blockade DAGs, Active Fungal Infections DAGs, SYSTEMATIC Presence of Sepsis Syndrome DAG, Septic Shock DAGs, Gastrointestinal Bleeding DAG,
+    - **Violated Branching Logic:** `trx_0` should never be missing (also patient has `trx_m1 == 'Available'`, indicating patient was in hospital at Day -1), and if it is `'Available'`, then the other values should be present.
+    - **Impacted DAG Variables:** Cannot calculate Neuromuscular Blockade DAGs, Active Fungal Infections DAGs, SYSTEMATIC Presence of Sepsis Syndrome DAG, Septic Shock DAGs, Gastrointestinal Bleeding DAG,
 - 45-0011:
   - `daily_resp_rate_8a_0`
     - **Violated Branching Logic:** `daily_resp_8a_0 == 'Invasive mechanical ventilation without ECMO'` for this record means value should be present
-    - **Impact:** Cannot calculate SCAP Criterion Respiratory Rate
+    - **Impacted DAG Variables:** Cannot calculate SCAP Criterion Respiratory Rate
   - `daily_standard_rr_8a_m1`
     - **Violated Branching Logic:** `daily_resp_8a_m1 == 'Standard flow supplemental oxygen'` for this record means value should be present
-    - **Impact:** Cannot calculate SCAP Criterion Respiratory Rate
+    - **Impacted DAG Variables:** Cannot calculate SCAP Criterion Respiratory Rate
 - 45-0015:
   - `daily_imv_mode_8a_0`, `daily_epap_8a_0`, `daily_resp_rate_8a_0`/`daily_resp_rate_8a_m1`
     - **Violated Branching Logic:** `daily_resp_8a_0 == 'Invasive mechanical ventilation without ECMO'` (`daily_resp_8a_m1` for the `m1` value) for this record means these values should be present
-    - **Impact:** Cannot calculate Respiratory Failure Severity DAGs, SCAP Criterion Respiratory Rate
+    - **Impacted DAG Variables:** Cannot calculate Respiratory Failure Severity DAGs, SCAP Criterion Respiratory Rate
 - 61-0040:
   - `daily_niv_fi02_8a_0`
     - **Violated Branching Logic:** `daily_resp_8a_0 == 'Non-invasive ventilation'` for this record means these values should be present
-    - **Impact:** Cannot calculate Respiratory Failure Severity DAGs
+    - **Impacted DAG Variables:** Cannot calculate Respiratory Failure Severity DAGs
 
 
 ### Missing Critical Values
 
 These records are missing critical values despite the branching logic being satisfied. These need to be queried, because they are missing data that no patient in the N=500 data set should be missing.
 
-Query:
-- 11-0059:
-  - `cxr_dm1_available`, `cxr_dm1_opacity`, `ct_dm1_available`, `ct_dm1_opacity`: all missing (NA) when at least one should be present
-    - **Impact:** Cannot calculate SCAP Criterion Bilateral Opacities DAG
-  - `cxr_d0_opacity == 'None'` but `cxr_d0_available`, `ct_d0_available`, `ct_d0_opacity` all missing: if Day 0 imaging data is not available, then `cxr_d0_opacity == 'No relevant imaging completed on this day'` instead
 - 12-0001, 42-0011, 54-0012, 61-0036:
   - `daily_gluc_nc_0 == 'Not Collected'`: Indicates Day 0 glucose wasn't collected. Technically satisfies branching logic.
     - **Values Missing as a Result:** `daily_gluc_8a_0`
-    - **Impact:** Cannot calculate SYSTEMATIC Hyperglycemia DAG Variable 2
+    - **Impacted DAG Variables:** Cannot calculate SYSTEMATIC Hyperglycemia DAG Variable 2
 - 13-0016:
   - No data for `event_label == 'Syndrome Adjudication'` (missing entirely from this event)
-    - **Impact:** Cannot calculate Acute Allergic Reaction, Diffuse Alveolar Hemorrhage, Acute Inflammatory Drug Toxicity, and Acute Cryptogenic Organizing Pneumonia DAGs (missing `organ_dysnfx_cause`); cannot calculate SCAP Criterion Bilateral Opacities DAG (missing imaging data);
+    - **Impacted DAG Variables:** Cannot calculate Acute Allergic Reaction, Diffuse Alveolar Hemorrhage, Acute Inflammatory Drug Toxicity, and Acute Cryptogenic Organizing Pneumonia DAGs (missing `organ_dysnfx_cause`); cannot calculate SCAP Criterion Bilateral Opacities DAG (missing imaging data);
 - 33-0007, 33-0012, 63-0008:
   - `trx_0 == 'Not Available'`: Indicates Day 0 treatments weren't collected, but they should be. Technically satisfies branching logic.
     - **Values Missing as a Result:** `daily_paralysis_0`, `daily_antifungal_0`, `daily_antiviral_0`, `daily_antibiotics_0`
-    - **Impact:** Cannot calculate Neuromuscular Blockade DAGs, SYSTEMATIC Presence of Sepsis Syndrome DAG, Septic Shock DAGs
+    - **Impacted DAG Variables:** Cannot calculate Neuromuscular Blockade DAGs, SYSTEMATIC Presence of Sepsis Syndrome DAG, Septic Shock DAGs
 - 33-0015:
   - `vs_perf == 'No'`: Indicates Day 0 vital signs weren't collected, but they should be. Technically satisfies branching logic.
     - **Values Missing as a Result:** `hightemp_vsorres`, `lowtemp_vsorres`, `lowsysbp_vsorres`, `lowdbp_vsorres`, `highhr_vsorres`, `lowhr_vsorres`, `highrr_vsorres`, `lowrr_vsorres`
-    - **Impact:** Cannot calculate Temperature, MAP, Heart Rate, and Respiratory Rate components of APS score for APACHE II (Global Physiology Severity DAG); cannot calculate SCAP Criterion Hypothermia DAG;
+    - **Impacted DAG Variables:** Cannot calculate Temperature, MAP, Heart Rate, and Respiratory Rate components of APS score for APACHE II (Global Physiology Severity DAG); cannot calculate SCAP Criterion Hypothermia DAG;
 - 43-0008, 61-0002, 61-0003, 61-0004, 61-0005, 61-0006, 61-0007, 61-0009, 61-0010, 61-0011, 61-0014, 61-0016:
   - `daily_bun_nc_0 == 'Not Collected'`: Indicates Day 0 BUN wasn't collected, but it should be. Technically satisfies branching logic.
     - **Values Missing as a Result:** `daily_bun_8a_0`
-    - **Impact:** Cannot calculate SCAP Criterion BUN Value DAG
+    - **Impacted DAG Variables:** Cannot calculate SCAP Criterion BUN Value DAG
     - **Note:** Some of these records also have `daily_bun_nc_m1 == 'Not Collected'` and `daily_bun_nc_m2 == 'Not Collected'` and missing the corresponding `8a` values. Some are missing (NA) both `daily_bun_nc_m2` and `daily_bun_8a_m2`, which is also a violation of branching logic. For both of these days, the records might not be in the hospital on Day -1 or -2, which would explain the issue, but given the problem with Day 0 measurements, we should query for all three days to confirm.
 - 45-0001:
   - `daily_hct_nc_0 == 'Not Collected'` (same for `daily_hct_nc_m1` and `daily_hct_nc_m2`): Indicates Day 0 hematocrit wasn't collected, but it should be. Technically satisfies branching logic.
     - **Values Missing as a Result:** `daily_hct_8a_0`/`daily_hct_8a_m1`/`daily_hct_8a_m2`
-    - **Impact:** Cannot calculate Hematocrit component of APS score for APACHE II (Global Physiology Severity DAG)
+    - **Impacted DAG Variables:** Cannot calculate Hematocrit component of APS score for APACHE II (Global Physiology Severity DAG)
 - 63-0008:
   - `dailysofa_perf_0 == 'Not Available'`: Indicates Day 0 SOFA components weren't collected, but they should be. Technically satisfies branching logic.
     - **Values Missing as a Result:** `daily_vasopressors_0___*` (all vasopressor variables for Day 0), `daily_sbp_8a_0`, `daily_dbp_8a_0`, `daily_resp_8a_0`, `daily_spo2_8a_0`
-    - **Impact:** Cannot calculate Hypotension Severity DAGs, Respiratory Failure Severity DAGs
+    - **Impacted DAG Variables:** Cannot calculate Hypotension Severity DAGs, Respiratory Failure Severity DAGs
     - **Note:** This record also has `dailysofa_perf_m1 == 'Not Available'` and `dailysofa_perf_m2 == 'Not Available'`. While this would normally indicate the patient wasn't in the hospital on those days, since the patient has `dailysofa_perf_0 == 'Not Available'`, these values are also called into question and should be queried.
 
 
@@ -157,42 +172,42 @@ These were assigned "Unknown" values for key variables that are needed to derive
 
 - 12-0006, 12-0011, 31-0025, 31-0047, 31-0052, 31-0055, 45-0002:
   - `m_endocrine == 'Unknown'`
-    - **Impact:** Assigned "99 (Unknown)" for Definite Adrenal Insufficiency DAGs; SYSTEMATIC Hyperglycemia DAG Variable 1;
+    - **Impacted DAG Variables:** Assigned "99 (Unknown)" for Definite Adrenal Insufficiency DAGs; SYSTEMATIC Hyperglycemia DAG Variable 1;
       - For 12-0006, 12-0011, 31-0052 ONLY, assigned "99 (Unknown)" for Chronic Moderate-Dose Steroid Use DAGs
 - 12-0006, 12-0011, 31-0017, 31-0052, 33-0016, 41-0003, 45-0004, 54-0035:
   - `m_immunosuppression == 'Unknown'`
-    - **Impact:** Assigned "99 (Unknown)" for SYSTEMATIC Definite Adrenal Insufficiency DAG, STREAMLINED Chronic Steroids High Dose DAG, Chronic Immunocompromise DAG,
+    - **Impacted DAG Variables:** Assigned "99 (Unknown)" for SYSTEMATIC Definite Adrenal Insufficiency DAG, STREAMLINED Chronic Steroids High Dose DAG, Chronic Immunocompromise DAG,
       - For 12-0006, 12-0011, 31-0052, 33-0016, 45-0004, 54-0035 ONLY, assigned "99 (Unknown)" for SYSTEMATIC Chronic Moderate-Dose Steroid Use DAGs
       - For 12-0006, 12-0011, 31-0052, 45-0004 ONLY, assigned "99 (Unknown)" for STREAMLINED Steroid Responsive Comorbidity DAG, Active Vasculitis DAG
 - 12-0006, 12-0011, 24-0006, 24-0022, 31-0022, 45-0001, 45-0004, 54-0035, 61-0002, 61-0041, 64-0008, 64-0018:
   - `mhccster == 'Unknown'`
-    - **Impact:** Assigned "99 (Unknown)" for Chronic Moderate-Dose Steroid Use DAGs (61-0002 is only "Unknown" for STREAMLINED version)
+    - **Impacted DAG Variables:** Assigned "99 (Unknown)" for Chronic Moderate-Dose Steroid Use DAGs (61-0002 is only "Unknown" for STREAMLINED version)
       - For 12-0006, 12-0011, 45-0004 ONLY, assigned "99 (Unknown)" for STREAMLINED Steroid Responsive Comorbidity DAG
       - For 12-0006, 12-0011, 45-0004 ONLY, assigned "99 (Unknown)" for Active Vasculitis DAG
 - 12-0006, 12-0011, 31-0047, 31-0052, 31-0055, 45-0004, 45-0005, 61-0022, 61-0038:
   - `mhrheumd == 'Unknown'`
-    - **Impact:** Assigned "99 (Unknown)" for SYSTEMATIC Steroid Responsive Comorbidity DAG
+    - **Impacted DAG Variables:** Assigned "99 (Unknown)" for SYSTEMATIC Steroid Responsive Comorbidity DAG
       - For 12-0006, 12-0011, 31-0052, 45-0004 ONLY, assigned "99 (Unknown)" for STREAMLINED Steroid Responsive Comorbidity DAG, Active Vasculitis DAG
 - 12-0006, 12-0011, 31-0025, 31-0047, 31-0055, 41-0003, 42-0012, 45-0002, 45-0004, 45-0005:
   - `m_pulmonary == 'Unknown'`
-    - **Impact:** Assigned "99 (Unknown)" for SYSTEMATIC Steroid Responsive Comorbidity DAG, Obstructive Lung Disease DAGs
+    - **Impacted DAG Variables:** Assigned "99 (Unknown)" for SYSTEMATIC Steroid Responsive Comorbidity DAG, Obstructive Lung Disease DAGs
 - 12-0006, 12-0011, 24-0006, 24-0022, 31-0022, 33-0016, 45-0004, 54-0035, 61-0002, 61-0041, 64-0008, 64-0018:
   - `mhantifungals == 'Unknown'`
-    - **Impact:** Assigned "99 (Unknown)" for Active Fungal Infections DAGs
+    - **Impacted DAG Variables:** Assigned "99 (Unknown)" for Active Fungal Infections DAGs
 - 12-0006, 12-0011, 31-0030, 31-0047, 31-0052, 31-0055, 41-0003, 45-0004, 45-0005:
   - `m_neurologic == 'Unknown'`
-    - **Impact:** Assigned "99 (Unknown)" for STREAMLINED Dementia DAG, Chronic Neuromuscular Disease DAG,
+    - **Impacted DAG Variables:** Assigned "99 (Unknown)" for STREAMLINED Dementia DAG, Chronic Neuromuscular Disease DAG,
 - 45-0014, 54-0003, 63-0004:
   - `daily_resp_8a_0 == 'Unknown'`
-    - **Impact:** Assigned "99 (Unknown)" for Variable 1 "Type of Support" under Respiratory Failure Severity DAGs, prevents calculation of Variable 2 "S/F Ratio Closest to 8am" under the same DAGs.
+    - **Impacted DAG Variables:** Assigned "99 (Unknown)" for Variable 1 "Type of Support" under Respiratory Failure Severity DAGs, prevents calculation of Variable 2 "S/F Ratio Closest to 8am" under the same DAGs.
 
 
 ## Additional Queries
 
 - 61-0002, 61-0004, 61-0012, 61-0022, 61-0038, 61-0044, 61-0045, 61-0049, 61-0051, 61-0052, 61-0058, 61-0063:
-  - These records have an unusually high packed red blood cell unit count (300+) and should be queried. As they are from the same site, we suspect that the person entering the data simply misinterpreted the question and didn't answer in "units of blood" but in some other unit.
+  - These records have an unusually high packed red blood cell unit count (300+ when it should most often be less than 5) and should be queried. As they are from the same site, we suspect that the person entering the data simply misinterpreted the question and didn't answer in "units of blood" but in some other unit.
   - **Values to Query:**: `blood_prbc_units_0`, `blood_prbc_units_m1`, `blood_prbc_units_m2`
-  - **Impact:** Invalid value for Gastrointestinal Bleeding DAG
+  - **Impacted DAG Variables:** Invalid value for Gastrointestinal Bleeding DAG
   - **Note:** To find records to query for this issue, we looked for records with `str_gi_bleeding_0 > 6` (gastrointestinal bleeding DAG variable).
 - For Major Recent Surgery DAG:
   - In deriving this variable, we discovered that the free-text surgery description fields weren't in the dataset, despite being defined in the dictionary. We need to follow up to find out how we can get access to those fields. They may have been removed as part of de-identification.
