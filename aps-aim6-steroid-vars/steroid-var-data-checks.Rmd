@@ -1,5 +1,5 @@
 ---
-title: "APS 6 Derived Variables Summary"
+title: "APS Aim 6 Steroid DAG - Data Checks"
 output:
   github_document:
     toc: true
@@ -23,6 +23,7 @@ source('support_functions.R')
 
 ## Load data from N=500 APS cohort
 ## provides "data", "dictionary" and "codebook" in the working environment
+## UPDATE with relative filepath to .RData file on your machine
 load(file = '../aps-data/20250731_data.RData')
 ## Filter the excluded record to not muddy the variable summaries
 data <- data |> filter(record_id != '52-0023')
@@ -33,9 +34,19 @@ data <- data |> filter(record_id != '52-0023')
 source("R/steroid-dag-variables.R")
 ```
 
-## Missing Record Data
+## Overview
 
-The record `52-0023` has almost no useable data because it was erroneously included in the `N=500` data set. It was filtered out before deriving the variables below. Consequently, the total counts for any given variable will sum to 499 not 500.
+While the file `steroid-var-query-report.Rmd` contains a report on what data needs to be queried, this file contains the *code* used to perform the data checks that lead to that report, specifically identifying missing, unknown, or unusual values for each steroid DAG. Code in this file was also used to verify that the final variable values for the steroid DAG variables were correct by examining the results for unusual patterns and distribution of values.
+
+If a given variable does not include a sub-header for "missing" or "unknown" values, then no additional data checks were necessary for that variable.
+
+**Note 1:** This file should be run from the root folder of the APS-Code-Sharing repo to properly source the DAG variables in `steroid-dag-variables.R`.
+
+**Note 2:** This was the primary working document during the development of the steroid DAG variable functions. As such, it is not very polished and sometimes in-consistently formatted. We HIGHLY recommend using the Query Report document instead of this document, where the data is better organized. This document is meant more as a reference for the code and process used to investigate the DAG variable data.
+
+### Reminder about Excluded Record
+
+As described in `steroid-var-query-report.Rmd`, the record `52-0023` was excluded from the data before running these data checks.
 
 ## Global Physiology Severity -- Systematic DAG
 
@@ -465,7 +476,7 @@ data_aps_component_vars |>
 
 #### 1. Temperature
 
-These records couldn't be scored because they are missing (NA) both `hightemp_vsorres` and `lowtemp_vsorres`. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored). The other has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `hightemp_vsorres` and `lowtemp_vsorres` technically satisfies the branching logic, but these should probably have values.
+These records couldn't be scored because they are missing (NA) both `hightemp_vsorres` and `lowtemp_vsorres`. The record has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `hightemp_vsorres` and `lowtemp_vsorres` technically satisfies the branching logic, but these should probably have values.
 
 ```{r}
 data_aps_component_vars |>
@@ -481,7 +492,7 @@ data_aps_component_vars |>
 
 #### 2. Mean Arterial Pressure (MAP)
 
-These records couldn't be scored because they are missing (NA) both `lowsysbp_vsorres` and `lowdbp_vsorres`. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored). Of the others, one has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `lowsysbp_vsorres` and `lowdbp_vsorres` technically satisfies the branching logic, but these should probably have values. This is the same record missing measurements for Temperature (above). The other has `vs_perf == 'Yes'`, so those missing values violate the branching logic.
+These records couldn't be scored because they are missing (NA) both `lowsysbp_vsorres` and `lowdbp_vsorres`. One has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `lowsysbp_vsorres` and `lowdbp_vsorres` technically satisfies the branching logic, but these should probably have values. This is the same record missing measurements for Temperature (above). The other has `vs_perf == 'Yes'`, so for that record those missing values violate the branching logic.
 
 ```{r}
 data_aps_component_vars |>
@@ -497,7 +508,7 @@ data_aps_component_vars |>
 
 #### 3. Heart Rate
 
-These records couldn't be scored because they are missing (NA) both `highhr_vsorres` and `lowhr_vsorres`. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored). Of the others, one has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `highhr_vsorres` and `lowhr_vsorres` technically satisfies the branching logic, but these should probably have values. This is the same record missing measurements for Temperature (above).
+These records couldn't be scored because they are missing (NA) both `highhr_vsorres` and `lowhr_vsorres`. The record has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `highhr_vsorres` and `lowhr_vsorres` technically satisfies the branching logic, but these should probably have values. This is the same record missing measurements for Temperature (above).
 
 ```{r}
 data_aps_component_vars |>
@@ -513,7 +524,7 @@ data_aps_component_vars |>
 
 #### 4. Respiratory Rate
 
-These records couldn't be scored because they are missing (NA) both `highrr_vsorres` and `lowrr_vsorres`. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored). Of the others, one has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `highrr_vsorres` and `lowrr_vsorres` technically satisfies the branching logic, but these should probably have values. This is the same record missing measurements for Temperature (above).
+These records couldn't be scored because they are missing (NA) both `highrr_vsorres` and `lowrr_vsorres`.The record has `vs_perf == 'No'` (Day 0 vital signs weren't collected), so missing `highrr_vsorres` and `lowrr_vsorres` technically satisfies the branching logic, but these should probably have values. This is the same record missing measurements for Temperature (above).
 
 ```{r}
 data_aps_component_vars |>
@@ -537,7 +548,7 @@ No records are missing this component, since all missing measurements are impute
 
 #### 7. Serum Sodium
 
-These records couldn't be scored because they are missing (NA) all pairs for `daily_na_nc_*`/`daily_na_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored), but the others should be queried.
+These records couldn't be scored because they are missing (NA) all pairs for `daily_na_nc_*`/`daily_na_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. These should be queried.
 
 ```{r}
 data_aps_component_vars |>
@@ -556,7 +567,7 @@ data_aps_component_vars |>
 
 #### 8. Serum Potassium
 
-These records couldn't be scored because they are missing (NA) all pairs for `daily_k_nc_*`/`daily_k_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored), but the others should be queried. These are the same records missing Serum Sodium (above).
+These records couldn't be scored because they are missing (NA) all pairs for `daily_k_nc_*`/`daily_k_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. These are the same records missing Serum Sodium (above) and should be queried.
 
 ```{r}
 data_aps_component_vars |>
@@ -575,7 +586,7 @@ data_aps_component_vars |>
 
 #### 9. Serum Creatinine
 
-These records couldn't be scored because they are missing (NA) all pairs for `daily_cr_nc_*`/`daily_cr_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored), but the others should be queried. These are the same records missing Serum Sodium (above).
+These records couldn't be scored because they are missing (NA) all pairs for `daily_cr_nc_*`/`daily_cr_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. These are the same records missing Serum Sodium (above) and should be queried.
 
 These records are also missing values related to `sofa_base_renal_dysnfx`, but these appear to be valid. `13-0016` has `sofa_base_renal_dysnfx == 'No'`, so missing `sofa_unk` and `sofa_base_renal_chronic` satisfies the branching logic. And `63-0008` has `sofa_unk == '<b>Select here if pre-illness SOFA score information is unknown</b>'` (this data input should be a more readable value, but it is consistent throughout the dataset) so missing `sofa_base_renal_dysnfx` and `sofa_base_renal_chronic` satisfies the branching logic.
 
@@ -599,7 +610,7 @@ data_aps_component_vars |>
 
 #### 10. Hematocrit
 
-These records couldn't be scored. Three are missing (NA) all pairs for `daily_hct_nc_*`/`daily_hct_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored), but the others should be queried. These are the same records missing Serum Sodium (above).
+These records couldn't be scored. Three are missing (NA) all pairs for `daily_hct_nc_*`/`daily_hct_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. These are the same records missing Serum Sodium (above) and should be queried.
 
 An additional record has `daily_hct_nc_* == 'Not Collected'` for all days. This satisfies the branching logic, but our formula doesn't know how to classify this record.
 
@@ -620,7 +631,7 @@ data_aps_component_vars |>
 
 #### 11. White Blood Cell Count
 
-These records couldn't be scored because they are missing (NA) all pairs for `daily_wbc_nc_*`/`daily_wbc_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. One record is `52-0023`, which is the record ultimately excluded from the N=500 dataset (and can therefore be ignored), but the others should be queried. These are the same records missing Serum Sodium (above).
+These records couldn't be scored because they are missing (NA) all pairs for `daily_wbc_nc_*`/`daily_wbc_8a_*`. The branching logic dictates these should be mutually exclusive - if one is NA, the other shouldn't be. These are the same records missing Serum Sodium (above) and should be queried.
 
 ```{r}
 data_aps_component_vars |>
@@ -654,7 +665,7 @@ wrapper_calc_sys_global_phys_sev_0(data, dictionary) |>
 
 In the final calculation of the full variable, we impute normal (0 points) for any missing component score. This is consistent with how the APS score is calculated for APACHE II. However, since we still want the capability of flagging records that are missing a component score due to missing data that must be queried, we impute normal for all components during the final calculation step.
 
-Below, we highlight the records that were otherwise missing their component score. Three component scores have no associated missing records: Oxygenation, Arterial pH, and GCS. Only one record (`52-0023`, excluded from the dataset) is missing all other components of the APS score. (this is the one record that is set to value of `0` in the Global Physiology Severity DAG). The others are missing several components, often with a given record missing several related components. All of these records should be queried for the missing data (e.g., `vs_perf == 0`, `nc/8a` mutual exclusivity, key labs labeled as 'Not Collected', etc.).
+Below, we highlight the records that were otherwise missing their component score. Three component scores have no associated missing records: Oxygenation, Arterial pH, and GCS. The others are missing several components, often with a given record missing several related components. All of these records should be queried for the missing data (e.g., `vs_perf == 0`, `nc/8a` mutual exclusivity, key labs labeled as 'Not Collected', etc.).
 
 ```{r}
 data_aps_var <- data_aps_component_vars |>
@@ -736,7 +747,41 @@ wrapper_calc_sys_hypotension_sev_0(data) |>
 The two records missing for this variable are missing almost all of their labs. These should be queried.
 
 ```{r}
-missing_sys_hypotension_sev_0(data) |>
+# Get record_ids with missing values
+missing_records <- wrapper_calc_sys_hypotension_sev_0(data) |>
+  filter(is.na(sys_hypotension_sev_0)) |>
+  select(record_id)
+
+# If no missing records, return dataframe indicating no missing values
+if (nrow(missing_records) == 0) {
+  return(data.frame(none_missing = TRUE))
+}
+
+# Get the input values for those records from Daily In-Hospital Forms
+data_daily_hospital <- data |>
+  filter(event_label == 'Daily In-Hospital Forms') |>
+  select(
+    record_id,
+    dailysofa_perf_0,
+    matches("^daily_vasopressors_0___"),
+
+    daily_sbp_8a_0,
+    daily_dbp_8a_0,
+
+    matches("_units_8a_0$"),
+    daily_vaso_dose_8a_0
+  )
+
+# Get weight from Day 0
+data_day0 <- data |>
+  filter(event_label == 'Day 0') |>
+  select(record_id, m_weight_kg)
+
+# Start with missing_records and left join data from both events
+# This ensures all missing records appear in the result, even if they're missing from Daily In-Hospital Forms
+missing_records |>
+  left_join(data_daily_hospital, by = 'record_id') |>
+  left_join(data_day0, by = 'record_id') |>
   gt()
 ```
 
@@ -771,14 +816,16 @@ data |>
   gt()
 ```
 
-#### Query Response
+#### Initial Query Response
+Early in the process we ran these records by Matt and received this response:
+
 > This is likely missing because data were not entered for daily paralysis even though it should have been entered. Although we have many data quality rules and coordinators fix many problems, we are not at 100% (and likely will never be, meaning that this kind of missingness should be considered in the analysis).
 
 Matt then asked two people to look at these (and the other missing values below) to see if there should be additional data quality rules.
 
 #### Valid NA Values
 
-These records were missing `daily_paralysis_0`, but this was considered valid (e.g., "Not Applicable") by the branching logic of `trx_0 == 'Not Available'`. Thus, they were set to `sys_nmblockade_0 = 0` according to the variable definition. However, as we are unsure what `trx_0` represents and why it would be marked "Not Available", we've included those records for completeness.
+These records were missing `daily_paralysis_0`, but this was considered valid (e.g., "Not Applicable") by the branching logic of `trx_0 == 'Not Available'`. Thus, they were set to `sys_nmblockade_0 = 0` according to the variable definition. However, as `trx_0` should be Available, we've included these records.
 
 ```{r}
 data |>
@@ -788,7 +835,9 @@ data |>
   gt()
 ```
 
-##### Query Response
+#### Initial Query Response
+Early in the process we ran these records by Matt and received this response:
+
 > Agree it seems suspicious that no in-hospital treatments would be available on day 0, even if the participant died shortly after enrollment.
 
 
@@ -917,7 +966,9 @@ data_with_sys_inflamprofile_0 |>
 ```
 
 
-#### Query Response
+#### Initial Query Response
+Early in the process we ran these records by Matt and received this response:
+
 > Again, this is likely missing because data were not entered even though they should have been entered.
 
 
@@ -1126,9 +1177,6 @@ data_with_sysrespfail_var2 |>
 ```
 
 
-
-
-
 ## Definite Adrenal Insufficiency -- Systematic DAG
 
 **Variable Definition:**
@@ -1182,7 +1230,7 @@ wrapper_calc_str_def_adrenal_insufficiency_0(data) |>
 
 ### Unknown and Missing Values
 
-Those with "Unknown" for `m_endocrine` listed under the variable "Definite Adrenal Insufficiency" (Systematic DAG) above are also "Unknown" for this variable.
+Those with "Unknown" for `m_endocrine` listed under the variable "Definite Adrenal Insufficiency" (Systematic DAG) are also "Unknown" for this variable.
 
 ## Chronic Moderate-Dose Steroid Use -- Systematic DAG
 
@@ -1822,7 +1870,7 @@ data |>
 ```
 
 
-## (AWAITING REWORK) Presence of ARDS Syndrome -- Systematic & Streamlined DAG
+## (AWAITING REWORKED DEFINITION) Presence of ARDS Syndrome -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -1843,7 +1891,7 @@ wrapper_calc_sys_ards_0(data) |>
 
 The missing (NA) record is `13-0016`, which is missing from the 'Syndrome Adjudication' event entirely (see Presence of Sepsis Syndrome DAGs above).
 
-## (AWAITING REWORK) Presence of Pneumonia Syndrome -- Systematic & Streamlined DAG
+## (AWAITING REWORKED DEFINITION) Presence of Pneumonia Syndrome -- Systematic & Streamlined DAG
 
 **Variable Definition:**
 
@@ -2688,7 +2736,7 @@ data_with_neuromuscular |>
   gt()
 ```
 
-## (NEW) PSI Score -- Streamlined DAG
+## (NEW, NEEDS REVIEW) PSI Score -- Streamlined DAG
 
 **Variable Definition:**
 

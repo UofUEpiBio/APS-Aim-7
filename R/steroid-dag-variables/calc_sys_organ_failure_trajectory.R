@@ -293,130 +293,16 @@ wrapper_calc_sys_organ_failure_trajectory <- function(data) {
     left_join(data_with_sofa, by = 'record_id')
 }
 
-# Missing values function for Day 0 SOFA
-# Returns a data frame showing records with missing sofa_total_day_0 and their input values
-missing_sofa_total_day_0 <- function(data) {
-  # Get record_ids with missing values
-  missing_records <- wrapper_calc_sys_organ_failure_trajectory(data) |>
-    filter(is.na(sofa_total_day_0)) |>
-    select(record_id)
-
-  # If no missing records, return dataframe indicating no missing values
-  if (nrow(missing_records) == 0) {
-    return(data.frame(none_missing = TRUE))
-  }
-
-  # Get the input values for those records from Daily In-Hospital Forms
-  data_daily_hospital <- data |>
-    filter(event_label == 'Daily In-Hospital Forms') |>
-    select(
-      record_id,
-      dailysofa_perf_0,
-
-      daily_pa02_lowest_0,
-      daily_resp_lowest_pao2_0,
-      daily_fio2_lowest_pao2_0,
-      daily_o2_lowest_pao2_0,
-      daily_spo2_lowest_0,
-      daily_resp_lowest_0,
-      daily_fio2_lowest_0,
-      daily_o2_lowest_0,
-
-      daily_platelet_8a_0,
-      daily_tbili_8a_0,
-
-      daily_sbp_8a_0,
-      daily_dbp_8a_0,
-
-      daily_dopa_dose_8a_0_mcg,
-      daily_dopa_dos_8a_0_mcgkg,
-      daily_dobuta_8a_0_mcg,
-      daily_dobuta_8a_0_mcgkg,
-      daily_epi_dose_8a_0_mcg,
-      daily_epi_dose_8a_0_mcgkg,
-      daily_ne_dose_8a_0_mcg,
-      daily_ne_dose_8a_0_mcgkg,
-
-      daily_gcs_8a_0,
-      daily_cr_8a_0
-    )
-
-  # Get weight from Day 0
-  data_day0 <- data |>
-    filter(event_label == 'Day 0') |>
-    select(record_id, m_weight_kg)
-
-  # Start with missing_records and left join data from both events
-  # This ensures all missing records appear in the result, even if they're missing from Daily In-Hospital Forms
-  missing_records |>
-    left_join(data_daily_hospital, by = 'record_id') |>
-    left_join(data_day0, by = 'record_id')
-}
-
-
-# Missing values function for Day -1 SOFA
-# Returns a data frame showing records with missing sofa_total_day_m1 and their input values
-missing_sofa_total_day_m1 <- function(data) {
-  # Get record_ids with missing values
-  missing_records <- wrapper_calc_sys_organ_failure_trajectory(data) |>
-    filter(is.na(sofa_total_day_m1)) |>
-    select(record_id)
-
-  # If no missing records, return dataframe indicating no missing values
-  if (nrow(missing_records) == 0) {
-    return(data.frame(none_missing = TRUE))
-  }
-
-  # Get the input values for those records from Daily In-Hospital Forms
-  data_daily_hospital <- data |>
-    filter(event_label == 'Daily In-Hospital Forms') |>
-    select(
-      record_id,
-      dailysofa_perf_m1,
-
-      daily_pa02_lowest_m1,
-      daily_resp_lowest_pao2_m1,
-      daily_fio2_lowest_pao2_m1,
-      daily_o2_lowest_pao2_m1,
-      daily_spo2_lowest_m1,
-      daily_resp_lowest_m1,
-      daily_fio2_lowest_m1,
-      daily_o2_lowest_m1,
-
-      daily_platelet_8a_m1,
-      daily_tbili_8a_m1,
-
-      daily_sbp_8a_m1,
-      daily_dbp_8a_m1,
-
-      daily_dopa_dose_8a_m1_mcg,
-      daily_dopa_dos_8a_m1_mcgkg,
-      daily_dobuta_8a_m1_mcg,
-      daily_dobuta_8a_m1_mcgkg,
-      daily_epi_dose_8a_m1_mcg,
-      daily_epi_dose_8a_m1_mcgkg,
-      daily_ne_dose_8a_m1_mcg,
-      daily_ne_dose_8a_m1_mcgkg,
-
-      daily_gcs_8a_m1,
-      daily_cr_8a_m1
-    )
-
-  # Get weight from Day 0
-  data_day0 <- data |>
-    filter(event_label == 'Day 0') |>
-    select(record_id, m_weight_kg)
-
-  # Start with missing_records and left join data from both events
-  # This ensures all missing records appear in the result, even if they're missing from Daily In-Hospital Forms
-  missing_records |>
-    left_join(data_daily_hospital, by = 'record_id') |>
-    left_join(data_day0, by = 'record_id')
-}
-
 
 ## =============================================================================
 ## Wrapper Functions for SOFA Component Scores
+##
+## Currently, the SOFA functions in `support_functions.R` return NA if the SOFA
+## component cannot be calculated (e.g., due to missing data). However, for this
+## DAG variable, we want to treat missing data as 0 points (i.e., normal SOFA
+## score). The wrapper functions below implement that change while preserving the
+## core calculation logic to remain consistent with the original SOFA results.
+##
 ## =============================================================================
 
 ## Wrapper for calc_sofa_coag that checks for 'Not Collected' status

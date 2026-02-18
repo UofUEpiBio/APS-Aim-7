@@ -49,6 +49,8 @@ I've organized the report into four general categories:
 
 Alongside the records and data values to query, I've included a list of impacted DAG variables. In most cases, if a record was missing or unknown for a relevant value, that record was likewise assigned missing or unknown for the associated variable. However, some variable definitions instead impute "normal" for missing/unknown values (e.g., SOFA scores), which means a record we want to query might instead be classified incorrectly. Further, some data points can be handled in the variable definition, but seem to indicate error during data collection that should be corrected.
 
+**Note:** This file should be run from the root folder of the APS-Code-Sharing repo to properly source the DAG variables in `steroid-dag-variables.R`.
+
 ### Excluded Record
 
 The record `52-0023` is missing almost all data values because it was erroneously included in the `N=500` data set. As this is a known problem and the record will be omitted from the final dataset, this record does not need to be queried. Instead, it should be filtered out before deriving steroid DAG variables: `data <- data |> filter(record_id != '52-0023')`. This will mean total counts for any given variable will sum to 499 not 500.
