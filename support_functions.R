@@ -297,15 +297,50 @@ calc_sofa_rena <- function(cr) {
 }
 
 ## calculate respiratory SOFA-2 score
-## pf_ratio - worst PaO2/FiO2 ratio
-## sf_ratio - worst SpO2/FiO2 ratio
-calc_sofa_2_resp <- function(pf_ratio, sf_ratio) {
+## pf_ratio  - worst PaO2/FiO2 ratio
+## sf_ratio  - worst SpO2/FiO2 ratio
+## resp_low_spo2 - Respiratory support at the time of lowest SpO2 measurement on this day
+calc_sofa_2_resp <- function(pf_ratio, sf_ratio, resp_low_pao2, resp_low_spo2) {
+  
+  ## if P/F available, use that and corresponding respiratory support value
+  pf_available <- !is.na(pf_ratio) 
+  resp_low <- ifelse(pf_available, resp_low_pao2, resp_low_spo2)
+  
+  ## ECMO
+  ecmo <- grepl('ECMO', resp_low)
+  
+  ## advanced ventilatory support
+  adv_vent <- case_when(
+    resp_low %in% c(
+      'ECMO and invasive mechanical ventilation',
+      'Invasive mechanical ventilation without ECMO',
+      'Non-invasive ventilation',
+      'High-flow nasal oxygen (high flow nasal oxygen)') ~ TRUE,
+    resp_low %in% c(
+      'ECMO without invasive mechanical ventilation',
+      'Standard flow supplemental oxygen',
+      'No respiratory support or supplemental oxygen (spontaneously breathing room air)') ~ FALSE,
+    TRUE ~ NA)
+  
   case_when(
-    pf_ratio <= 75  | sf_ratio <= 120 ~ 4,
-    pf_ratio <= 150 | sf_ratio <= 200 ~ 3,
-    pf_ratio <= 225 | sf_ratio <= 249 ~ 2,
-    pf_ratio <  300 | sf_ratio <  300 ~ 1,
-    pf_ratio >= 300 | sf_ratio >= 300 ~ 0,
+    ## any ECMO
+    ecmo ~ 4,
+    
+    ## P/F criteria
+    ( pf_available & pf_ratio <= 75 ) & (is.na(adv_vent) | adv_vent) ~ 4,
+    ( pf_available & pf_ratio <= 150) & (is.na(adv_vent) | adv_vent) ~ 3,
+    ( pf_available & pf_ratio <= 225)                                ~ 2,
+    ( pf_available & pf_ratio <= 300)                                ~ 1,
+    ( pf_available & pf_ratio >  300)                                ~ 0,
+    
+    ## S/F criteria
+    (!pf_available & sf_ratio <= 120) & (is.na(adv_vent) | adv_vent) ~ 4,
+    (!pf_available & sf_ratio <= 200) & (is.na(adv_vent) | adv_vent) ~ 3,
+    (!pf_available & sf_ratio <= 249)                                ~ 2,
+    (!pf_available & sf_ratio <= 300)                                ~ 1,
+    (!pf_available & sf_ratio >  300)                                ~ 0,
+    
+    ## not enough information
     TRUE ~ NA
   )
 }
@@ -353,31 +388,68 @@ calc_sofa_2_livr <- function(bilirubin) {
 ## ang2_mcg   - angiotensin II dose (mcg/min)
 ## ang2_mcgkg - angiotensin II dose (mcg/min/kg)
 ## weight_kg  - weight (kg)
+## resp_supp  - respiratory support
 calc_sofa_2_card <- function(sbp, dbp, dopa_mcg, dopa_mcgkg, dobu_mcg, dobu_mcgkg,
-                             epin_mcg, epin_mcgkg, nore_mcg, nore_mcgkg,
-                             phen_mcg, phen_mcgkg, vaso_dose,ang2_mcg, ang2_mcgkg,
-                             weight_kg) {
+                             epin_mcg, epin_mcgkg, nore_mcg, nore_mcgkg, 
+                             phen_mcg, phen_mcgkg, vaso_dose,ang2_mcg, ang2_mcgkg, 
+                             weight_kg, resp_supp) {
+  
+  ## calculate MAP
   map <- 1/3*sbp + 2/3*dbp
+  
+  ## convert to mcg/kg/min
+  dopa_mcgkg <- ifelse(!is.na(dopa_mcgkg), dopa_mcgkg, dopa_mcg/weight_kg)
+  dobu_mcgkg <- ifelse(!is.na(dobu_mcgkg), dobu_mcgkg, dobu_mcg/weight_kg)
+  epin_mcgkg <- ifelse(!is.na(epin_mcgkg), epin_mcgkg, epin_mcg/weight_kg)
+  nore_mcgkg <- ifelse(!is.na(nore_mcgkg), nore_mcgkg, nore_mcg/weight_kg)
+  phen_mcgkg <- ifelse(!is.na(phen_mcgkg), phen_mcgkg, phen_mcg/weight_kg)
+  ang2_mcgkg <- ifelse(!is.na(ang2_mcgkg), ang2_mcgkg, ang2_mcg/weight_kg)
+  
+  ## if missing infusion rate, set equal to zero
+  dopa_mcgkg <- ifelse(!is.na(dopa_mcgkg), dopa_mcgkg, 0)
+  dobu_mcgkg <- ifelse(!is.na(dobu_mcgkg), dobu_mcgkg, 0)
+  epin_mcgkg <- ifelse(!is.na(epin_mcgkg), epin_mcgkg, 0)
+  nore_mcgkg <- ifelse(!is.na(nore_mcgkg), nore_mcgkg, 0)
+  phen_mcgkg <- ifelse(!is.na(phen_mcgkg), phen_mcgkg, 0)
+  ang2_mcgkg <- ifelse(!is.na(ang2_mcgkg), ang2_mcgkg, 0)
+  vaso_dose  <- ifelse(!is.na(vaso_dose), vaso_dose, 0)
+  
+  ## is dopamine the only vasopressor used?
+  dopa_only <- 
+    dopa_mcgkg >  0 &
+    dobu_mcgkg == 0 &
+    epin_mcgkg == 0 &
+    nore_mcgkg == 0 &
+    phen_mcgkg == 0 &
+    ang2_mcgkg == 0 &
+    vaso_dose  == 0
+    
+  ecmo <- grepl('ECMO', resp_supp)
+  
+  ## calculate cardiovascular component
   case_when(
     epin_mcgkg + nore_mcgkg > 0.4 |
       ((epin_mcgkg + nore_mcgkg > 0.2) &
-         (dopa_mcgkg > 0.0 | dopa_mcg > 0.0 |
-            dobu_mcgkg > 0.0 | dobu_mcg > 0.0 |
-            phen_mcg > 0.0 | phen_mcgkg > 0.0 |
-            vaso_dose  > 0.0 | ang2_mcg  > 0.0 |
-            ang2_mcgkg  > 0.0))    ~ 4,
+         (dopa_mcgkg > 0.0 |
+          dobu_mcgkg > 0.0 |
+          phen_mcgkg > 0.0 | 
+          vaso_dose  > 0.0 |
+          ang2_mcgkg > 0.0 |
+          ecmo)) |
+      (dopa_only & dopa_mcgkg > 40) ~ 4,
     epin_mcgkg + nore_mcgkg > 0.2 |
       ((epin_mcgkg + nore_mcgkg > 0) &
-         (dopa_mcgkg > 0.0 | dopa_mcg > 0.0 |
-            dobu_mcgkg > 0.0 | dobu_mcg > 0.0 |
-            phen_mcg > 0.0 | phen_mcgkg > 0.0 |
-            vaso_dose  > 0.0 | ang2_mcg  > 0.0 |
-            ang2_mcgkg  > 0.0))   ~ 3,
-    epin_mcgkg + nore_mcgkg <= 0.2 |
-      dopa_mcgkg > 0.0 | dopa_mcg > 0.0 |
-      dobu_mcgkg > 0.0 | dobu_mcg > 0.0 |
-      phen_mcg > 0.0 | phen_mcgkg > 0.0 |
-      vaso_dose  > 0.0 | ang2_mcg  > 0.0 |
+         (dopa_mcgkg > 0.0 |
+            dobu_mcgkg > 0.0 |
+            phen_mcgkg > 0.0 | 
+            vaso_dose  > 0.0 |
+            ang2_mcgkg > 0.0)) |
+      (dopa_only & dopa_mcgkg > 20) ~ 3,
+    epin_mcgkg + nore_mcgkg > 0.0 |
+      dopa_mcgkg > 0.0 |  
+      dobu_mcgkg > 0.0 | 
+      phen_mcgkg > 0.0 | 
+      vaso_dose  > 0.0 |
       ang2_mcgkg  > 0.0 ~ 2,
     map < 70  ~ 1,
     map >= 70 ~ 0,
@@ -387,8 +459,9 @@ calc_sofa_2_card <- function(sbp, dbp, dopa_mcg, dopa_mcgkg, dobu_mcg, dobu_mcgk
 
 ## calculate CNS SOFA-2 score
 ## gcs - Glasgow Coma Score
-calc_sofa_2_cns <- function(gcs) {
-
+## del_med - TRUE/FALSE - Any drug treatment for delirium
+calc_sofa_2_cns <- function(gcs, del_med = FALSE) {
+  
   ## treat 'not documented' as missing
   gcs <- ifelse(gcs == 'not documented', NA, gcs)
 
@@ -400,7 +473,7 @@ calc_sofa_2_cns <- function(gcs) {
     gcs)
 
   ## convert to SOFA CNS score
-  case_when(
+  score <- case_when(
     gcs_imput <= 5  ~ 4,
     gcs_imput <= 8  ~ 3,
     gcs_imput <= 12 ~ 2,
@@ -408,14 +481,20 @@ calc_sofa_2_cns <- function(gcs) {
     gcs_imput == 15 ~ 0,
     TRUE ~ NA
   )
+  
+  ## if any drug treatment for delirium score at least 1
+  score <- ifelse(score == 0 & del_med, 1, score)
+  
+  return(score)
 }
 
 ## calculate renal SOFA-2 score
-## cr - creatinine concentration (mg/dL)
+## cr  - creatinine concentration (mg/dL)
+## rrt - TRUE/FALSE - chronic or new RRT
 ## uop - urine output (mL)
-calc_sofa_2_rena <- function(cr, uop) {
+calc_sofa_2_rena <- function(cr, rrt, uop) {
   case_when(
-    cr > 5.0 ~ 4,
+    rrt ~ 4,
     cr > 3.5 ~ 3,
     cr > 2.0 ~ 2,
     cr > 1.2 ~ 1,
@@ -423,6 +502,53 @@ calc_sofa_2_rena <- function(cr, uop) {
     TRUE ~ NA
   )
 }
+
+## last observation carry forward (LOCF)
+## x - vector to impute
+locf <- function(x) {
+  
+  ## return if length == 0
+  if(!length(x))
+    stop('length zero "x"')
+  
+  ## no imputation if all missing
+  na <- is.na(x)
+  if (all(na)) 
+    return(x)
+  
+  ## fill gaps
+  ok <- which(!na)
+  if (is.na(x[1L])) 
+    ok <- c(1L, ok)
+  gaps <- diff(c(ok, length(x) + 1L))
+  
+  return(rep(x[ok], gaps))
+}
+
+## impute mising values by imputing 'normal' (score 0) for the first eligible
+## missing value for among study days -2:0
+## score - score vector to impute
+## impute_eligible - TRUE/FALSE vector is the score eligible to impute
+## study_day - study day
+calc_sofa_2_impute <- function(score, impute_eligible, study_day) {
+  
+  ## mark missing values before imputation
+  na <- is.na(score)
+  
+  ## find index of first value eligible for imputation
+  idx <- match(TRUE, study_day <= 0 & impute_eligible & is.na(score))
+  if(!is.na(idx))
+    score[idx] <- 0
+  
+  ## last observation carry forward
+  score <- locf(score)
+  
+  ## mark missing ineligible scores as NA
+  score[!impute_eligible & na] <- NA
+  
+  return(score)
+}
+
 
 ## calculate norepinephrine equivalents (NEE) for vasopressor dosing
 ## Converts all vasopressor and inotrope doses to norepinephrine-equivalent mcg/min
