@@ -45,14 +45,16 @@ dictionary %>%
   unclass()
 ```
 
+You can also use the `view_dict()` function to accomplish the same thing:
+
+```{r}
+view_dict('frailty_base', dictionary)
+```
+
 Note the branching logic "[frailty_perf] = '1'", which specifies that the "fraily_base" field is only presented in the REDCap user interface when the value of another field [fraily_perf] takes a value '1' for the corresponding record and event. The "frailty_perf" field is used to indicate whether the Clinical Frailty Scale assessment was performed. Thus, "frailty_base" should be missing if "frailty_perf" is "No".
 
 ```{r}
-dictionary %>%
-  filter(field_name == 'frailty_perf') %>%
-  select('field_name', 'field_type', 'form_label', 'field_label',
-    'select_choices_or_calculations', 'branching_logic') %>%
-  unclass()
+view_dict('frailty_perf', dictionary)
 ```
 
 We can examine whether this is true in the data by cross-tabulating the two fields at the 'Patient/Surrogate Interview' event.
@@ -76,11 +78,7 @@ data %>%
 Consider the day 0 Confusion Assessment Method (CAM) assessment variable "cam_0". Here the branching logic is more complex involving two other fields. In plain English, the branching logic specifies that the CAM assessment field is only presented in the REDCap interface if the Richmond Agitation-Sedation Scale (RASS) scale was assessed on day 0 (i.e., not missing) and its value was > -4 (values -4 or -5 are non-responsive states).
 
 ```{r}
-dictionary %>%
-  filter(field_name == 'cam_0') %>%
-  select('field_name', 'field_type', 'form_label', 'field_label',
-    'select_choices_or_calculations', 'branching_logic') %>%
-  unclass()
+view_dict('cam_0', dictionary)
 ```
 
 This branching logic can be reproduced to verify that missing values for "cam_0" are due to unsatisfied branching logic:
@@ -134,6 +132,12 @@ data %>%
   select(record_id, elig_vent_support, elig_vent_support_code) %>%
   head() %>%
   gt()
+```
+
+If you don't know which `event_label` a particular data value is associated with (i.e., what to filter for), use the support function `view_label()`:
+
+```{r}
+view_label(data, ards_clinical_judgement)
 ```
 
 # Table of syndrome adjudications
@@ -446,4 +450,29 @@ data_sofa_imp %>%
     labs(x='Study Day', y='Participant Count', fill='Reason', title='SOFA-2 Missing Reason') +
     scale_fill_manual(values = c(hue_pal()(5), "grey70")) +
     theme_light()
+```
+
+
+## APS Aim 6 Steroid DAG Variables
+
+```{r}
+## Filter the excluded record to keep variable summaries clean
+data_filtered <- data |> filter(record_id != '52-0023')
+
+# Source variable derivation code
+source("R/steroid-dag-variables.R")
+
+# Calculate steroid DAG variables
+steroid_dag_data <- calc_all_steroid_dag_variables(data_filtered, dictionary)
+
+# Example: Get distribution of sys_delirium_0 variable
+steroid_dag_data |>
+  group_by(sys_delirium_0) |>
+  summarise(count = n()) |>
+  mutate(percent = round(count / sum(count) * 100, 2)) |>
+  gt()
+
+# Example: Using support function to display count table for a variable
+steroid_dag_data |>
+  display_grand_total(sys_active_covid19_0)
 ```

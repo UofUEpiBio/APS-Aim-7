@@ -1,10 +1,12 @@
 # Instructions for Deriving Variables
 
-This document details the general steps followed in order to derive variables for the APS Aim 6 project. Following this process will ensure consistency with the data dictionary and the variable definition.
+Authored by Andrew Pulsipher.
+
+This document details my process for deriving the APS Aim 6 steroid DAG variables, ensuring consistency with the data dictionary and the variable definition. You may find it helpful for future variable derivations.
 
 ## Steps
-1. Identify the required columns from the dataset based on the variable definition.
-    - For the Steroid DAG, these were typically listed in the DAG sheet.
+1. Identify the required input columns from the dataset based on the variable definition.
+    - For the Steroid DAG, most of these listed in the DAG sheet we used for storing variable definitions.
     - You will often identify additional columns needed as your write the derivation function.
 2. For each input column, verify spelling and data format with `summary(data$<column_name>)`.
     - If the spelling is incorrect, you'll see `Warning message: Unknown or uninitialised column`. Otherwise, the function will show you how the data is formatted in that column.
@@ -14,9 +16,10 @@ This document details the general steps followed in order to derive variables fo
     Unchecked   Checked      NA's
           299       200      7686
     ```
-    - You can also look in `param_docs.R` for brief descriptions of parameters we used in the Steroid DAG. This document is not comprehensive and may drift from the data dictionary, but it can be a helpful reference and quicker than running functions in R console.
+    - You can also look in `param_docs.R` for brief descriptions of parameters we used in the Steroid DAG. This document is not comprehensive and may drift from the data dictionary, but it can be a helpful reference and quicker than running functions in R console or parsing the data dictionary manually.
+    - Understanding the actual data format is important, because the dictionary entries (especially the branching logic) often use abbreviated values as described in the next step.
 3. Examine the data dictionary entry for each column using `view_dict("<column_name>", dictionary)` from `support_functions.R`.
-    - This will show you the field name, description, possible values, and branching logic.
+    - This will show you the field name, field description, possible values, and branching logic.
     - For example, here is the dictionary entry for `daily_vasopressors_0___0`:
     ```r
     > view_dict("daily_vasopressors_0___0", dictionary)
@@ -38,7 +41,7 @@ This document details the general steps followed in order to derive variables fo
     $branching_logic
     [1] "[dailysofa_perf_0] = '1'"
     ```
-    - This tells us that `daily_vasopressors_0___0` is a checkbox field representing whether "none (no vasopressors)", while `daily_vasopressors_0___1` would represent "norepinephrine", and so on.
+    - This tells us that `daily_vasopressors_0___0` is a checkbox field representing "none (no vasopressors)" on Day 0, while `daily_vasopressors_0___1` would represent "norepinephrine", `daily_vasopressors_0___2` would represent "epinephrine", and so on.
     - Further, it shows that this checkbox value is only meaningful if the column `dailysofa_perf_0` is '1'.
         - WARNING: Be sure to check the dictionary and summary for upstream branching logic functions. The branching logic can have multiple layers. Also, the values shown in the branching logic section aren't always a 1:1 match for how the data of that branching logic column is formatted. For example, consider `dailysofa_perf_0`:
         ```r
@@ -64,18 +67,19 @@ This document details the general steps followed in order to derive variables fo
         Available Not Available          NA's
               498             1          7686
         ```
-        - In this case, the '1' in the `branching_logic` section for `daily_vasopressors_0___0` corresponds to the value "Available" in `dailysofa_perf_0`.
+        - In this case, the '1' in the `branching_logic` section for `daily_vasopressors_0___0` corresponds to the value "Available" in `dailysofa_perf_0`. Again, the statement `dailysofa_perf_0 == '1'` will always be FALSE, you MUST use the actual data value.
     - You will often need upstream columns to correctly handle different edge cases in your variable definition, especially for handling `NA` values that arise from the branching logic (i.e., if the branching logic condition is not met, the column will be `NA`).
+    - As a final note, while most values are `NA` if the branching logic condition isn't satisfied, checkbox values are unique in that they are "Unchecked" by default and only `NA` for events where they aren't collected. This is why it is important to check upstream branching logic!
 4. For each input column, determine which `event_label` the column belongs to with the `view_label()` function from `support_functions.R`.
-    - Columns are associated with a single event label, so if you use the wrong one it will return only `NA` values.
-    - Most variable derivations start with `data |> filter(event_label == "<event_label>")` to ensure only the relevant rows are used.
-    - For some variables, you will need to combine rows from multiple event labels. This is typically done using `left_join()` by `record_id`.
-    - For example, here is the event label for `daily_vasopressors_0___0`:
+    - Here is the event label for `daily_vasopressors_0___0`:
     ```r
     > view_label(data, daily_vasopressors_0___0)
     [1] "Daily In-Hospital Forms"
     ```
-5. Write the scaffolding for deriving the variable. We recommend using ddplyr functions for data manipulation. The general structure is as follows:
+    - Columns are associated with a single event label, so if you use the wrong one it will return only `NA` values.
+    - Most variable derivations start with `data |> filter(event_label == "<event_label>")` to ensure only the relevant rows are used.
+    - For some variables, you will need to combine rows from multiple event labels. This is typically done using `left_join()` by `record_id`. Look at the steroid DAG .Rmd files and `wrapper_` functions for examples of this.
+5. Write the scaffolding for deriving the variable. We recommend using dplyr functions for data manipulation. The general structure is as follows:
     - Select the relevant event label(s) using `filter(event_label == "<event_label>")` (and possibly `left_join()` if multiple event labels are needed)
     - Create code label maps as needed (described below) and use `left_join()` to merge them into the dataset
     - Create a new column for the derived variable using `mutate()`
@@ -96,7 +100,8 @@ This document details the general steps followed in order to derive variables fo
                                                NA's
                                                7687
     ```
-    - Instead of checking `daily_resp_8a_0 == 'Invasive mechanical ventilation without ECMO'`, it is easier to create a code map that assigns a short code to each possible values. This can be done using the `get_code_label_map()` function from `support_functions.R`:
+    - Instead of checking `daily_resp_8a_0 == 'Invasive mechanical ventilation without ECMO'`, it is easier to create a code map that assigns a short code to each possible values so you can instead check for `daily_resp_8a_0_code == 3`.
+    - This can be done using the `get_code_label_map()` function from `support_functions.R` and `left_join()` to merge it with your dataset:
     ```r
     > resp_map <- get_code_label_map("daily_resp_8a_0", dictionary)
     > print(resp_map)
@@ -109,12 +114,9 @@ This document details the general steps followed in order to derive variables fo
     6                    6                                                Standard flow supplemental oxygen
     7                    7 No respiratory support or supplemental oxygen (spontaneously breathing room air)
     8                   99                                                                          Unknown
-    ```
-    - You can then `left_join()` this map to your dataset using
-    ```r
-    data <- data |> left_join(resp_map, by = "daily_resp_8a_0")
+    > data <- data |> left_join(resp_map, by = "daily_resp_8a_0")
     ```
     - This will add a new column `daily_resp_8a_0_code` that contains those short numeric codes. Use this column in your derivation function instead of the long strings to get `daily_resp_8a_0_code == 3`, for example.
-7. After writing your variable function, test it on the dataset and display a summary to verify it works as expected. For categorical variables, you can use the `display_grand_total()` function from `support_functions.R` to see the counts for each category using a `gt()` table. For continues variables, you can use `summary()` or `ggplot2` to visualize the distribution.
+7. After writing your variable function, test it on the dataset and display a summary to verify it works as expected. For categorical variables, you can use the `display_grand_total()` function from `support_functions.R` to see the counts for each category using a `gt()` table. For continuous variables, you can use `summary()` or `ggplot2` to visualize the distribution.
     - If the results are not as expected, revisit Steps 2-6 to identify any issues. Most problems arise from misunderstanding the branching logic and not accounting for edge cases properly. This can be fixed by adding an upstream branching logic column as an input to your derivation function and handling the `NA` values appropriately.
 8. Once you are satisfied with the derived variable, repeat this process as needed for any additional variables.
