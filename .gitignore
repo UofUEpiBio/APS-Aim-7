@@ -6,13 +6,3 @@
 .Ruserdata
 .DS_Store
 *.Rproj
-
-final.md
-aim6-summary.md
-aim6-summary_files/*
-
-R/copilot-files/*
-
-*.csv
-
-copilot-*
