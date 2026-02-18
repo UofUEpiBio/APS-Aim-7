@@ -5,6 +5,11 @@
 # This file is the starting point for deriving all steroid DAG variables for
 # APS Aim 6. Use `source("steroid-dag-variables.R")` to get access to all
 # variable functions, or source individual files for specific variables as needed.
+# In addition to source statements for each steroid DAG file, this file contains
+# two helper functions, one for calculating all DAG variables
+# (`calc_all_steroid_dag_variables()`) and one for identifying records that
+# couldn't be classified (left as NA) under one or more DAG variables
+# (`get_records_with_missing_values()`).
 #
 # A given variable may have both a "systematic" and "streamlined" version, though
 # many have only one or the other. The prefix "sys_" is used for SYSTEMATIC
@@ -13,9 +18,19 @@
 # component variables, the file is named more generically after the variable
 # (e.g., calc_sys_hyperglycemia_0.R).
 #
-# This file also contains two helper functions, one for calculating all DAG
-# variables (`calc_all_steroid_dag_variables()`) and one for identifying records
-# that couldn't be classified (left as NA) under one or more DAG variables.
+# Each file contains a main function that contains the logic for calculating the
+# variable from the appropriate inputs and a convenience wrapper function that
+# takes the full dataset (and sometimes the data dictionary) as input, extracts
+# the necessary variables, calculates the variable (using the main function), and
+# returns a data frame with record_id and variable columns (one row per record_id).
+#
+# For example, `calc_sys_nmblockade_0.R` contains `calc_sys_nmblockade_0()` and
+# `wrapper_calc_sys_nmblockade_0()`.
+#
+# We HIGHLY recommend using the wrapper function instead of the main function,
+# because the process for extracting the necessary variables is tedious and error-prone,
+# often requiring joining multiple event labels together. The wrapper function abstracts
+# away that complexity.
 #
 # ==============================================================================
 
