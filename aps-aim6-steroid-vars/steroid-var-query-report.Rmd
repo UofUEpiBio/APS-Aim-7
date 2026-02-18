@@ -33,7 +33,7 @@ data <- data |> filter(record_id != '52-0023')
 ```{r, include = FALSE}
 # Source variable derivation code
 source("R/steroid-dag-variables.R")
-steroid_dag_data <- get_all_steroid_dag_variables(data, dictionary)
+steroid_dag_data <- calc_all_steroid_dag_variables(data, dictionary)
 ```
 
 ## Overview

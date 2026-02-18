@@ -31,7 +31,7 @@ data <- data |> filter(record_id != '52-0023')
 ```{r, echo = FALSE}
 # Source variable derivation code
 source("R/steroid-dag-variables.R")
-steroid_dag_data <- get_all_steroid_dag_variables(data, dictionary)
+steroid_dag_data <- calc_all_steroid_dag_variables(data, dictionary)
 ```
 
 ## Missing Records
@@ -81,7 +81,7 @@ get_missing_input_params_all <- function(records_with_missing, data, dictionary)
     check_missing_sys_chron_steroid_moddose_0(data, record_ids),
     check_missing_str_chron_steroid_moddose_0(data, record_ids),
     check_missing_sys_def_adrenal_insufficiency_0(data, record_ids),
-    check_missing_str_adrenal_insufficiency_0(data, record_ids),
+    check_missing_str_def_adrenal_insufficiency_0(data, record_ids),
     check_missing_sys_hyperglycemia_0(data, record_ids),
     check_missing_str_hyperglyc_hist_0(data, record_ids),
     check_missing_sys_steroid_comorb_0(data, record_ids),

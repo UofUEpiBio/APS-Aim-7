@@ -438,7 +438,7 @@ calc_aps_gcs_score <- function(
 # Calculate SYSTEMATIC DAG 'Global Physiology Severity'
 #
 # Value: Total APS score (sum of 12 components, range 0-48+)
-calc_aps_score <- function(
+calc_sys_global_phys_sev_0 <- function(
   aps_temp_score,
   aps_map_score,
   aps_hr_score,
@@ -778,7 +778,7 @@ wrapper_calc_sys_global_phys_sev_0 <- function(data, dictionary) {
   # Calculate final APS score
   data_aps_var <- data_aps_component_vars |>
     mutate(
-      sys_global_phys_sev_0 = calc_aps_score(
+      sys_global_phys_sev_0 = calc_sys_global_phys_sev_0(
         aps_temp_score = aps_temp_score,
         aps_map_score = aps_map_score,
         aps_hr_score = aps_hr_score,

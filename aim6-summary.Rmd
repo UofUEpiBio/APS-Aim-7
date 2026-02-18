@@ -659,7 +659,7 @@ Below, we highlight the records that were otherwise missing their component scor
 ```{r}
 data_aps_var <- data_aps_component_vars |>
   mutate(
-    aps_score = calc_aps_score(
+    aps_score = calc_sys_global_phys_sev_0(
       aps_temp_score = aps_temp_score,
       aps_map_score = aps_map_score,
       aps_hr_score = aps_hr_score,
@@ -1176,8 +1176,8 @@ Binary indicator variable (used to exclude patients if yes)
 **Summary:**
 
 ```{r}
-wrapper_calc_str_adrenal_insufficiency_0(data) |>
-  display_grand_total(str_adrenal_insufficiency_0)
+wrapper_calc_str_def_adrenal_insufficiency_0(data) |>
+  display_grand_total(str_def_adrenal_insufficiency_0)
 ```
 
 ### Unknown and Missing Values
