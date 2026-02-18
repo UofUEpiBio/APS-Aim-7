@@ -40,7 +40,7 @@ view_dict <- function(field, dictionary) {
     unclass()
 }
 
-# Helper function to determine the event lable associated with a given data field
+# Helper function to determine the event label associated with a given data field
 view_label <- function(data, field) {
   # Handle both quoted strings and unquoted names
   field_name <- rlang::as_name(rlang::enquo(field))
@@ -69,6 +69,7 @@ is_unknown <- function(x) {
 }
 
 # Helper function: Get value with lookback (Day 0 -> Day -1 -> Day -2)
+# - Used to find the most recent non-missing value for a given variable
 get_value_with_lookback <- function(val_0, val_m1, val_m2) {
   dplyr::coalesce(val_0, val_m1, val_m2)
 }
@@ -119,6 +120,8 @@ get_gcs_with_lookback <- function(daily_gcs_8a_0, daily_gcs_8a_m1, daily_gcs_8a_
 
 # Helper function: Display count table with grand total row
 # Usage: data |> display_count_with_total(column_name)
+# - Most commonly used in .Rmd files to dispaly a count table for a given
+#   variable with a grand total row at the bottom
 display_grand_total <- function(data, col) {
   data |>
     count({{ col }}) |>
